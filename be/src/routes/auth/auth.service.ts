@@ -106,7 +106,7 @@ export class AuthService {
     try {
       const decoded = await this.tokenService.verifyRefreshToken(refreshToken)
       userId = decoded.userId
-    } catch (err) {
+    } catch {
       throw new UnauthorizedException('Refresh token không hợp lệ hoặc đã hết hạn')
     }
 

@@ -46,7 +46,7 @@ export class AiRateLimitGuard implements CanActivate {
 
       // allow
       return true
-    } catch (err) {
+    } catch {
       // On Redis error, be conservative: fail closed (or you can choose fail-open)
       // Here we return 503 to indicate service degraded.
       throw new HttpException('Rate limiter unavailable', HttpStatus.SERVICE_UNAVAILABLE)

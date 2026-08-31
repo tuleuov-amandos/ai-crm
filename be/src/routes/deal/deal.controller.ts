@@ -15,13 +15,7 @@ import { ApiTags, ApiOkResponse } from '@nestjs/swagger'
 import { AnalyzeDealBodyType, CreateDealBodyType, DealStageType, UpdateDealBodyType } from './deal.model'
 import { DealService } from './deal.service'
 import { ZodSerializerDto } from 'nestjs-zod'
-import {
-  CreateDealBodyDto,
-  CreateDealResDto,
-  GetDealResDto,
-  GetDealsPipelineResDto,
-  UpdateDealResDto,
-} from './deal.dto'
+import { CreateDealResDto, GetDealResDto, GetDealsPipelineResDto, UpdateDealResDto } from './deal.dto'
 import { CreateTaskBodyDto, CreateTasksBulkBodyDto, UpdateTaskBodyDto, TaskResDto } from './task.dto'
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard'
 import { CurrentUser } from 'src/common/decorators/current-user.decorator'

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useGetInvitations, useRevokeInvitation, useUpdateInvitation } from "@/hooks/useInvitations";
 import {
-  Copy, Check, Clock, Trash2, Mail, ExternalLink, RefreshCw, Pencil
+  Copy, Check, Clock, Trash2, Mail, RefreshCw, Pencil
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";

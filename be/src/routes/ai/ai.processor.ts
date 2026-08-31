@@ -7,7 +7,6 @@ import { saveAiResultAtomic } from './ai.service'
 // Runs in the standalone worker process, which has no local SSE subscribers,
 // so events are pushed to the HTTP process over Redis Pub/Sub.
 import { publishAiEventRemote as publishAiEvent } from './ai.sse'
-import envConfig from '../../common/config'
 import { z } from 'zod'
 import { openai, AI_MODEL } from './ai.client'
 
@@ -43,7 +42,7 @@ function withTimeout<T>(promise: Promise<T>, ms = OPENAI_TIMEOUT_MS) {
 
 const MODEL = AI_MODEL
 
-async function callOpenAiAndParse(meetingNote: string, jobId: string, dealId: string): Promise<AiResponseType> {
+async function callOpenAiAndParse(meetingNote: string): Promise<AiResponseType> {
   const prompt = `
     You are an assistant that extracts actionable items from a meeting note.
     \nReturn ONLY a single valid JSON object (no explanation) with keys:
@@ -136,17 +135,16 @@ export function startAiWorker(): Worker {
   const worker = new Worker(
     AI_QUEUE_NAME,
     async (job) => {
-      const { jobId, dealId, tenantId, userId, meetingNote } = job.data as {
+      const { jobId, dealId, tenantId, meetingNote } = job.data as {
         jobId: string
         dealId: string
         tenantId: string
-        userId: string
         meetingNote: string
       }
 
       let aiResult: AiResponseType | null = null
       try {
-        aiResult = await callOpenAiAndParse(meetingNote, jobId, dealId)
+        aiResult = await callOpenAiAndParse(meetingNote)
       } catch (err) {
         const error = err as CustomAiError
         const rawErrorObj = error.raw as Record<string, any> | undefined

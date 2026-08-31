@@ -1,4 +1,4 @@
-import { AbilityBuilder, createMongoAbility, subject, MongoAbility } from '@casl/ability'
+import { AbilityBuilder, createMongoAbility, MongoAbility } from '@casl/ability'
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../services/prisma.service'
 import { RedisService } from '../services/redis.service'

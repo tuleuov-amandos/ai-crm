@@ -1,5 +1,5 @@
 import { axiosInstance } from "@/lib/api";
-import { LoginFormValues, RegisterFormValues } from "@/lib/types/auth";
+import { LoginFormValues } from "@/lib/types/auth";
 import { RegisterBodyType } from "@/lib/validations/auth.schema";
 
 export const authService = {

@@ -66,10 +66,10 @@ export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   
   // Date ranges default to entire 2026 to capture all seeded records
-  const [startDate, setStartDate] = useState("2026-01-01");
-  const [endDate, setEndDate] = useState("2026-12-31");
+  const [startDate] = useState("2026-01-01");
+  const [endDate] = useState("2026-12-31");
 
-  const { data: me, isLoading: isLoadingMe } = useMe();
+  const { isLoading: isLoadingMe } = useMe();
   const { can } = useAbility();
 
   const visibleTabs = TABS.filter((tab) => {

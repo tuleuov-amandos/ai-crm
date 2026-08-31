@@ -45,7 +45,7 @@ const featuresData = [
     demoContent: (
       <div className="border border-border rounded-xl p-4 bg-muted/30 font-mono text-[10px] space-y-2">
         <p className="text-green-600 font-bold">// SQL Query executed by Prisma extension:</p>
-        <p className="text-foreground">SELECT * FROM "Contact" WHERE "tenantId" = 'tenant_company_abc';</p>
+        <p className="text-foreground">{`SELECT * FROM "Contact" WHERE "tenantId" = 'tenant_company_abc';`}</p>
         <div className="h-px bg-border my-2" />
         <p className="text-red-500 font-bold">// Request from tenant XYZ trying to access ABC:</p>
         <p className="text-muted-foreground font-semibold">Error: ForbiddenException (Access denied - Dynamic isolation check failed)</p>
@@ -106,11 +106,11 @@ const featuresData = [
     demoContent: (
       <div className="border border-border rounded-xl p-3 bg-muted/30 text-[10px] space-y-2">
         <div className="flex justify-between items-center bg-background p-1.5 border border-border rounded">
-          <span>Cột trong file: "Email KH"</span>
+          <span>{`Cột trong file: "Email KH"`}</span>
           <span className="text-primary font-bold">→ email</span>
         </div>
         <div className="flex justify-between items-center bg-background p-1.5 border border-border rounded">
-          <span>Cột trong file: "Tên công ty"</span>
+          <span>{`Cột trong file: "Tên công ty"`}</span>
           <span className="text-primary font-bold">→ companyName</span>
         </div>
       </div>
@@ -164,42 +164,6 @@ const featuresData = [
     )
   }
 ];
-
-// Magnetic wrapper component for premium tactile feel
-function Magnetic({ children }: { children: React.ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!ref.current) return;
-    const { clientX, clientY } = e;
-    const { left, top, width, height } = ref.current.getBoundingClientRect();
-    const centerX = left + width / 2;
-    const centerY = top + height / 2;
-    const distanceX = clientX - centerX;
-    const distanceY = clientY - centerY;
-    setPosition({ x: distanceX * 0.35, y: distanceY * 0.35 });
-  };
-
-  const handleMouseLeave = () => {
-    setPosition({ x: 0, y: 0 });
-  };
-
-  const { x, y } = position;
-
-  return (
-    <motion.div
-      ref={ref}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      animate={{ x, y }}
-      transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.1 }}
-      className="inline-block"
-    >
-      {children}
-    </motion.div>
-  );
-}
 
 export default function LandingPage() {
   const router = useRouter();
@@ -292,7 +256,7 @@ export default function LandingPage() {
   const [activeFeatureIndex, setActiveFeatureIndex] = useState<number | null>(null);
 
   // 7. Custom cursor coordinates and proximity snap state
-  const [mousePos, setMousePos] = useState({ x: -100, y: -100 });
+  const [, setMousePos] = useState({ x: -100, y: -100 });
   const [nearestCardIndex, setNearestCardIndex] = useState<number | null>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -1242,7 +1206,7 @@ export default function LandingPage() {
                           </div>
                           <div>
                             <p className="text-sm font-semibold text-foreground">Đang tải tệp Excel lên...</p>
-                            <p className="text-xs text-muted-foreground mt-0.5 font-mono">Đang đọc các cột: "Họ tên KH", "Hòm thư", "Số điện thoại", "Dự án"...</p>
+                            <p className="text-xs text-muted-foreground mt-0.5 font-mono">{`Đang đọc các cột: "Họ tên KH", "Hòm thư", "Số điện thoại", "Dự án"...`}</p>
                           </div>
                         </div>
                       )}
@@ -1321,7 +1285,7 @@ export default function LandingPage() {
                           </div>
 
                           <div className="bg-muted p-2 rounded-lg text-center mt-2">
-                            <span className="text-[10px] text-muted-foreground">Ấn nút "Xác nhận Import" sẽ kích hoạt logic ghi nhận trùng lặp, gán Owner và tự động lưu vào DB.</span>
+                            <span className="text-[10px] text-muted-foreground">{`Ấn nút "Xác nhận Import" sẽ kích hoạt logic ghi nhận trùng lặp, gán Owner và tự động lưu vào DB.`}</span>
                           </div>
                         </motion.div>
                       )}

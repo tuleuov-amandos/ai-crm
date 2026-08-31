@@ -343,7 +343,7 @@ export class ContactsService {
         .trim()
       const mappings = JSON.parse(cleanJson)
       return { mappings }
-    } catch (err) {
+    } catch {
       // Fallback mapping in case of AI API error
       const mappings: Record<string, string | null> = {}
       const fields = [

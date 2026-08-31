@@ -1,4 +1,3 @@
-import { ROLE } from 'src/common/constants/role.constanst'
 import z from 'zod'
 
 export const CreateInvitationSchema = z

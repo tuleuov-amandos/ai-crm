@@ -23,7 +23,7 @@ export const useCreateInvitation = () => {
   return useMutation({
     mutationFn: ({ email, role }: { email: string; role: string }) =>
       invitationsService.create(email, role),
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success("Đã gửi lời mời thành công!");
       queryClient.invalidateQueries({ queryKey: invitationKeys.lists() });
     },

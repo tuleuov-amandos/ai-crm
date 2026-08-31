@@ -10,7 +10,6 @@ import {
   GetContactResSchema,
   // GET ALL
   GetContactsQuerySchema,
-  GetContactsResSchema,
   GetContactsWithDealsActivitiesResSchema,
   // BULK IMPORT
   BulkImportContactsBodySchema,

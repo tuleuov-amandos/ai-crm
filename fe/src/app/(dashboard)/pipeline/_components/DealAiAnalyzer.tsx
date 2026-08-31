@@ -43,26 +43,6 @@ interface AITask {
   done: boolean;
 }
 
-const AI_TASKS: AITask[] = [
-  { id: "ai1", title: "Soạn và gửi hợp đồng + SOW chi tiết",          due: "22/03/2026", done: false },
-  { id: "ai2", title: "Lên lịch kickoff meeting với đội kỹ thuật JKL", due: "24/03/2026", done: false },
-  { id: "ai3", title: "Chuẩn bị quyền truy cập staging environment",   due: "25/03/2026", done: false },
-  { id: "ai4", title: "Xác nhận danh sách checklist PCI-DSS với JKL",  due: "28/03/2026", done: false },
-];
-
-const EMAIL_DRAFT =
-  `Kính gửi anh Phạm Đức Quang,\n\n` +
-  `Cảm ơn anh đã dành thời gian cho cuộc gặp hôm nay tại văn phòng Ngân hàng JKL. Chúng tôi rất trân trọng cơ hội được hỗ trợ dự án bảo mật quan trọng này.\n\n` +
-  `Như đã thảo luận, chúng tôi sẽ tiến hành Security Audit toàn diện bao gồm:\n` +
-  `  • Penetration testing cho toàn bộ hệ thống core banking\n` +
-  `  • Security code review và đánh giá kiến trúc bảo mật\n` +
-  `  • Đánh giá tuân thủ tiêu chuẩn PCI-DSS\n\n` +
-  `Timeline dự kiến: 8 tuần, bắt đầu đầu tháng 4/2026. Báo cáo bàn giao song ngữ Việt – Anh.\n\n` +
-  `Hợp đồng và Statement of Work chi tiết sẽ được gửi trước ngày 22/03/2026.\n\n` +
-  `Trân trọng,\n` +
-  `Đặng Tuấn — Sales Manager, SalesFlow\n` +
-  `0912 888 999 | tuan.dang@salesflow.vn`;
-
 type Phase = "idle" | "analyzing" | "streaming_tasks" | "streaming_email" | "done";
 
 interface DealAiAnalyzerProps {

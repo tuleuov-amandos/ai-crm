@@ -233,7 +233,7 @@ export function MembersRoles() {
   const activeUsers = users || [];
   const pendingInvitations = (invitations || []).filter((i) => i.status === "PENDING");
 
-  const membersList: Member[] = activeUsers.map((u, index) => {
+  const membersList: Member[] = activeUsers.map((u) => {
     const roleMapped = u.role;
     const initials = u.name
       ? u.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)

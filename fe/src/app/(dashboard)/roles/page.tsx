@@ -1,6 +1,6 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { ShieldCheck, UserCheck, Users, Edit2, Loader2, Pencil, Trash2, Plus, Lock } from "lucide-react";
+import React, { useState } from "react";
+import { ShieldCheck, UserCheck, Users, Loader2, Pencil, Trash2, Plus, Lock } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { usersService, RoleDto, RolePermission } from "@/services/users.service";
 import { useMe } from "@/hooks/useAuth";
@@ -22,17 +22,6 @@ const getRoleIcon = (name: string) => {
   if (name === "ADMIN") return { icon: ShieldCheck, color: "#EF4444", bgColor: "#FEF2F2" };
   if (name === "MANAGER") return { icon: UserCheck, color: "#3B82F6", bgColor: "#EFF6FF" };
   return { icon: Users, color: "#10B981", bgColor: "#ECFDF5" };
-};
-
-const formatAction = (action: string) => {
-  const map: Record<string, string> = {
-    create: "Thêm",
-    read: "Xem",
-    update: "Sửa",
-    delete: "Xóa",
-    manage: "Toàn quyền",
-  };
-  return map[action] || action;
 };
 
 const formatSubject = (subject: string) => {

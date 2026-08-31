@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/common/services/prisma.service'
 import { UserType } from 'src/routes/auth/auth.model'
-import { ROLE, RoleType } from '../constants/role.constanst'
+import { RoleType } from '../constants/role.constanst'
 
 @Injectable()
 export class SharedUserRepository {

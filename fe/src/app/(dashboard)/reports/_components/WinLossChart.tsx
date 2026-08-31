@@ -5,7 +5,6 @@ import {
 import { BarChart2 } from "lucide-react";
 import { ChartCard } from "./ChartCard";
 import { EmptyState } from "./EmptyState";
-import { winLossData } from "./reportsData";
 
 import { CustomTooltipProps } from "@/lib/types/chart";
 

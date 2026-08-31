@@ -81,7 +81,7 @@ export function publishAiEvent(tenantId: string, dealId: string, event: string, 
     if (event === 'ai-complete' || event === 'ai-error') {
       try {
         sub.res.end()
-      } catch (e) {
+      } catch {
         // ignore
       }
       clearInterval(sub.interval)

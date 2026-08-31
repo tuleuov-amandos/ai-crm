@@ -9,8 +9,6 @@ import {
   ChevronRight,
   Edit2,
   TrendingUp,
-  Target,
-  Flag,
   CheckCircle2,
   Trash2,
 } from "lucide-react";
@@ -32,9 +30,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as ShadcnCalendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 
-type Priority = "high" | "medium" | "low";
-type DueStatus = "overdue" | "today" | "upcoming" | "done";
-
 const PIPELINE_STAGES: { key: DealStage; label: string }[] = [
   { key: "PROSPECT",   label: "Prospect" },
   { key: "QUALIFIED",  label: "Qualified" },
@@ -42,12 +37,6 @@ const PIPELINE_STAGES: { key: DealStage; label: string }[] = [
   { key: "CLOSED_WON", label: "Closed Won" },
   { key: "CLOSED_LOST", label: "Closed Lost" },
 ];
-
-const PRIORITY_DOT: Record<Priority, string> = {
-  high:   "#ef4444",
-  medium: "#f97316",
-  low:    "#9ca3af",
-};
 
 type DealLeftPanelProps = {
   deal: DealDetail;

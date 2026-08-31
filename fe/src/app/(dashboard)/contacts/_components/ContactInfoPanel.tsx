@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { StageBadge, type DealStage } from "@/components/StageBage";
+import { StageBadge } from "@/components/StageBage";
 import { GetContactResType, ContactTagConst, ContactTagType } from "@/lib/validations/contacts.scheme";
 import { formatCurrency, getInitials, relativeTime } from "@/lib/helper";
 import {
