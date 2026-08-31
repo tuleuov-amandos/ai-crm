@@ -58,6 +58,7 @@ export class InvitationsController {
   }
 
   @Get('verify/:token')
+  @Throttle(BRUTE_FORCE_GUARD_THROTTLE)
   verifyToken(@Param('token') token: string) {
     return this.invitationsService.verifyInvitationToken(token);
   }
