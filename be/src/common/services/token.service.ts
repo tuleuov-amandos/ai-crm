@@ -28,11 +28,13 @@ export class TokenService {
   verifyAccessToken(token: string): Promise<AccessTokenPayload> {
     return this.jwtService.verifyAsync(token, {
       secret: envConfig.ACCESS_TOKEN_SECRET,
+      algorithms: ['HS256'],
     });
   }
   verifyRefreshToken(token: string): Promise<RefreshTokenPayload> {
     return this.jwtService.verifyAsync(token, {
       secret: envConfig.REFRESH_TOKEN_SECRET,
+      algorithms: ['HS256'],
     });
   }
 }
