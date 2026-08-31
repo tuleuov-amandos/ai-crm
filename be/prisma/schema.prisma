@@ -1,0 +1,286 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Tenant {
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique
+  plan        String       @default("free")
+  createdAt   DateTime     @default(now())
+  roles       Role[]
+  activities  Activity[]
+  contacts    Contact[]
+  deals       Deal[]
+  invitations Invitation[]
+  kpiTargets  KpiTarget[]
+  users       User[]
+  auditLogs   AuditLog[]
+}
+
+model User {
+  id            String         @id @default(cuid())
+  tenantId      String
+  email         String         @unique
+  name          String
+  roleId        String
+  role          Role           @relation(fields: [roleId], references: [id])
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  password      String?
+  accounts      Account[]
+  activities    Activity[]
+  ownedContacts Contact[]      @relation("ContactOwner")
+  ownedDeals    Deal[]         @relation("DealOwner")
+  kpiTargets    KpiTarget[]
+  refreshTokens RefreshToken[]
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
+  auditLog      AuditLog[]
+  @@index([tenantId])
+  @@index([roleId])
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  tenantId    String           // Ensure multi-tenancy (SaaS): Each tenant can define its own role
+  name        String           // "ADMIN", "MANAGER", "SALES_REP" or custom name
+  description String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  
+  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  users       User[]
+  invitations Invitation[]
+  permissions RolePermission[]
+  @@unique([tenantId, name])
+  @@index([tenantId])
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  action      String           // "manage", "create", "read", "update", "delete"
+  subject     String           // "Contact", "Deal", "Task", "Activity", "User", "all"
+  description String?
+  createdAt   DateTime         @default(now())
+  roles       RolePermission[]
+  
+  @@unique([action, subject])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  conditions   Json?           // Store ownership conditions (ABAC), e.g.: {"ownerId": "${user.id}"}
+  
+  role         Role            @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission      @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  @@id([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+}
+
+model Account {
+  id                String   @id @default(cuid())
+  userId            String
+  provider          String
+  providerAccountId String
+  createdAt         DateTime @default(now())
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Contact {
+  id         String     @id @default(cuid())
+  tenantId   String
+  name       String
+  email      String?
+  phone      String?
+  company    String?
+  position   String?
+  tags       String[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  deletedAt  DateTime?
+  ownerId    String
+  activities Activity[]
+  owner      User       @relation("ContactOwner", fields: [ownerId], references: [id])
+  tenant     Tenant     @relation(fields: [tenantId], references: [id])
+  deals      Deal[]
+
+  @@index([tenantId])
+  @@index([tenantId, ownerId])
+  @@index([tenantId, name])
+}
+
+model Deal {
+  id            String         @id @default(cuid())
+  tenantId      String
+  contactId     String
+  ownerId       String
+  title         String
+  value         Decimal        @default(0)
+  stage         DealStage      @default(PROSPECT)
+  closeDate     DateTime?
+  note          String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+  activities    Activity[]
+  aiSuggestions AiSuggestion[]
+  contact       Contact        @relation(fields: [contactId], references: [id])
+  owner         User           @relation("DealOwner", fields: [ownerId], references: [id])
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
+  tasks         Task[]
+
+  @@index([tenantId])
+  @@index([tenantId, stage])
+  @@index([tenantId, ownerId])
+}
+
+model Activity {
+  id        String       @id @default(cuid())
+  tenantId  String
+  contactId String?
+  dealId    String?
+  userId    String
+  type      ActivityType
+  note      String
+  date      DateTime     @default(now())
+  title     String?
+  contact   Contact?     @relation(fields: [contactId], references: [id])
+  deal      Deal?        @relation(fields: [dealId], references: [id])
+  tenant    Tenant       @relation(fields: [tenantId], references: [id])
+  user      User         @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, contactId])
+  @@index([tenantId, dealId])
+}
+
+model Task {
+  id        String    @id @default(cuid())
+  dealId    String
+  title     String
+  done      Boolean   @default(false)
+  dueDate   DateTime?
+  createdAt DateTime  @default(now())
+  tenantId  String
+  deal      Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, dealId])
+}
+
+model AiSuggestion {
+  id         String           @id @default(cuid())
+  dealId     String
+  type       AiSuggestionType
+  content    String
+  sourceNote String?
+  createdAt  DateTime         @default(now())
+  jobId      String
+  tenantId   String
+  deal       Deal             @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, dealId])
+  @@index([tenantId, jobId])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Invitation {
+  id        String           @id @default(cuid())
+  tenantId  String
+  email     String
+  roleId    String
+  role      Role             @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  token     String           @unique
+  status    InvitationStatus @default(PENDING)
+  expiresAt DateTime
+  createdAt DateTime         @default(now())
+  tenant    Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@index([token])
+  @@index([roleId])
+}
+
+
+model KpiTarget {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String
+  target    Decimal  @default(0)
+  month     Int
+  year      Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId, month, year])
+  @@index([tenantId, userId])
+}
+model AuditLog {
+  id         String   @id @default(cuid())
+  tenantId   String
+  userId     String
+  action     String   // "CREATE", "UPDATE", "DELETE"
+  targetType String   // "DEAL", "CONTACT"
+  targetId   String
+  targetName String?
+  changes    Json     // Format: { [fieldName]: { old: any, new: any } }
+  createdAt  DateTime @default(now())
+
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, targetType])
+  @@index([tenantId, userId])
+}
+
+enum DealStage {
+  PROSPECT
+  QUALIFIED
+  PROPOSAL
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+enum ActivityType {
+  CALL
+  EMAIL
+  MEETING
+  NOTE
+}
+
+enum AiSuggestionType {
+  TASK_LIST
+  EMAIL_DRAFT
+  SUMMARY
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
