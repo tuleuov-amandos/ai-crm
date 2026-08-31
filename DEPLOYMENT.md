@@ -3,6 +3,43 @@
 Backend → **Railway**, Frontend → **Vercel**. Часть шагов делается руками в UI;
 этот файл фиксирует список переменных и порядок проверки.
 
+## CI/CD (GitHub Actions)
+
+Ручной процесс (SSH на прод → `git pull` → `docker compose build`) заменён на пайплайн.
+`docker-compose.yml` остаётся только для локального запуска стека.
+
+| Workflow | Триггер | Что делает |
+|---|---|---|
+| [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | PR в `main` | `npm ci` + lint + `tsc --noEmit` + test — отдельно для `be/` и `fe/` |
+| [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) | push в `main` | собрать образ `be` → push в `ghcr.io/<repo>/backend:sha-<sha>` + `:latest` → `railway up` (API + worker) → health-check гейт |
+
+Health-check: [`.github/scripts/wait-for-health.sh`](.github/scripts/wait-for-health.sh)
+поллит `GET {BACKEND_URL}{HEALTHCHECK_PATH}` до 200. Railway с `healthcheckPath`
+из [`be/railway.json`](be/railway.json) сам не переключает трафик на неисправный
+деплой и держит предыдущий — отдельный откат не нужен, упавший job просто красный.
+
+### Что настроить руками
+
+GitHub → Settings → Secrets and variables → Actions:
+
+- **Secret** `RAILWAY_TOKEN` — project token из Railway (Project → Settings → Tokens).
+- **Variables**:
+  - `RAILWAY_API_SERVICE` — имя сервиса API в Railway.
+  - `RAILWAY_WORKER_SERVICE` — имя сервиса воркера.
+  - `BACKEND_URL` — публичный адрес backend, без завершающего слэша.
+  - `HEALTHCHECK_PATH` — пока `/`; после мержа ветки с `/health/ready` → `/health/ready`
+    (и одновременно `healthcheckPath` в `be/railway.json`).
+
+`GITHUB_TOKEN` для пуша в ghcr — встроенный, добавлять не нужно.
+
+### Railway: сервисы под пайплайн
+
+- **API**: source = этот репо, root `be/`, билд по `be/Dockerfile`. `be/railway.json`
+  подхватывается автоматически (`preDeployCommand` = `npx prisma migrate deploy`,
+  healthcheck). Ручной прогон миграций из чек-листа ниже больше не нужен.
+- **Worker**: тот же репо/root, **Custom Start Command** `node dist/src/worker.js`,
+  те же переменные окружения, без healthcheck.
+
 ## Backend (Railway)
 
 Полный список переменных — в [`be/.env.example`](be/.env.example).
