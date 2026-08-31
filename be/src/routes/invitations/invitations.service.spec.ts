@@ -96,6 +96,19 @@ describe('InvitationsService', () => {
       expect(result.role).toBe(ROLE.SALES_REP)
       expect(mockInvitationRepo.create).toHaveBeenCalled()
     })
+
+    it('rejects a requester with an unrecognized role, even inviting SALES_REP', async () => {
+      const unknownRoleUser: AccessTokenPayload = { ...managerUser, role: 'SOME_CUSTOM_ROLE' }
+      mockSharedUserRepo.findUniqueEmail.mockResolvedValue(null)
+      mockSharedUserRepo.findTenantUnique.mockResolvedValue({ id: tenantId, name: 'Acme' })
+      mockPrismaService.role.findFirst.mockResolvedValue({ id: 'role-sales', name: ROLE.SALES_REP, tenantId })
+
+      await expect(
+        service.createInvitation({ email: 'new@acme.com', role: ROLE.SALES_REP }, tenantId, unknownRoleUser),
+      ).rejects.toThrow(ForbiddenException)
+
+      expect(mockInvitationRepo.create).not.toHaveBeenCalled()
+    })
   })
 
   describe('updateInvitation', () => {

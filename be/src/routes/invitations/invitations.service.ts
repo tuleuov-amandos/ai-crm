@@ -15,7 +15,7 @@ import { CreateInvitationType, AcceptInvitationType, UpdateInvitationType } from
 import { v4 as uuidv4 } from 'uuid'
 import envConfig from 'src/common/config'
 import { PrismaService } from 'src/common/services/prisma.service'
-import { getRoleWeight } from 'src/common/constants/role-hierarchy.constant'
+import { getRoleWeight, getRequesterRoleWeight } from 'src/common/constants/role-hierarchy.constant'
 import { AccessTokenPayload } from 'src/common/types/jwt.type'
 
 @Injectable()
@@ -48,7 +48,7 @@ async createInvitation(body: CreateInvitationType, tenantId: string, currentUser
     if (!dbRole) {
       throw new BadRequestException('Vai trò không hợp lệ')
     }
-    if (getRoleWeight(dbRole.name) > getRoleWeight(currentUser.role)) {
+    if (getRoleWeight(dbRole.name) > getRequesterRoleWeight(currentUser.role)) {
       throw new ForbiddenException('Bạn không thể mời người dùng với vai trò cao hơn vai trò của chính mình')
     }
     await this.invitationRepo.deleteManyByEmail(body.email)
@@ -187,7 +187,7 @@ async verifyInvitationToken(token: string) {
     if (body.role) {
       const dbRole = await this.prismaService.role.findFirst({ where: { tenantId, name: body.role } })
       if (!dbRole) throw new BadRequestException('Vai trò không hợp lệ')
-      if (getRoleWeight(dbRole.name) > getRoleWeight(currentUser.role)) {
+      if (getRoleWeight(dbRole.name) > getRequesterRoleWeight(currentUser.role)) {
         throw new ForbiddenException('Bạn không thể gán vai trò cao hơn vai trò của chính mình')
       }
       updateData.roleId = dbRole.id
