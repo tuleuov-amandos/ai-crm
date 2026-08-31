@@ -15,7 +15,7 @@ export class ContactsRepository {
         phone: data.phone ?? null,
         company: data.company ?? null,
         position: data.position ?? null,
-        tags: data.tags ?? []
+        tags: data.tags ?? [],
       } as any,
     })
   }
@@ -48,8 +48,8 @@ export class ContactsRepository {
 
   findOne(contactId: string, filters?: { ownerId?: string }) {
     return this.prismaService.contact.findFirst({
-      where: { 
-        id: contactId, 
+      where: {
+        id: contactId,
         deletedAt: null,
         ...(filters?.ownerId && { ownerId: filters.ownerId }),
       },
@@ -76,8 +76,8 @@ export class ContactsRepository {
 
   findDeleted(contactId: string, filters?: { ownerId?: string }) {
     return this.prismaService.contact.findFirst({
-      where: { 
-        id: contactId, 
+      where: {
+        id: contactId,
         deletedAt: { not: null },
         ...(filters?.ownerId && { ownerId: filters.ownerId }),
       },
@@ -95,21 +95,17 @@ export class ContactsRepository {
   findUserByEmail(email: string) {
     return this.prismaService.user.findFirst({
       where: { email },
-    });
+    })
   }
 
   // Search for existing Contact by email or phone number
   findByEmailOrPhone(email?: string | null, phone?: string | null) {
-    if (!email && !phone) return null;
+    if (!email && !phone) return null
     return this.prismaService.contact.findFirst({
       where: {
         deletedAt: null,
-        OR: [
-          ...(email ? [{ email }] : []),
-          ...(phone ? [{ phone }] : []),
-        ],
+        OR: [...(email ? [{ email }] : []), ...(phone ? [{ phone }] : [])],
       },
-    });
+    })
   }
 }
-

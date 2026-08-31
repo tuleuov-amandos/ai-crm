@@ -13,9 +13,7 @@ export class PipelineReportService {
     private readonly caslAbilityFactory: CaslAbilityFactory,
   ) {}
 
-  async getPipelineAnalysis(
-    user: AccessTokenPayload,
-  ) {
+  async getPipelineAnalysis(user: AccessTokenPayload) {
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('read', subject('Report', { view: 'pipeline' } as any))) {
       throw new ForbiddenException('Bạn không có quyền xem báo cáo phễu bán hàng')
@@ -40,7 +38,8 @@ export class PipelineReportService {
     const wonCount = deals.filter((d) => d.stage === DealStage.CLOSED_WON).length
     const lostCount = deals.filter((d) => d.stage === DealStage.CLOSED_LOST).length
 
-    const getStageSum = (stage: DealStage) => deals.filter((d) => d.stage === stage).reduce((sum, d) => sum + Number(d.value), 0)
+    const getStageSum = (stage: DealStage) =>
+      deals.filter((d) => d.stage === stage).reduce((sum, d) => sum + Number(d.value), 0)
 
     const conversionFunnel = funnelStages.map((stage) => {
       let count = 0
@@ -48,7 +47,11 @@ export class PipelineReportService {
 
       if (stage.key === DealStage.PROSPECT) {
         count = leadCount + contactedCount + proposalCount + wonCount
-        value = getStageSum(DealStage.PROSPECT) + getStageSum(DealStage.QUALIFIED) + getStageSum(DealStage.PROPOSAL) + getStageSum(DealStage.CLOSED_WON)
+        value =
+          getStageSum(DealStage.PROSPECT) +
+          getStageSum(DealStage.QUALIFIED) +
+          getStageSum(DealStage.PROPOSAL) +
+          getStageSum(DealStage.CLOSED_WON)
       } else if (stage.key === DealStage.QUALIFIED) {
         count = contactedCount + proposalCount + wonCount
         value = getStageSum(DealStage.QUALIFIED) + getStageSum(DealStage.PROPOSAL) + getStageSum(DealStage.CLOSED_WON)
@@ -72,7 +75,7 @@ export class PipelineReportService {
     })
 
     const bottlenecks: { type: 'warning' | 'success'; title: string; description: string }[] = []
-    
+
     const totalProspects = leadCount + contactedCount + proposalCount + wonCount
     const totalQualified = contactedCount + proposalCount + wonCount
     const qualRate = totalProspects > 0 ? (totalQualified / totalProspects) * 100 : 0
@@ -80,7 +83,8 @@ export class PipelineReportService {
       bottlenecks.push({
         type: 'warning',
         title: `Tỷ lệ Lead -> Contacted thấp (${Math.round(qualRate)}%)`,
-        description: 'Tỷ lệ chuyển đổi khách hàng tiềm năng sang liên hệ thấp. Cần tăng cường hoạt động gọi điện/email tiếp cận.',
+        description:
+          'Tỷ lệ chuyển đổi khách hàng tiềm năng sang liên hệ thấp. Cần tăng cường hoạt động gọi điện/email tiếp cận.',
       })
     } else if (qualRate >= 50 && totalProspects > 0) {
       bottlenecks.push({
@@ -95,11 +99,12 @@ export class PipelineReportService {
       bottlenecks.push({
         type: 'warning',
         title: `Tỷ lệ Contacted -> Proposal giảm mạnh (${Math.round(propRate)}%)`,
-        description: 'Nhiều khách hàng đã liên hệ nhưng không nhận được/chưa đồng ý đề xuất giải pháp. Cần xem xét lại báo giá.',
+        description:
+          'Nhiều khách hàng đã liên hệ nhưng không nhận được/chưa đồng ý đề xuất giải pháp. Cần xem xét lại báo giá.',
       })
     }
 
-    const winRateVal = (proposalCount + wonCount) > 0 ? (wonCount / (proposalCount + wonCount)) * 100 : 0
+    const winRateVal = proposalCount + wonCount > 0 ? (wonCount / (proposalCount + wonCount)) * 100 : 0
     if (winRateVal >= 50 && wonCount > 0) {
       bottlenecks.push({
         type: 'success',
@@ -134,7 +139,10 @@ export class PipelineReportService {
         const dDate = d.closeDate || d.createdAt
         return dDate.getFullYear() === currentYear && dDate.getMonth() + 1 === m
       })
-      const monthOpenWeightedVal = monthOpen.reduce((sum, d) => sum + Number(d.value) * (STAGE_PROBABILITIES[d.stage] || 0), 0)
+      const monthOpenWeightedVal = monthOpen.reduce(
+        (sum, d) => sum + Number(d.value) * (STAGE_PROBABILITIES[d.stage] || 0),
+        0,
+      )
 
       const monthTargets = kpiTargets.filter((t) => t.month === m)
       const monthTargetVal = monthTargets.reduce((sum, t) => sum + Number(t.target), 0)
@@ -144,7 +152,8 @@ export class PipelineReportService {
 
       cumForecast += monthActualVal + monthOpenWeightedVal
 
-      const isFutureMonth = currentYear > now.getFullYear() || (currentYear === now.getFullYear() && m > now.getMonth() + 1)
+      const isFutureMonth =
+        currentYear > now.getFullYear() || (currentYear === now.getFullYear() && m > now.getMonth() + 1)
 
       return {
         month: `T${m}`,

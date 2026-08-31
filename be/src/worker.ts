@@ -1,11 +1,11 @@
-import 'reflect-metadata';
-import { Logger } from '@nestjs/common';
+import 'reflect-metadata'
+import { Logger } from '@nestjs/common'
 // Importing the config module here validates env vars (and loads .env) exactly
 // like main.ts does, so the worker fails fast on misconfiguration.
-import './common/config';
-import { startAiWorker } from './routes/ai/ai.processor';
+import './common/config'
+import { startAiWorker } from './routes/ai/ai.processor'
 
-const logger = new Logger('WorkerBootstrap');
+const logger = new Logger('WorkerBootstrap')
 
 /**
  * Standalone entrypoint for the background worker.
@@ -16,26 +16,26 @@ const logger = new Logger('WorkerBootstrap');
  * ai.processor.ts), so a full Nest application context is unnecessary.
  */
 function bootstrap() {
-  const worker = startAiWorker();
-  logger.log('AI worker process started');
+  const worker = startAiWorker()
+  logger.log('AI worker process started')
 
-  let shuttingDown = false;
+  let shuttingDown = false
   const shutdown = async (signal: string) => {
-    if (shuttingDown) return;
-    shuttingDown = true;
-    logger.log(`Received ${signal}, closing AI worker...`);
+    if (shuttingDown) return
+    shuttingDown = true
+    logger.log(`Received ${signal}, closing AI worker...`)
     try {
-      await worker.close();
-      logger.log('AI worker closed cleanly');
-      process.exit(0);
+      await worker.close()
+      logger.log('AI worker closed cleanly')
+      process.exit(0)
     } catch (err) {
-      logger.error('Error while closing AI worker', err instanceof Error ? err.stack : String(err));
-      process.exit(1);
+      logger.error('Error while closing AI worker', err instanceof Error ? err.stack : String(err))
+      process.exit(1)
     }
-  };
+  }
 
-  process.on('SIGTERM', () => void shutdown('SIGTERM'));
-  process.on('SIGINT', () => void shutdown('SIGINT'));
+  process.on('SIGTERM', () => void shutdown('SIGTERM'))
+  process.on('SIGINT', () => void shutdown('SIGINT'))
 }
 
-bootstrap();
+bootstrap()

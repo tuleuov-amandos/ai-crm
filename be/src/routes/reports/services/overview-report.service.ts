@@ -13,11 +13,7 @@ export class OverviewReportService {
     private readonly caslAbilityFactory: CaslAbilityFactory,
   ) {}
 
-  async getOverview(
-    startDateStr: string | undefined,
-    endDateStr: string | undefined,
-    user: AccessTokenPayload,
-  ) {
+  async getOverview(startDateStr: string | undefined, endDateStr: string | undefined, user: AccessTokenPayload) {
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('read', subject('Report', { view: 'overview' } as any))) {
       throw new ForbiddenException('Bạn không có quyền xem báo cáo tổng quan')
@@ -50,8 +46,12 @@ export class OverviewReportService {
     }
 
     // Metric 2: Total Closed Deals (won or lost in period)
-    const currentClosedCount = currentDeals.filter((d) => d.stage === DealStage.CLOSED_WON || d.stage === DealStage.CLOSED_LOST).length
-    const prevClosedCount = previousDeals.filter((d) => d.stage === DealStage.CLOSED_WON || d.stage === DealStage.CLOSED_LOST).length
+    const currentClosedCount = currentDeals.filter(
+      (d) => d.stage === DealStage.CLOSED_WON || d.stage === DealStage.CLOSED_LOST,
+    ).length
+    const prevClosedCount = previousDeals.filter(
+      (d) => d.stage === DealStage.CLOSED_WON || d.stage === DealStage.CLOSED_LOST,
+    ).length
     const closedDeltaVal = currentClosedCount - prevClosedCount
     const closedDeals = {
       value: currentClosedCount,
@@ -76,9 +76,11 @@ export class OverviewReportService {
     }
 
     // Metric 4: Avg Deal Size
-    const currentAvgSize = currentWon.length > 0 ? currentWon.reduce((sum, d) => sum + Number(d.value), 0) / currentWon.length : 0
+    const currentAvgSize =
+      currentWon.length > 0 ? currentWon.reduce((sum, d) => sum + Number(d.value), 0) / currentWon.length : 0
     const prevAvgSize = prevWon.length > 0 ? prevWon.reduce((sum, d) => sum + Number(d.value), 0) / prevWon.length : 0
-    const sizeDeltaVal = prevAvgSize > 0 ? ((currentAvgSize - prevAvgSize) / prevAvgSize) * 100 : currentAvgSize > 0 ? 100 : 0
+    const sizeDeltaVal =
+      prevAvgSize > 0 ? ((currentAvgSize - prevAvgSize) / prevAvgSize) * 100 : currentAvgSize > 0 ? 100 : 0
     const avgDealSize = {
       value: Math.round(currentAvgSize),
       delta: `${sizeDeltaVal >= 0 ? '+' : ''}${Math.round(sizeDeltaVal)}%`,
@@ -87,10 +89,12 @@ export class OverviewReportService {
 
     // Metric 5: Avg Days to Close
     const getAvgDaysToClose = (deals: typeof currentDeals) => {
-      const closed = deals.filter((d) => (d.stage === DealStage.CLOSED_WON || d.stage === DealStage.CLOSED_LOST) && d.closeDate)
+      const closed = deals.filter(
+        (d) => (d.stage === DealStage.CLOSED_WON || d.stage === DealStage.CLOSED_LOST) && d.closeDate,
+      )
       if (closed.length === 0) return 0
       const totalDays = closed.reduce((sum, d) => {
-        const days = Math.round((d.closeDate!.getTime() - d.createdAt.getTime()) / (1000 * 60 * 60 * 24))
+        const days = Math.round((d.closeDate.getTime() - d.createdAt.getTime()) / (1000 * 60 * 60 * 24))
         return sum + Math.max(0, days)
       }, 0)
       return totalDays / closed.length
@@ -149,7 +153,10 @@ export class OverviewReportService {
         const dDate = d.closeDate || d.createdAt
         return dDate.getFullYear() < m.year || (dDate.getFullYear() === m.year && dDate.getMonth() + 1 <= m.month)
       })
-      const openWeightedSum = openDeals.reduce((sum, d) => sum + Number(d.value) * (STAGE_PROBABILITIES[d.stage] || 0), 0)
+      const openWeightedSum = openDeals.reduce(
+        (sum, d) => sum + Number(d.value) * (STAGE_PROBABILITIES[d.stage] || 0),
+        0,
+      )
 
       cumActual = wonSum
       cumForecast = wonSum + openWeightedSum

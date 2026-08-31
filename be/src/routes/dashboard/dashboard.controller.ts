@@ -6,7 +6,7 @@ import { AccessTokenPayload } from 'src/common/types/jwt.type'
 import { ZodSerializerDto } from 'nestjs-zod'
 import { DashboardService } from './dashboard.service'
 import { GetDashboardQueryDto, DashboardResDto } from './dashboard.dto'
-import { SkipThrottle } from '@nestjs/throttler';
+import { SkipThrottle } from '@nestjs/throttler'
 
 @UseGuards(JwtAuthGuard)
 @ApiTags('Dashboard')
@@ -18,10 +18,7 @@ export class DashboardController {
   @Get()
   @ApiOkResponse({ type: DashboardResDto })
   @ZodSerializerDto(DashboardResDto)
-  getDashboardData(
-    @Query() query: GetDashboardQueryDto,
-    @CurrentUser() user: AccessTokenPayload,
-  ) {
+  getDashboardData(@Query() query: GetDashboardQueryDto, @CurrentUser() user: AccessTokenPayload) {
     return this.dashboardService.getDashboardData(user.tenantId, query.period, user)
   }
 }

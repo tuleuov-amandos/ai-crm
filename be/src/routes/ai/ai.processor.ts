@@ -31,17 +31,17 @@ const AiResponseSchema = z.object({
 type AiResponseType = z.infer<typeof AiResponseSchema>
 
 class CustomAiError extends Error {
-  code?: string;
-  raw?: unknown;
-  details?: { first: string; retry: string };
-  status?: number;
+  code?: string
+  raw?: unknown
+  details?: { first: string; retry: string }
+  status?: number
 }
 
 function withTimeout<T>(promise: Promise<T>, ms = OPENAI_TIMEOUT_MS) {
   return Promise.race([promise, new Promise<T>((_, rej) => setTimeout(() => rej(new Error('OpenAI timeout')), ms))])
 }
 
-const MODEL = AI_MODEL;
+const MODEL = AI_MODEL
 
 async function callOpenAiAndParse(meetingNote: string, jobId: string, dealId: string): Promise<AiResponseType> {
   const prompt = `
@@ -134,110 +134,110 @@ export function startAiWorker(): Worker {
   const prisma = new PrismaService()
 
   const worker = new Worker(
-  AI_QUEUE_NAME,
-  async (job) => {
-    const { jobId, dealId, tenantId, userId, meetingNote } = job.data as {
-      jobId: string
-      dealId: string
-      tenantId: string
-      userId: string
-      meetingNote: string
-    }
+    AI_QUEUE_NAME,
+    async (job) => {
+      const { jobId, dealId, tenantId, userId, meetingNote } = job.data as {
+        jobId: string
+        dealId: string
+        tenantId: string
+        userId: string
+        meetingNote: string
+      }
 
-    let aiResult: AiResponseType | null = null
-    try {
-      aiResult = await callOpenAiAndParse(meetingNote, jobId, dealId)
-    } catch (err) {
-      const error = err as CustomAiError
-      const rawErrorObj = error.raw as Record<string, any> | undefined
-      const status = rawErrorObj?.status || error.status
-      let reason = error.code || status || 'OPENAI_ERROR'
+      let aiResult: AiResponseType | null = null
+      try {
+        aiResult = await callOpenAiAndParse(meetingNote, jobId, dealId)
+      } catch (err) {
+        const error = err as CustomAiError
+        const rawErrorObj = error.raw as Record<string, any> | undefined
+        const status = rawErrorObj?.status || error.status
+        let reason = error.code || status || 'OPENAI_ERROR'
 
-      if (error.code === 'OPENAI_TIMEOUT') {
-        console.error('OpenAI timeout', { jobId, dealId, err: error.raw })
-        reason = 'OPENAI_TIMEOUT'
+        if (error.code === 'OPENAI_TIMEOUT') {
+          console.error('OpenAI timeout', { jobId, dealId, err: error.raw })
+          reason = 'OPENAI_TIMEOUT'
+          try {
+            publishAiEvent(tenantId, dealId, 'ai-error', {
+              message: 'Phân tích AI mất quá nhiều thời gian. Vui lòng thử lại.',
+              jobId,
+              reason,
+            })
+          } catch (e) {
+            console.error('Failed to publish SSE ai-error for timeout', { jobId, dealId, err: e })
+          }
+          throw new Error(reason)
+        }
+
+        if (status === 401 || status === 403) {
+          console.error('OpenAI auth error', { jobId, dealId, status, message: err.message })
+          reason = 'OPENAI_AUTH_ERROR'
+          try {
+            publishAiEvent(tenantId, dealId, 'ai-error', {
+              message: 'Dịch vụ AI tạm thời không khả dụng. Vui lòng liên hệ admin.',
+              jobId,
+              reason,
+            })
+          } catch (e) {
+            console.error('Failed to publish SSE ai-error for auth', { jobId, dealId, err: e })
+          }
+          throw new Error(reason)
+        }
+
+        if (status === 429) {
+          console.error('OpenAI rate limit', { jobId, dealId, status })
+          reason = 'OPENAI_RATE_LIMIT'
+          try {
+            publishAiEvent(tenantId, dealId, 'ai-error', {
+              message: 'Dịch vụ AI tạm thời không khả dụng. Vui lòng thử lại sau vài phút.',
+              jobId,
+              reason,
+            })
+          } catch (e) {
+            console.error('Failed to publish SSE ai-error for rate limit', { jobId, dealId, err: e })
+          }
+          throw new Error(reason)
+        }
+
+        console.error('OpenAI parse/response error', { jobId, dealId, message: err.message, details: err.details })
         try {
           publishAiEvent(tenantId, dealId, 'ai-error', {
-            message: 'Phân tích AI mất quá nhiều thời gian. Vui lòng thử lại.',
+            message: 'Dịch vụ AI tạm thời không khả dụng. Vui lòng thử lại.',
             jobId,
             reason,
           })
         } catch (e) {
-          console.error('Failed to publish SSE ai-error for timeout', { jobId, dealId, err: e })
+          console.error('Failed to publish SSE ai-error for generic OpenAI error', { jobId, dealId, err: e })
         }
-        throw new Error(reason)
+        throw err
       }
 
-      if (status === 401 || status === 403) {
-        console.error('OpenAI auth error', { jobId, dealId, status, message: err.message })
-        reason = 'OPENAI_AUTH_ERROR'
+      try {
+        await saveAiResultAtomic(prisma, aiResult, jobId, tenantId, dealId, meetingNote)
+        await connection.incr(`cache:tenant_version:${tenantId}`)
+        // publish ai-complete to any SSE subscribers
         try {
-          publishAiEvent(tenantId, dealId, 'ai-error', {
-            message: 'Dịch vụ AI tạm thời không khả dụng. Vui lòng liên hệ admin.',
+          publishAiEvent(tenantId, dealId, 'ai-complete', {
+            tasks: aiResult.tasks ?? [],
+            emailDraft: aiResult.emailDraft ?? null,
+            summary: aiResult.summary ?? null,
             jobId,
-            reason,
           })
         } catch (e) {
-          console.error('Failed to publish SSE ai-error for auth', { jobId, dealId, err: e })
+          console.error('Failed to publish SSE ai-complete', { jobId, dealId, err: e })
         }
-        throw new Error(reason)
-      }
 
-      if (status === 429) {
-        console.error('OpenAI rate limit', { jobId, dealId, status })
-        reason = 'OPENAI_RATE_LIMIT'
+        return { ok: true }
+      } catch (err) {
+        console.error('DB transaction failed', { jobId, dealId, err })
         try {
-          publishAiEvent(tenantId, dealId, 'ai-error', {
-            message: 'Dịch vụ AI tạm thời không khả dụng. Vui lòng thử lại sau vài phút.',
-            jobId,
-            reason,
-          })
+          publishAiEvent(tenantId, dealId, 'ai-error', { message: 'Lưu kết quả AI thất bại. Vui lòng thử lại.', jobId })
         } catch (e) {
-          console.error('Failed to publish SSE ai-error for rate limit', { jobId, dealId, err: e })
+          console.error('Failed to publish SSE ai-error', { jobId, dealId, err: e })
         }
-        throw new Error(reason)
+        throw new Error(`DB transaction failed: ${String((err as Error).message || err)}`)
       }
-
-      console.error('OpenAI parse/response error', { jobId, dealId, message: err.message, details: err.details })
-      try {
-        publishAiEvent(tenantId, dealId, 'ai-error', {
-          message: 'Dịch vụ AI tạm thời không khả dụng. Vui lòng thử lại.',
-          jobId,
-          reason,
-        })
-      } catch (e) {
-        console.error('Failed to publish SSE ai-error for generic OpenAI error', { jobId, dealId, err: e })
-      }
-      throw err
-    }
-
-    try {
-      await saveAiResultAtomic(prisma, aiResult!, jobId, tenantId, dealId, meetingNote)
-      await connection.incr(`cache:tenant_version:${tenantId}`)
-      // publish ai-complete to any SSE subscribers
-      try {
-        publishAiEvent(tenantId, dealId, 'ai-complete', {
-          tasks: aiResult!.tasks ?? [],
-          emailDraft: aiResult!.emailDraft ?? null,
-          summary: aiResult!.summary ?? null,
-          jobId,
-        })
-      } catch (e) {
-        console.error('Failed to publish SSE ai-complete', { jobId, dealId, err: e })
-      }
-
-      return { ok: true }
-    } catch (err) {
-      console.error('DB transaction failed', { jobId, dealId, err })
-      try {
-        publishAiEvent(tenantId, dealId, 'ai-error', { message: 'Lưu kết quả AI thất bại. Vui lòng thử lại.', jobId })
-      } catch (e) {
-        console.error('Failed to publish SSE ai-error', { jobId, dealId, err: e })
-      }
-      throw new Error(`DB transaction failed: ${String((err as Error).message || err)}`)
-    }
-  },
-  { connection: connection as any, concurrency: 2 },
+    },
+    { connection: connection as any, concurrency: 2 },
   )
 
   worker.on('error', (err) => {

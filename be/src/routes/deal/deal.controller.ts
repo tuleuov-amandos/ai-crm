@@ -22,12 +22,7 @@ import {
   GetDealsPipelineResDto,
   UpdateDealResDto,
 } from './deal.dto'
-import {
-  CreateTaskBodyDto,
-  CreateTasksBulkBodyDto,
-  UpdateTaskBodyDto,
-  TaskResDto,
-} from './task.dto'
+import { CreateTaskBodyDto, CreateTasksBulkBodyDto, UpdateTaskBodyDto, TaskResDto } from './task.dto'
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard'
 import { CurrentUser } from 'src/common/decorators/current-user.decorator'
 import { AccessTokenPayload } from 'src/common/types/jwt.type'
@@ -108,7 +103,7 @@ export class DealController {
     } catch (err) {
       if (err instanceof HttpException) throw err
       // log original error for debugging before returning generic 503
-      // eslint-disable-next-line no-console
+
       console.error('analyze() unexpected error', { err })
       throw new HttpException('AI analysis temporarily unavailable. Please try later.', HttpStatus.SERVICE_UNAVAILABLE)
     }

@@ -13,11 +13,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   constructor(private readonly cls?: ClsService) {
     const adapter = new PrismaPg({
       connectionString: envConfig.DATABASE_URL,
-      ssl: envConfig.DATABASE_URL.includes('amazonaws.com')
-        ? { rejectUnauthorized: false }
-        : undefined,
+      ssl: envConfig.DATABASE_URL.includes('amazonaws.com') ? { rejectUnauthorized: false } : undefined,
     })
-    
+
     // Call the original PrismaClient constructor
     super({ adapter })
 
@@ -84,7 +82,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
                 if (operation === 'upsert') {
                   queryArgs.where = queryArgs.where || {}
                   queryArgs.where.tenantId = tenantId
-                  
+
                   if (queryArgs.create) queryArgs.create.tenantId = tenantId
                   if (queryArgs.update) queryArgs.update.tenantId = tenantId
                 }
@@ -116,4 +114,3 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.$connect()
   }
 }
-

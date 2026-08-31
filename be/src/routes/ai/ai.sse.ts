@@ -107,12 +107,7 @@ let bridgePublisher: Redis | null = null
  * standalone worker instead of `publishAiEvent`, which only reaches subscribers
  * in the current process.
  */
-export function publishAiEventRemote(
-  tenantId: string,
-  dealId: string,
-  event: string,
-  payload: unknown,
-) {
+export function publishAiEventRemote(tenantId: string, dealId: string, event: string, payload: unknown) {
   if (!bridgePublisher) {
     bridgePublisher = createRedis()
     bridgePublisher.on('error', (err) => log.warn('SSE bridge publisher error', err))

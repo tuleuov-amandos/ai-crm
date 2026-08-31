@@ -5,13 +5,7 @@ import { PrismaService } from 'src/common/services/prisma.service'
 export class InvitationRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async create(payload: {
-    email: string
-    roleId: string
-    tenantId: string
-    token: string
-    expiresAt: Date
-  }) {
+  async create(payload: { email: string; roleId: string; tenantId: string; token: string; expiresAt: Date }) {
     return this.prismaService.invitation.create({
       data: { ...payload, status: 'PENDING' },
       include: { role: true },
@@ -40,9 +34,9 @@ export class InvitationRepository {
   async findByToken(token: string) {
     return this.prismaService.invitation.findUnique({
       where: { token },
-      include: { 
+      include: {
         tenant: { select: { name: true } },
-        role: true 
+        role: true,
       },
     })
   }
@@ -74,11 +68,11 @@ export class InvitationRepository {
   async update(
     id: string,
     data: {
-      email?: string;
-      token?: string;
-      expiresAt?: Date;
-      status?: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
-      roleId?: string;
+      email?: string
+      token?: string
+      expiresAt?: Date
+      status?: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED'
+      roleId?: string
     },
   ) {
     return this.prismaService.invitation.update({

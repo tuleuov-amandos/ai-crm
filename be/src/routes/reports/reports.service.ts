@@ -15,40 +15,23 @@ export class ReportsService {
     private readonly activityReportService: ActivityReportService,
   ) {}
 
-  getOverview(
-    startDateStr: string | undefined,
-    endDateStr: string | undefined,
-    user: AccessTokenPayload,
-  ) {
+  getOverview(startDateStr: string | undefined, endDateStr: string | undefined, user: AccessTokenPayload) {
     return this.overviewReportService.getOverview(startDateStr, endDateStr, user)
   }
 
-  getTeamPerformance(
-    startDateStr: string | undefined,
-    endDateStr: string | undefined,
-    user: AccessTokenPayload,
-  ) {
+  getTeamPerformance(startDateStr: string | undefined, endDateStr: string | undefined, user: AccessTokenPayload) {
     return this.teamReportService.getTeamPerformance(startDateStr, endDateStr, user)
   }
 
-  updateKpiTarget(
-    dto: UpdateKpiTargetDto,
-    user: AccessTokenPayload,
-  ) {
+  updateKpiTarget(dto: UpdateKpiTargetDto, user: AccessTokenPayload) {
     return this.teamReportService.updateKpiTarget(dto, user)
   }
 
-  getPipelineAnalysis(
-    user: AccessTokenPayload,
-  ) {
+  getPipelineAnalysis(user: AccessTokenPayload) {
     return this.pipelineReportService.getPipelineAnalysis(user)
   }
 
-  getActivitiesReport(
-    startDateStr: string | undefined,
-    endDateStr: string | undefined,
-    user: AccessTokenPayload,
-  ) {
+  getActivitiesReport(startDateStr: string | undefined, endDateStr: string | undefined, user: AccessTokenPayload) {
     return this.activityReportService.getActivitiesReport(startDateStr, endDateStr, user)
   }
 }

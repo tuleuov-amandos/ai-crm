@@ -23,47 +23,33 @@ export class ReportsController {
   @Get('overview')
   @ApiOkResponse({ type: OverviewResDto })
   @ZodSerializerDto(OverviewResDto)
-  getOverview(
-    @Query() query: ReportsQueryDto,
-    @CurrentUser() user: AccessTokenPayload,
-  ) {
+  getOverview(@Query() query: ReportsQueryDto, @CurrentUser() user: AccessTokenPayload) {
     return this.reportsService.getOverview(query.startDate, query.endDate, user)
   }
 
   @Get('team-performance')
   @ApiOkResponse({ type: TeamPerformanceResDto })
   @ZodSerializerDto(TeamPerformanceResDto)
-  getTeamPerformance(
-    @Query() query: ReportsQueryDto,
-    @CurrentUser() user: AccessTokenPayload,
-  ) {
+  getTeamPerformance(@Query() query: ReportsQueryDto, @CurrentUser() user: AccessTokenPayload) {
     return this.reportsService.getTeamPerformance(query.startDate, query.endDate, user)
   }
 
   @Post('kpi')
-  updateKpiTarget(
-    @Body() body: UpdateKpiTargetDto,
-    @CurrentUser() user: AccessTokenPayload,
-  ) {
+  updateKpiTarget(@Body() body: UpdateKpiTargetDto, @CurrentUser() user: AccessTokenPayload) {
     return this.reportsService.updateKpiTarget(body, user)
   }
 
   @Get('pipeline-analysis')
   @ApiOkResponse({ type: PipelineAnalysisResDto })
   @ZodSerializerDto(PipelineAnalysisResDto)
-  getPipelineAnalysis(
-    @CurrentUser() user: AccessTokenPayload,
-  ) {
+  getPipelineAnalysis(@CurrentUser() user: AccessTokenPayload) {
     return this.reportsService.getPipelineAnalysis(user)
   }
 
   @Get('activities')
   @ApiOkResponse({ type: ActivitiesReportResDto })
   @ZodSerializerDto(ActivitiesReportResDto)
-  getActivitiesReport(
-    @Query() query: ReportsQueryDto,
-    @CurrentUser() user: AccessTokenPayload,
-  ) {
+  getActivitiesReport(@Query() query: ReportsQueryDto, @CurrentUser() user: AccessTokenPayload) {
     return this.reportsService.getActivitiesReport(query.startDate, query.endDate, user)
   }
 }

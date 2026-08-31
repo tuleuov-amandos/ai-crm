@@ -1,7 +1,7 @@
-import OpenAI from 'openai';
-import envConfig from '../../common/config';
+import OpenAI from 'openai'
+import envConfig from '../../common/config'
 
-const isGroq = envConfig.AI_PROVIDER === 'groq';
+const isGroq = envConfig.AI_PROVIDER === 'groq'
 
 export const openai = new OpenAI(
   isGroq
@@ -11,9 +11,9 @@ export const openai = new OpenAI(
       }
     : {
         apiKey: envConfig.OPENAI_API_KEY,
-      }
-);
+      },
+)
 
 export const AI_MODEL = isGroq
-  ? (envConfig.GROQ_MODEL || 'llama-3.3-70b-versatile')
-  : (envConfig.OPENAI_MODEL || 'gpt-4o-mini');
+  ? envConfig.GROQ_MODEL || 'llama-3.3-70b-versatile'
+  : envConfig.OPENAI_MODEL || 'gpt-4o-mini'

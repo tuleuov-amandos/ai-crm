@@ -1,7 +1,7 @@
-import { Injectable } from "@nestjs/common";
-import { PrismaService } from "src/common/services/prisma.service";
-import { UserType } from "src/routes/auth/auth.model";
-import { ROLE, RoleType } from "../constants/role.constanst";
+import { Injectable } from '@nestjs/common'
+import { PrismaService } from 'src/common/services/prisma.service'
+import { UserType } from 'src/routes/auth/auth.model'
+import { ROLE, RoleType } from '../constants/role.constanst'
 
 @Injectable()
 export class SharedUserRepository {
@@ -47,33 +47,33 @@ export class SharedUserRepository {
 
       // 2. Create 3 default Roles
       const adminRole = await tx.role.create({
-        data: { tenantId: tenant.id, name: 'ADMIN', description: 'Quản trị viên doanh nghiệp' }
+        data: { tenantId: tenant.id, name: 'ADMIN', description: 'Quản trị viên doanh nghiệp' },
       })
       const managerRole = await tx.role.create({
-        data: { tenantId: tenant.id, name: 'MANAGER', description: 'Quản lý đội ngũ' }
+        data: { tenantId: tenant.id, name: 'MANAGER', description: 'Quản lý đội ngũ' },
       })
       const salesRepRole = await tx.role.create({
-        data: { tenantId: tenant.id, name: 'SALES_REP', description: 'Nhân viên kinh doanh' }
+        data: { tenantId: tenant.id, name: 'SALES_REP', description: 'Nhân viên kinh doanh' },
       })
 
       // 3. Assign manage:all permission to ADMIN
       const systemManageAll = await tx.permission.findFirst({
-        where: { action: 'manage', subject: 'all' }
+        where: { action: 'manage', subject: 'all' },
       })
       if (systemManageAll) {
         await tx.rolePermission.create({
-          data: { roleId: adminRole.id, permissionId: systemManageAll.id }
+          data: { roleId: adminRole.id, permissionId: systemManageAll.id },
         })
       }
 
       // 4. Assign permissions for MANAGER & SALES_REP
       const allDomainPerms = await tx.permission.findMany({
-        where: { subject: { in: ['Contact', 'Deal', 'Task', 'Activity'] } }
+        where: { subject: { in: ['Contact', 'Deal', 'Task', 'Activity'] } },
       })
       for (const perm of allDomainPerms) {
         // MANAGER
         await tx.rolePermission.create({
-          data: { roleId: managerRole.id, permissionId: perm.id }
+          data: { roleId: managerRole.id, permissionId: perm.id },
         })
         // SALES_REP (ABAC)
         const isSubjectRestricted = ['Contact', 'Deal', 'Activity'].includes(perm.subject)
@@ -81,10 +81,12 @@ export class SharedUserRepository {
           data: {
             roleId: salesRepRole.id,
             permissionId: perm.id,
-            conditions: isSubjectRestricted 
-              ? (perm.subject === 'Activity' ? { userId: '${user.id}' } : { ownerId: '${user.id}' })
-              : undefined
-          }
+            conditions: isSubjectRestricted
+              ? perm.subject === 'Activity'
+                ? { userId: '${user.id}' }
+                : { ownerId: '${user.id}' }
+              : undefined,
+          },
         })
       }
 
@@ -138,4 +140,4 @@ export class SharedUserRepository {
       }
     })
   }
-}
+}

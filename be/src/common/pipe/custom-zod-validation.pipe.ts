@@ -20,7 +20,7 @@ export const MyZodValidationPipe = createZodValidationPipe({
     return new UnprocessableEntityException({
       message: error.issues[0].message,
       path: error.issues[0].path.join('.'),
-      statusCode: HttpStatus.UNPROCESSABLE_ENTITY
+      statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
     })
-  }
+  },
 })

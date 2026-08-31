@@ -11,21 +11,25 @@ export const AuditLogSchema = z.object({
   targetName: z.string().nullable(),
   changes: z.any(),
   createdAt: zDate,
-  user: z.object({
-    id: z.string(),
-    name: z.string(),
-    email: z.string(),
-    role: z.string(),
-  }).optional(),
+  user: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      email: z.string(),
+      role: z.string(),
+    })
+    .optional(),
 })
 
-export const GetAuditLogsQuerySchema = z.object({
-  limit: z.coerce.number().min(1).max(100).default(20).optional(),
-  cursor: z.string().optional(),
-  action: z.string().optional(),
-  targetType: z.string().optional(),
-  userId: z.string().optional(),
-  search: z.string().optional(),
-}).strict()
+export const GetAuditLogsQuerySchema = z
+  .object({
+    limit: z.coerce.number().min(1).max(100).default(20).optional(),
+    cursor: z.string().optional(),
+    action: z.string().optional(),
+    targetType: z.string().optional(),
+    userId: z.string().optional(),
+    search: z.string().optional(),
+  })
+  .strict()
 
 export type GetAuditLogsQueryType = z.infer<typeof GetAuditLogsQuerySchema>

@@ -245,13 +245,13 @@ export default function Activities() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xóa hoạt động</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa hoạt động "
+              Bạn có chắc chắn muốn xóa hoạt động &quot;
               {activityToDelete?.title ||
                 (activityToDelete?.note
                   ? activityToDelete.note.slice(0, 40) +
                     (activityToDelete.note.length > 40 ? "..." : "")
                   : "")}
-              "? Hành động này không thể hoàn tác.
+              &quot;? Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

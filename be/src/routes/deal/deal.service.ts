@@ -15,33 +15,33 @@ import { CreateTaskBodyType, UpdateTaskBodyType } from './task.model'
 import { AiService } from '../ai/ai.service'
 import { ContactsRepository } from '../contacts/contacts.repo'
 import { RedisService } from 'src/common/services/redis.service'
-import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { AuditLogsService } from '../audit-logs/audit-logs.service'
 import { CaslAbilityFactory } from 'src/common/casl/casl-ability.factory'
 import { subject } from '@casl/ability'
 
 export function getChangesDiff(
   oldObj: Record<string, unknown>,
-  newObj: Record<string, unknown>
+  newObj: Record<string, unknown>,
 ): Record<string, { old: unknown; new: unknown }> {
-  const diff: Record<string, { old: unknown; new: unknown }> = {};
-  const ignoredFields = ['updatedAt', 'createdAt', 'deletedAt', 'tenantId', 'id'];
+  const diff: Record<string, { old: unknown; new: unknown }> = {}
+  const ignoredFields = ['updatedAt', 'createdAt', 'deletedAt', 'tenantId', 'id']
   for (const key of Object.keys(newObj)) {
-    if (ignoredFields.includes(key)) continue;
-    const oldVal = oldObj[key];
-    const newVal = newObj[key];
+    if (ignoredFields.includes(key)) continue
+    const oldVal = oldObj[key]
+    const newVal = newObj[key]
     // Compare string/object or Decimal
-    const strOld = oldVal !== null && oldVal !== undefined ? String(oldVal) : '';
-    const strNew = newVal !== null && newVal !== undefined ? String(newVal) : '';
+    const strOld = oldVal !== null && oldVal !== undefined ? String(oldVal) : ''
+    const strNew = newVal !== null && newVal !== undefined ? String(newVal) : ''
     if (strOld !== strNew) {
-      if (oldVal === null && newVal === undefined) continue;
-      if (oldVal === undefined && newVal === null) continue;
+      if (oldVal === null && newVal === undefined) continue
+      if (oldVal === undefined && newVal === null) continue
       diff[key] = {
         old: oldVal !== undefined ? oldVal : null,
         new: newVal !== undefined ? newVal : null,
-      };
+      }
     }
   }
-  return diff;
+  return diff
 }
 @Injectable()
 export class DealService {
@@ -56,31 +56,31 @@ export class DealService {
   ) {}
 
   async create(tenantId: string, data: CreateDealBodyType, user: { userId: string; role: string; tenantId: string }) {
-    const ability = await this.caslAbilityFactory.createForUser(user);
+    const ability = await this.caslAbilityFactory.createForUser(user)
 
     // Check Deal creation permission
     if (ability.cannot('create', 'Deal')) {
-      throw new ForbiddenException('Bạn không có quyền tạo deal');
+      throw new ForbiddenException('Bạn không có quyền tạo deal')
     }
 
     // If only allowed to create deals owned by oneself
     if (ability.cannot('manage', 'all')) {
       if (data.ownerId !== user.userId) {
-        throw new ForbiddenException('Bạn chỉ có thể tạo deal do chính mình sở hữu');
+        throw new ForbiddenException('Bạn chỉ có thể tạo deal do chính mình sở hữu')
       }
-      const contact = await this.contactsRepo.findOne(data.contactId);
-      if (!contact || ability.cannot('read', subject('Contact', contact as unknown as Record<string, unknown>))) {
-        throw new NotFoundException('Liên hệ không tồn tại');
+      const contact = await this.contactsRepo.findOne(data.contactId)
+      if (!contact || ability.cannot('read', subject('Contact', contact))) {
+        throw new NotFoundException('Liên hệ không tồn tại')
       }
     }
 
     const deal = await this.dealRepo.create(data)
     await this.redisService.invalidateTenantCache(tenantId)
 
-    const changes: Record<string, { old: unknown; new: unknown }> = {};
+    const changes: Record<string, { old: unknown; new: unknown }> = {}
     for (const [key, val] of Object.entries(deal)) {
-      if (['createdAt', 'updatedAt', 'deletedAt', 'id', 'tenantId'].includes(key)) continue;
-      changes[key] = { old: null, new: val };
+      if (['createdAt', 'updatedAt', 'deletedAt', 'id', 'tenantId'].includes(key)) continue
+      changes[key] = { old: null, new: val }
     }
     await this.auditLogsService.logAction({
       tenantId,
@@ -90,20 +90,20 @@ export class DealService {
       targetId: deal.id,
       targetName: deal.title,
       changes,
-    });
+    })
 
     return deal
   }
 
   async getPipleline(tenantId: string, user: { userId: string; role: string; tenantId: string }) {
-    const ability = await this.caslAbilityFactory.createForUser(user);
-    const filters: { ownerId?: string } = {};
+    const ability = await this.caslAbilityFactory.createForUser(user)
+    const filters: { ownerId?: string } = {}
     if (ability.cannot('read', 'Deal')) {
-      throw new ForbiddenException('Bạn không có quyền xem cơ hội bán hàng');
+      throw new ForbiddenException('Bạn không có quyền xem cơ hội bán hàng')
     }
 
     if (ability.cannot('read', subject('Deal', { ownerId: 'other' } as any))) {
-      filters.ownerId = user.userId;
+      filters.ownerId = user.userId
     }
 
     const deals = await this.dealRepo.findAllByTenant(filters)
@@ -128,21 +128,26 @@ export class DealService {
       throw new NotFoundException('Không tìm thấy deal')
     }
 
-    const ability = await this.caslAbilityFactory.createForUser(user);
-    if (ability.cannot('read', subject('Deal', deal as unknown as Record<string, unknown>))) {
+    const ability = await this.caslAbilityFactory.createForUser(user)
+    if (ability.cannot('read', subject('Deal', deal))) {
       throw new NotFoundException('Không tìm thấy deal') // 404 to prevent scanning
     }
     return deal
   }
 
-  async update(dealId: string, tenantId: string, body: UpdateDealBodyType, user: { userId: string; role: string; tenantId: string }) {
+  async update(
+    dealId: string,
+    tenantId: string,
+    body: UpdateDealBodyType,
+    user: { userId: string; role: string; tenantId: string },
+  ) {
     const oldDeal = await this.dealRepo.findOne(dealId)
     if (!oldDeal) {
       throw new NotFoundException('Không tìm thấy deal')
     }
 
-    const ability = await this.caslAbilityFactory.createForUser(user);
-    if (ability.cannot('update', subject('Deal', oldDeal as unknown as Record<string, unknown>))) {
+    const ability = await this.caslAbilityFactory.createForUser(user)
+    if (ability.cannot('update', subject('Deal', oldDeal))) {
       throw new NotFoundException('Không tìm thấy deal')
     }
 
@@ -159,19 +164,24 @@ export class DealService {
         targetId: dealId,
         targetName: updated.title,
         changes,
-      });
+      })
     }
     return updated
   }
 
-  async updateDealStage(dealId: string, tenantId: string, stage: DealStageType, user: { userId: string; role: string; tenantId: string }) {
+  async updateDealStage(
+    dealId: string,
+    tenantId: string,
+    stage: DealStageType,
+    user: { userId: string; role: string; tenantId: string },
+  ) {
     const oldDeal = await this.dealRepo.findOne(dealId)
     if (!oldDeal) {
       throw new NotFoundException('Không tìm thấy deal')
     }
 
-    const ability = await this.caslAbilityFactory.createForUser(user);
-    if (ability.cannot('update', subject('Deal', oldDeal as unknown as Record<string, unknown>))) {
+    const ability = await this.caslAbilityFactory.createForUser(user)
+    if (ability.cannot('update', subject('Deal', oldDeal))) {
       throw new NotFoundException('Không tìm thấy deal')
     }
 
@@ -183,8 +193,8 @@ export class DealService {
     await this.redisService.invalidateTenantCache(tenantId)
 
     const changes = {
-      stage: { old: oldDeal.stage, new: stage }
-    };
+      stage: { old: oldDeal.stage, new: stage },
+    }
     await this.auditLogsService.logAction({
       tenantId,
       userId: user.userId,
@@ -193,7 +203,7 @@ export class DealService {
       targetId: dealId,
       targetName: updated.title,
       changes,
-    });
+    })
 
     return updated
   }
@@ -204,18 +214,18 @@ export class DealService {
       throw new NotFoundException('Không tìm thấy deal')
     }
 
-    const ability = await this.caslAbilityFactory.createForUser(user);
-    if (ability.cannot('delete', subject('Deal', deal as unknown as Record<string, unknown>))) {
+    const ability = await this.caslAbilityFactory.createForUser(user)
+    if (ability.cannot('delete', subject('Deal', deal))) {
       throw new NotFoundException('Không tìm thấy deal')
     }
 
     await this.dealRepo.softDelete(dealId)
     await this.redisService.invalidateTenantCache(tenantId)
 
-    const changes: Record<string, { old: unknown; new: unknown }> = {};
+    const changes: Record<string, { old: unknown; new: unknown }> = {}
     for (const [key, val] of Object.entries(deal)) {
-      if (['createdAt', 'updatedAt', 'deletedAt', 'id', 'tenantId'].includes(key)) continue;
-      changes[key] = { old: val, new: null };
+      if (['createdAt', 'updatedAt', 'deletedAt', 'id', 'tenantId'].includes(key)) continue
+      changes[key] = { old: val, new: null }
     }
     await this.auditLogsService.logAction({
       tenantId,
@@ -225,7 +235,7 @@ export class DealService {
       targetId: dealId,
       targetName: deal.title,
       changes,
-    });
+    })
 
     return { message: 'Xóa deal thành công' }
   }
@@ -242,7 +252,7 @@ export class DealService {
       throw new NotFoundException('Không tìm thấy deal')
     }
 
-    const ability = await this.caslAbilityFactory.createForUser(user);
+    const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('read', subject('Deal', deal as any))) {
       throw new NotFoundException('Không tìm thấy deal')
     }
@@ -263,11 +273,16 @@ export class DealService {
 
   // ─── SECURITY RULES FOR TASK OPERATIONS BASED ON DEAL PERMISSIONS ───
 
-  async createTask(dealId: string, tenantId: string, data: CreateTaskBodyType, user: { userId: string; role: string; tenantId: string }) {
+  async createTask(
+    dealId: string,
+    tenantId: string,
+    data: CreateTaskBodyType,
+    user: { userId: string; role: string; tenantId: string },
+  ) {
     const deal = await this.dealRepo.findOne(dealId)
     if (!deal) throw new NotFoundException('Không tìm thấy deal')
 
-    const ability = await this.caslAbilityFactory.createForUser(user);
+    const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('update', subject('Deal', deal as any))) {
       throw new NotFoundException('Không tìm thấy deal')
     }
@@ -277,11 +292,16 @@ export class DealService {
     return task
   }
 
-  async createTasksBulk(dealId: string, tenantId: string, tasks: CreateTaskBodyType[], user: { userId: string; role: string; tenantId: string }) {
+  async createTasksBulk(
+    dealId: string,
+    tenantId: string,
+    tasks: CreateTaskBodyType[],
+    user: { userId: string; role: string; tenantId: string },
+  ) {
     const deal = await this.dealRepo.findOne(dealId)
     if (!deal) throw new NotFoundException('Không tìm thấy deal')
 
-    const ability = await this.caslAbilityFactory.createForUser(user);
+    const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('update', subject('Deal', deal as any))) {
       throw new NotFoundException('Không tìm thấy deal')
     }
@@ -291,11 +311,17 @@ export class DealService {
     return result
   }
 
-  async updateTask(dealId: string, tenantId: string, taskId: string, data: UpdateTaskBodyType, user: { userId: string; role: string; tenantId: string }) {
+  async updateTask(
+    dealId: string,
+    tenantId: string,
+    taskId: string,
+    data: UpdateTaskBodyType,
+    user: { userId: string; role: string; tenantId: string },
+  ) {
     const deal = await this.dealRepo.findOne(dealId)
     if (!deal) throw new NotFoundException('Không tìm thấy deal')
 
-    const ability = await this.caslAbilityFactory.createForUser(user);
+    const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('update', subject('Deal', deal as any))) {
       throw new NotFoundException('Không tìm thấy deal')
     }
@@ -305,11 +331,16 @@ export class DealService {
     return task
   }
 
-  async deleteTask(dealId: string, tenantId: string, taskId: string, user: { userId: string; role: string; tenantId: string }) {
+  async deleteTask(
+    dealId: string,
+    tenantId: string,
+    taskId: string,
+    user: { userId: string; role: string; tenantId: string },
+  ) {
     const deal = await this.dealRepo.findOne(dealId)
     if (!deal) throw new NotFoundException('Không tìm thấy deal')
 
-    const ability = await this.caslAbilityFactory.createForUser(user);
+    const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('update', subject('Deal', deal as any))) {
       throw new NotFoundException('Không tìm thấy deal')
     }

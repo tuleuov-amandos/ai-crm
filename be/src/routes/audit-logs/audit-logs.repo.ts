@@ -1,22 +1,20 @@
-import { Injectable } from "@nestjs/common";
-import { PrismaService } from "src/common/services/prisma.service";
-import { GetAuditLogsQueryType } from "./audit-logs.model";
+import { Injectable } from '@nestjs/common'
+import { PrismaService } from 'src/common/services/prisma.service'
+import { GetAuditLogsQueryType } from './audit-logs.model'
 
 @Injectable()
 export class AuditLogsRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  create(
-    params: {
-    tenantId: string,
+  create(params: {
+    tenantId: string
     userId: string
-    action: string,
-    targetType: string,
-    targetId: string,
-    targetName?: string | null,
-    changes: Record<string, unknown>;
-  }
-  )  {
+    action: string
+    targetType: string
+    targetId: string
+    targetName?: string | null
+    changes: Record<string, unknown>
+  }) {
     return this.prismaService.auditLog.create({
       data: {
         tenantId: params.tenantId,
@@ -26,15 +24,12 @@ export class AuditLogsRepository {
         targetId: params.targetId,
         targetName: params.targetName ?? null,
         // Prisma Json field requires InputJsonValue; Record<string,unknown> is structurally compatible — cast via unknown
-        changes: params.changes as unknown as object,
-      }
+        changes: params.changes,
+      },
     })
   }
 
-  async getLogsByTenant(params: {
-    tenantId: string,
-    query: GetAuditLogsQueryType,
-  }){
+  async getLogsByTenant(params: { tenantId: string; query: GetAuditLogsQueryType }) {
     return this.prismaService.auditLog.findMany({
       where: {
         ...(params.query.action && { action: params.query.action }),

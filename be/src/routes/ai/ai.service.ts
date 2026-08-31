@@ -22,8 +22,8 @@ export class AiService {
       model: AI_MODEL,
       messages: [{ role: 'user', content: prompt }],
       temperature: options?.temperature ?? 0.1,
-    });
-    return response.choices[0]?.message?.content || '';
+    })
+    return response.choices[0]?.message?.content || ''
   }
 
   async enqueueAnalysis(opts: EnqueueOpts) {

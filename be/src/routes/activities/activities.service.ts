@@ -103,7 +103,7 @@ export class ActivitiesService {
     if (!deal) throw new NotFoundException('Deal không tồn tại')
 
     const ability = await this.caslAbilityFactory.createForUser(user)
-    if (ability.cannot('read', subject('Deal', deal as unknown as Record<string, unknown>))) {
+    if (ability.cannot('read', subject('Deal', deal))) {
       throw new NotFoundException('Deal không tồn tại')
     }
 
