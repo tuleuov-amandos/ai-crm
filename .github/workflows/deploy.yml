@@ -51,12 +51,77 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ─── 2. Деплой на Railway: API + BullMQ worker ───────────────────────────────
-  # Миграции Prisma гоняются автоматически через deploy.preDeployCommand в
-  # be/railway.json — до переключения трафика на новый деплой.
+  # ─── 2. Бэкап прод-БД ПЕРЕД миграциями ───────────────────────────────────────
+  # Логический дамп pg_dump через публичный proxy-endpoint Railway — не зависит
+  # от тарифа Railway и складывается как artifact ВНЕ Railway. Нативные snapshot'ы
+  # Railway (Postgres → Backups) — второй, независимый уровень, включаются руками
+  # в дашборде (см. DEPLOYMENT.md).
+  backup:
+    name: pg_dump · artifact
+    needs: image
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}   # публичный proxy-URL Railway, добавить в Environment secrets
+    outputs:
+      artifact: ${{ steps.dump.outputs.name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dump database
+        id: dump
+        run: |
+          name="railway-$(date -u +%Y%m%dT%H%M%SZ)-${GITHUB_SHA::12}.dump"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          .github/scripts/backup-db.sh "db-backups/$name"
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.sha }}
+          path: db-backups/*.dump
+          retention-days: 14
+          if-no-files-found: error
+
+  # ─── 3. Prisma migrate deploy — отдельный шаг пайплайна ──────────────────────
+  # Мигрируем ТОЛЬКО здесь, при реальном деплое новой версии, и только после
+  # успешного бэкапа. НЕ в build stage Dockerfile (иначе миграции гонялись бы на
+  # каждой сборке образа) и больше НЕ в be/railway.json preDeployCommand.
+  migrate:
+    name: prisma migrate deploy
+    needs: backup
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: be
+    environment:
+      name: production
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: be/package-lock.json
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Prisma generate
+        run: npx prisma generate
+
+      - name: Apply migrations
+        run: npx prisma migrate deploy
+
+  # ─── 4. Деплой на Railway: API + BullMQ worker ───────────────────────────────
+  # Миграции уже применены job'ом migrate — Railway только катит новый образ.
   deploy:
     name: railway up
-    needs: image
+    needs: migrate
     runs-on: ubuntu-latest
     environment:
       name: production
@@ -75,7 +140,7 @@ jobs:
       - name: Deploy worker service
         run: railway up --service "${{ vars.RAILWAY_WORKER_SERVICE }}" --ci
 
-  # ─── 3. Health-check как гейт ────────────────────────────────────────────────
+  # ─── 5. Health-check как гейт ────────────────────────────────────────────────
   # Ждём 200 от GET /health/ready. Railway с healthcheckPath (be/railway.json)
   # сам не переключает трафик на неисправный деплой и оставляет предыдущий —
   # этот job лишь подтверждает снаружи и красит пайплайн при неуспехе.

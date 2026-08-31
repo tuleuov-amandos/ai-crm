@@ -5,6 +5,14 @@ import { DealStage, ActivityType, AiSuggestionType } from '../generated/prisma-c
 import 'dotenv/config'
 import { PrismaPg } from '@prisma/adapter-pg'
 
+// Жёсткий предохранитель: seed стирает и перезаписывает данные (main() начинается
+// с deleteMany по всем таблицам). В production это недопустимо — прерываемся до
+// любого подключения к БД, независимо от того, как запущен файл.
+if (process.env.NODE_ENV === 'production') {
+  console.error('❌ prisma/seed.ts запрещён в production (NODE_ENV=production). Прерываю.')
+  process.exit(1)
+}
+
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.DATABASE_URL?.includes('amazonaws.com')

@@ -11,7 +11,23 @@ Backend → **Railway**, Frontend → **Vercel**. Часть шагов дела
 | Workflow | Триггер | Что делает |
 |---|---|---|
 | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | PR в `main` | `npm ci` + lint + `tsc --noEmit` + test — отдельно для `be/` и `fe/` |
-| [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) | push в `main` | собрать образ `be` → push в `ghcr.io/<repo>/backend:sha-<sha>` + `:latest` → `railway up` (API + worker) → health-check гейт |
+| [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) | push в `main` | собрать образ `be` → push в `ghcr.io/<repo>/backend:sha-<sha>` + `:latest` → **бэкап прод-БД** (`pg_dump` → artifact) → **`prisma migrate deploy`** → `railway up` (API + worker) → health-check гейт |
+
+### Бэкап БД и миграции
+
+- **Бэкап** (`backup` job): `pg_dump --format=custom` прод-Postgres через публичный
+  proxy-endpoint Railway, из образа `postgres:17-alpine`
+  ([`.github/scripts/backup-db.sh`](.github/scripts/backup-db.sh)). Дамп кладётся как
+  artifact `db-backup-<sha>` (retention 14 дней). Restore:
+  `pg_restore --clean --if-exists --no-owner -d "$DATABASE_URL" railway-*.dump`.
+- **Миграции** (`migrate` job): `npx prisma migrate deploy` — **отдельный шаг пайплайна**,
+  строго между бэкапом и `railway up`. Не в build stage Dockerfile и больше не в
+  `be/railway.json` `preDeployCommand` — миграции применяются один раз за реальный
+  деплой, а не на каждой сборке образа.
+- **Нативные snapshot'ы Railway** — независимый второй уровень: Railway → сервис
+  Postgres → **Backups** → включить scheduled backups (глубина retention зависит от
+  тарифа). CLI/API-хука «сделать бэкап сейчас» у Railway нет, поэтому в пайплайне —
+  `pg_dump`.
 
 Health-check: [`.github/scripts/wait-for-health.sh`](.github/scripts/wait-for-health.sh)
 поллит `GET {BACKEND_URL}{HEALTHCHECK_PATH}` до 200. Railway с `healthcheckPath`
@@ -23,6 +39,10 @@ Health-check: [`.github/scripts/wait-for-health.sh`](.github/scripts/wait-for-he
 GitHub → Settings → Secrets and variables → Actions:
 
 - **Secret** `RAILWAY_TOKEN` — project token из Railway (Project → Settings → Tokens).
+- **Secret** `DATABASE_URL` (лучше в Environment `production`) — **публичная** строка
+  подключения Railway Postgres (`postgresql://…@<host>.proxy.rlwy.net:<port>/railway?sslmode=require`,
+  Railway отдаёт её как `DATABASE_PUBLIC_URL`). Нужна job'ам `backup` и `migrate`.
+  Внутренний `*.railway.internal` хост из GitHub Actions недоступен.
 - **Variables**:
   - `RAILWAY_API_SERVICE` — имя сервиса API в Railway.
   - `RAILWAY_WORKER_SERVICE` — имя сервиса воркера.
@@ -35,8 +55,9 @@ GitHub → Settings → Secrets and variables → Actions:
 ### Railway: сервисы под пайплайн
 
 - **API**: source = этот репо, root `be/`, билд по `be/Dockerfile`. `be/railway.json`
-  подхватывается автоматически (`preDeployCommand` = `npx prisma migrate deploy`,
-  healthcheck). Ручной прогон миграций из чек-листа ниже больше не нужен.
+  подхватывается автоматически (healthcheck, restart policy). Миграции Railway больше
+  **не** гоняет — их применяет job `migrate` в пайплайне (см. «Бэкап БД и миграции»).
+  Ручной прогон миграций из чек-листа ниже не нужен.
 - **Worker**: тот же репо/root, **Custom Start Command** `node dist/src/worker.js`,
   те же переменные окружения, без healthcheck.
 
@@ -70,7 +91,7 @@ GitHub → Settings → Secrets and variables → Actions:
 - [ ] `NODE_ENV=production`. `PORT` Railway прокидывает сам.
 
 ### После деплоя
-- [ ] Прогнать миграции Prisma (`npx prisma migrate deploy`).
+- [ ] Миграции Prisma применяются пайплайном (job `migrate`) — вручную не гонять.
 - [ ] Проверить логи: `✓ Redis connected`, `Server running on port: ...`.
 - [ ] `GET /api-docs` открывается.
 
