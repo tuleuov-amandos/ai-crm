@@ -22,9 +22,9 @@ jobs:
           script: |
             cd /var/www/crm-saas
             git pull origin main
-            docker compose build --no-cache backend
-            docker compose up -d --force-recreate backend
+            docker compose build --no-cache backend worker
+            docker compose up -d --force-recreate backend worker
             docker compose exec -T backend npx prisma migrate deploy
             docker image prune -f
-            echo "✅ Backend deployed!"
+            echo "✅ Backend + worker deployed!"
 

@@ -55,6 +55,26 @@ services:
     ports:
       - "3001:3001"
 
+  # ─── AI Worker (NestJS BullMQ) ────────────────────────────────────────────────
+  # Same image as `backend`, different start command. Runs the BullMQ worker
+  # only (no HTTP server) so it can be scaled/restarted independently of the API.
+  worker:
+    build:
+      context: ./be
+      dockerfile: Dockerfile
+    container_name: crm_worker
+    restart: unless-stopped
+    command: ["node", "dist/src/worker.js"]
+    env_file:
+      - ./be/.env.production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - crm_network
+
 volumes:
   postgres_data:
   redis_data:

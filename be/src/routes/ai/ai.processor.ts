@@ -1,15 +1,17 @@
 import { Worker } from 'bullmq'
+import { Logger } from '@nestjs/common'
 import { createRedis } from '../../common/providers/redis.provider'
 import { AI_QUEUE_NAME } from './ai.queue'
 import { PrismaService } from '../../common/services/prisma.service'
 import { saveAiResultAtomic } from './ai.service'
-import { publishAiEvent } from './ai.sse'
+// Runs in the standalone worker process, which has no local SSE subscribers,
+// so events are pushed to the HTTP process over Redis Pub/Sub.
+import { publishAiEventRemote as publishAiEvent } from './ai.sse'
 import envConfig from '../../common/config'
 import { z } from 'zod'
 import { openai, AI_MODEL } from './ai.client'
 
-const connection = createRedis()
-const prisma = new PrismaService()
+const log = new Logger('AiProcessor')
 const OPENAI_TIMEOUT_MS = 30_000
 
 const AiResponseSchema = z.object({
@@ -119,7 +121,19 @@ async function callOpenAiAndParse(meetingNote: string, jobId: string, dealId: st
   }
 }
 
-new Worker(
+/**
+ * Creates and starts the BullMQ worker for the AI analysis queue.
+ *
+ * This is invoked explicitly from the standalone worker entrypoint
+ * (`src/worker.ts`) instead of running as an import side effect inside the
+ * HTTP process, so the API and the worker can be deployed and scaled as
+ * independent services.
+ */
+export function startAiWorker(): Worker {
+  const connection = createRedis()
+  const prisma = new PrismaService()
+
+  const worker = new Worker(
   AI_QUEUE_NAME,
   async (job) => {
     const { jobId, dealId, tenantId, userId, meetingNote } = job.data as {
@@ -224,4 +238,17 @@ new Worker(
     }
   },
   { connection: connection as any, concurrency: 2 },
-)
+  )
+
+  worker.on('error', (err) => {
+    log.error('AI worker error', err instanceof Error ? err.stack : String(err))
+  })
+  worker.on('failed', (job, err) => {
+    log.error(`AI job ${job?.id ?? 'unknown'} failed: ${err?.message ?? err}`)
+  })
+  worker.on('ready', () => {
+    log.log(`AI worker ready, listening on queue "${AI_QUEUE_NAME}"`)
+  })
+
+  return worker
+}
