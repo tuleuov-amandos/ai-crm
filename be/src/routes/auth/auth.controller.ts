@@ -21,6 +21,9 @@ import envConfig from 'src/common/config'
 import { COOKIE_OPTIONS } from './auth.constants'
 import { AccessTokenPayload } from 'src/common/types/jwt.type'
 import { AuthGuard } from '@nestjs/passport'
+import { Throttle } from '@nestjs/throttler'
+
+const BRUTE_FORCE_GUARD_THROTTLE = { default: { limit: 5, ttl: 60000 } }
 
 interface GoogleAuthRequest extends Request {
   user: {
@@ -41,6 +44,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @Throttle(BRUTE_FORCE_GUARD_THROTTLE)
   @ApiOkResponse({ type: RegisterResDto })
   @ZodSerializerDto(RegisterResDto)
   register(@Body() body: RegisterBodyDto) {
@@ -48,6 +52,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @Throttle(BRUTE_FORCE_GUARD_THROTTLE)
   @ApiOkResponse({ type: MessageDto })
   @ZodSerializerDto(MessageDto)
   async login(@Body() body: LoginBodyDto, @Res({ passthrough: true }) res: Response) {
@@ -78,6 +83,7 @@ export class AuthController {
   }
 
   @Post('refresh-token')
+  @Throttle(BRUTE_FORCE_GUARD_THROTTLE)
   @ApiOkResponse({ type: MessageDto })
   @ZodSerializerDto(MessageDto)
   async refreshToken(@Req() req: Request, @Res({ passthrough: true }) res: Response) {

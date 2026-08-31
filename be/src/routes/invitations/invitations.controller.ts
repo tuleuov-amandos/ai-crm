@@ -1,6 +1,7 @@
 import { Controller, Post, Get, Patch, Delete, Body, Param, UseGuards, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
+import { Throttle } from '@nestjs/throttler';
 import { InvitationsService } from './invitations.service';
 import { CreateInvitationDto, AcceptInvitationDto, UpdateInvitationDto } from './invitations.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
@@ -10,6 +11,8 @@ import { ROLE } from 'src/common/constants/role.constanst';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { AccessTokenPayload } from 'src/common/types/jwt.type';
 import { COOKIE_OPTIONS } from '../auth/auth.constants';
+
+const BRUTE_FORCE_GUARD_THROTTLE = { default: { limit: 5, ttl: 60000 } };
 
 @ApiTags('Invitations')
 @Controller('invitations')
@@ -60,6 +63,7 @@ export class InvitationsController {
   }
 
   @Post('accept')
+  @Throttle(BRUTE_FORCE_GUARD_THROTTLE)
   async acceptInvitation(
     @Body() body: AcceptInvitationDto,
     @Res({ passthrough: true }) res: Response,
