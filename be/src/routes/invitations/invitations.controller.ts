@@ -23,7 +23,7 @@ export class InvitationsController {
     @Body() body: CreateInvitationDto,
     @CurrentUser() user: AccessTokenPayload,
   ) {
-    return this.invitationsService.createInvitation(body, user.tenantId);
+    return this.invitationsService.createInvitation(body, user.tenantId, user);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -51,7 +51,7 @@ export class InvitationsController {
     @Body() body: UpdateInvitationDto,
     @CurrentUser() user: AccessTokenPayload,
   ) {
-    return this.invitationsService.updateInvitation(id, body, user.tenantId);
+    return this.invitationsService.updateInvitation(id, body, user.tenantId, user);
   }
 
   @Get('verify/:token')
