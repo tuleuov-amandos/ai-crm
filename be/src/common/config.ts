@@ -19,6 +19,7 @@ const ConfigSchema = z.object({
   REFRESH_TOKEN_EXPIRES_IN: z.string(),
 
   FRONTEND_URL: z.string(),
+  COOKIE_DOMAIN: z.string().optional(),
   NODE_ENV: z.string(),
   PORT: z.string(),
 

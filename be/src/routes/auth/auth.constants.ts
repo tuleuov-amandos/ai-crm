@@ -7,5 +7,6 @@ export const COOKIE_OPTIONS = {
   secure: isProduction,
   sameSite: 'lax' as const,
   path: '/',
-  domain: isProduction ? '.codelaicuocdoi.io.vn' : undefined
+  // COOKIE_DOMAIN задаётся в проде (напр. ".example.com"); undefined для локальной разработки.
+  domain: envConfig.COOKIE_DOMAIN || undefined,
 }
