@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { AuditLogsRepository } from './audit-logs.repo'
-import { GetAuditLogsQueryType } from './audit-logs.model'
+import { AuditLogChanges, GetAuditLogsQueryType } from './audit-logs.model'
 
 @Injectable()
 export class AuditLogsService {
@@ -13,7 +13,7 @@ export class AuditLogsService {
     targetType: string
     targetId: string
     targetName?: string | null
-    changes: Record<string, unknown>
+    changes: AuditLogChanges
   }) {
     return this.auditLogsRepository.create(params)
   }

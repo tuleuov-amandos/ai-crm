@@ -18,20 +18,22 @@ import { RedisService } from 'src/common/services/redis.service'
 import { AuditLogsService } from '../audit-logs/audit-logs.service'
 import { CaslAbilityFactory } from 'src/common/casl/casl-ability.factory'
 import { subject } from '@casl/ability'
+import { Prisma } from '../../../generated/prisma-client/client'
+import { AuditLogChanges } from '../audit-logs/audit-logs.model'
 
 export function getChangesDiff(
-  oldObj: Record<string, unknown>,
-  newObj: Record<string, unknown>,
-): Record<string, { old: unknown; new: unknown }> {
-  const diff: Record<string, { old: unknown; new: unknown }> = {}
+  oldObj: Record<string, Prisma.InputJsonValue>,
+  newObj: Record<string, Prisma.InputJsonValue>,
+): AuditLogChanges {
+  const diff: AuditLogChanges = {}
   const ignoredFields = ['updatedAt', 'createdAt', 'deletedAt', 'tenantId', 'id']
   for (const key of Object.keys(newObj)) {
     if (ignoredFields.includes(key)) continue
     const oldVal = oldObj[key]
     const newVal = newObj[key]
-    // Compare string/object or Decimal
-    const strOld = oldVal !== null && oldVal !== undefined ? String(oldVal) : ''
-    const strNew = newVal !== null && newVal !== undefined ? String(newVal) : ''
+    // Compare by JSON representation so objects/arrays and Decimal/Date (via toJSON) diff correctly
+    const strOld = oldVal !== null && oldVal !== undefined ? JSON.stringify(oldVal) : ''
+    const strNew = newVal !== null && newVal !== undefined ? JSON.stringify(newVal) : ''
     if (strOld !== strNew) {
       if (oldVal === null && newVal === undefined) continue
       if (oldVal === undefined && newVal === null) continue
@@ -77,7 +79,7 @@ export class DealService {
     const deal = await this.dealRepo.create(data)
     await this.redisService.invalidateTenantCache(tenantId)
 
-    const changes: Record<string, { old: unknown; new: unknown }> = {}
+    const changes: AuditLogChanges = {}
     for (const [key, val] of Object.entries(deal)) {
       if (['createdAt', 'updatedAt', 'deletedAt', 'id', 'tenantId'].includes(key)) continue
       changes[key] = { old: null, new: val }
@@ -222,7 +224,7 @@ export class DealService {
     await this.dealRepo.softDelete(dealId)
     await this.redisService.invalidateTenantCache(tenantId)
 
-    const changes: Record<string, { old: unknown; new: unknown }> = {}
+    const changes: AuditLogChanges = {}
     for (const [key, val] of Object.entries(deal)) {
       if (['createdAt', 'updatedAt', 'deletedAt', 'id', 'tenantId'].includes(key)) continue
       changes[key] = { old: val, new: null }

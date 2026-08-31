@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/common/services/prisma.service'
-import { GetAuditLogsQueryType } from './audit-logs.model'
+import { AuditLogChanges, GetAuditLogsQueryType } from './audit-logs.model'
 
 @Injectable()
 export class AuditLogsRepository {
@@ -13,7 +13,7 @@ export class AuditLogsRepository {
     targetType: string
     targetId: string
     targetName?: string | null
-    changes: Record<string, unknown>
+    changes: AuditLogChanges
   }) {
     return this.prismaService.auditLog.create({
       data: {
@@ -23,7 +23,6 @@ export class AuditLogsRepository {
         targetType: params.targetType,
         targetId: params.targetId,
         targetName: params.targetName ?? null,
-        // Prisma Json field requires InputJsonValue; Record<string,unknown> is structurally compatible — cast via unknown
         changes: params.changes,
       },
     })

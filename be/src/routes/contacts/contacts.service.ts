@@ -3,6 +3,7 @@ import { ContactsRepository } from './contacts.repo'
 import { CreateContactBodyType, ContactTagType, GetContactsQueryType } from './contacts.model'
 import { RedisService } from 'src/common/services/redis.service'
 import { AuditLogsService } from '../audit-logs/audit-logs.service'
+import { AuditLogChanges } from '../audit-logs/audit-logs.model'
 import { getChangesDiff } from '../deal/deal.service'
 import { CaslAbilityFactory } from 'src/common/casl/casl-ability.factory'
 import { subject } from '@casl/ability'
@@ -69,7 +70,7 @@ export class ContactsService {
     const result = await this.contactRepository.create(ownerId, body)
     await this.redisService.invalidateTenantCache(tenantId)
 
-    const changes: Record<string, { old: unknown; new: unknown }> = {}
+    const changes: AuditLogChanges = {}
     for (const [key, val] of Object.entries(result)) {
       if (['createdAt', 'updatedAt', 'deletedAt', 'id', 'tenantId'].includes(key)) continue
       changes[key] = { old: null, new: val }
@@ -135,7 +136,7 @@ export class ContactsService {
     const result = await this.contactRepository.delete(contactId)
     await this.redisService.invalidateTenantCache(tenantId)
 
-    const changes: Record<string, { old: unknown; new: unknown }> = {}
+    const changes: AuditLogChanges = {}
     for (const [key, val] of Object.entries(oldContact)) {
       if (['createdAt', 'updatedAt', 'deletedAt', 'id', 'tenantId'].includes(key)) continue
       changes[key] = { old: val, new: null }
@@ -237,7 +238,7 @@ export class ContactsService {
         })
 
         // Write Audit Log for CREATE Contact action
-        const changes: Record<string, { old: unknown; new: unknown }> = {}
+        const changes: AuditLogChanges = {}
         for (const [key, val] of Object.entries(contact)) {
           if (['createdAt', 'updatedAt', 'deletedAt', 'id', 'tenantId'].includes(key)) continue
           changes[key] = { old: null, new: val }
@@ -281,7 +282,7 @@ export class ContactsService {
         })
 
         // Write Audit Log for CREATE Deal action
-        const dealChanges: Record<string, { old: unknown; new: unknown }> = {}
+        const dealChanges: AuditLogChanges = {}
         for (const [key, val] of Object.entries(deal)) {
           if (['createdAt', 'updatedAt', 'deletedAt', 'id', 'tenantId'].includes(key)) continue
           dealChanges[key] = { old: null, new: val }
