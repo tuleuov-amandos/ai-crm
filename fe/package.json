@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "//": "TODO: это заглушка, реальных тестов нет. Покрыть fe тестами — отдельная задача.",
     "test": "echo \"[fe] no test runner configured yet — TODO: add vitest/jest\" && exit 0"
   },
   "dependencies": {
