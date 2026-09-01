@@ -1,26 +1,13 @@
-// import { UnprocessableEntityException } from '@nestjs/common'
-// import { createZodValidationPipe } from 'nestjs-zod'
-// import { ZodError } from 'zod'
-
-// export const MyZodValidationPipe = createZodValidationPipe({
-//   // provide custom validation exception factory
-//   createValidationException: (error: ZodError) => {
-//     console.log(error.issues)
-//     return new UnprocessableEntityException(error.issues[0]?.message || 'Validation failed')
-//   },
-// })
-import { HttpStatus, UnprocessableEntityException } from '@nestjs/common'
 import { createZodValidationPipe } from 'nestjs-zod'
 import { ZodError } from 'zod'
+import { validationExceptionFromZodError } from '../errors/validation'
 
+/**
+ * Turns a failed Zod request validation into an `AppException` (HTTP 422)
+ * carrying a stable `VALIDATION_*` code, so the frontend can localize it the
+ * same way it localizes every other backend error. Only the first issue is
+ * surfaced. The English `message` is a fallback for logs / non-FE clients.
+ */
 export const MyZodValidationPipe = createZodValidationPipe({
-  // provide custom validation exception factory
-  createValidationException: (error: ZodError) => {
-    // console.log(error.issues)
-    return new UnprocessableEntityException({
-      message: error.issues[0].message,
-      path: error.issues[0].path.join('.'),
-      statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
-    })
-  },
+  createValidationException: (error: ZodError) => validationExceptionFromZodError(error),
 })

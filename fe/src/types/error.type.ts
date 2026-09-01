@@ -10,7 +10,11 @@ export interface ApiErrorResponse {
    * `errors` namespace in `messages/*.json` — use the `useApiError` hook.
    */
   code?: string
-  /** Field path for form-level validation errors (e.g. "password"). */
+  /**
+   * Field path for validation errors (e.g. "password", "contacts.0.name").
+   * Present on 422 responses whose `code` is one of the `VALIDATION_*` codes.
+   * Not localized — for debugging only; the user-facing text comes from `code`.
+   */
   path?: string
   /** Present on rate-limit (429) responses. */
   retryAfter?: number

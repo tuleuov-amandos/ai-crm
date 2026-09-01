@@ -1,6 +1,7 @@
 import { ROLE } from 'src/common/constants/role.constanst'
 import z from 'zod'
 import { zDate } from 'src/common/utils/zod.util'
+import { ValidationErrorCode } from 'src/common/errors'
 
 export const UserBaseSchema = z.object({
   id: z.string(),
@@ -34,7 +35,7 @@ export const RegisterBodySchema = UserWithPasswordSchema.pick({
     if (password !== confirmPassword) {
       ctx.addIssue({
         code: 'custom',
-        message: 'Mật khẩu xác nhận không khớp',
+        message: ValidationErrorCode.PASSWORD_MISMATCH,
       })
     }
   })

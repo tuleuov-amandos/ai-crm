@@ -2,6 +2,7 @@
   "common": {
     "appName": "SalesFlow",
     "languageName": "Русский",
+    "switchLanguage": "Сменить язык",
     "cancel": "Отмена",
     "save": "Сохранить",
     "add": "Добавить",
@@ -1304,6 +1305,18 @@
     "OPENAI_AUTH_ERROR": "Сервис AI временно недоступен. Обратитесь к администратору.",
     "OPENAI_RATE_LIMIT": "Сервис AI сейчас перегружен. Попробуйте через несколько минут.",
     "OPENAI_ERROR": "Сервис AI временно недоступен. Попробуйте ещё раз.",
-    "AI_PERSIST_FAILED": "Не удалось сохранить результат AI. Попробуйте ещё раз."
+    "AI_PERSIST_FAILED": "Не удалось сохранить результат AI. Попробуйте ещё раз.",
+    "VALIDATION_FAILED": "Проверьте правильность заполнения полей.",
+    "VALIDATION_REQUIRED": "Заполните все обязательные поля.",
+    "VALIDATION_TOO_SHORT": "Значение слишком короткое.",
+    "VALIDATION_TOO_LONG": "Значение слишком длинное.",
+    "VALIDATION_INVALID_EMAIL": "Некорректный адрес email.",
+    "VALIDATION_INVALID_TYPE": "Некорректное значение поля.",
+    "VALIDATION_INVALID_ENUM": "Выбрано недопустимое значение.",
+    "VALIDATION_NUMBER_MIN": "Значение меньше допустимого.",
+    "VALIDATION_NUMBER_MAX": "Значение больше допустимого.",
+    "VALIDATION_UNRECOGNIZED_KEYS": "В запросе есть неизвестные поля.",
+    "VALIDATION_PASSWORD_MISMATCH": "Пароли не совпадают.",
+    "VALIDATION_AT_LEAST_ONE_FIELD": "Измените хотя бы одно поле."
   }
 }

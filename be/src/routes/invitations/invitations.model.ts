@@ -1,8 +1,9 @@
 import z from 'zod'
+import { ValidationErrorCode } from 'src/common/errors'
 
 export const CreateInvitationSchema = z
   .object({
-    email: z.string().email('Email không hợp lệ'),
+    email: z.string().email(),
     role: z.string(),
   })
   .strict()
@@ -12,8 +13,8 @@ export type CreateInvitationType = z.infer<typeof CreateInvitationSchema>
 export const AcceptInvitationSchema = z
   .object({
     token: z.string(),
-    name: z.string().min(1, 'Họ và tên không được để trống'),
-    password: z.string().min(6, 'Mật khẩu phải từ 6 ký tự trở lên'),
+    name: z.string().min(1),
+    password: z.string().min(6),
     confirmPassword: z.string(),
   })
   .strict()
@@ -22,7 +23,7 @@ export const AcceptInvitationSchema = z
       ctx.addIssue({
         code: 'custom',
         path: ['confirmPassword'],
-        message: 'Mật khẩu xác nhận không khớp',
+        message: ValidationErrorCode.PASSWORD_MISMATCH,
       })
     }
   })
@@ -31,7 +32,7 @@ export type AcceptInvitationType = z.infer<typeof AcceptInvitationSchema>
 
 export const UpdateInvitationSchema = z
   .object({
-    email: z.string().email('Email không hợp lệ').optional(),
+    email: z.string().email().optional(),
     role: z.string().optional(),
   })
   .strict()

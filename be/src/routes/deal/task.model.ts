@@ -1,11 +1,12 @@
 import { z } from 'zod'
 import { zIsoDatetime } from 'src/common/utils/zod.util'
+import { ValidationErrorCode } from 'src/common/errors'
 
 export const TaskBaseSchema = z.object({
   id: z.string(),
   tenantId: z.string(),
   dealId: z.string(),
-  title: z.string().min(1, 'Tiêu đề không được để trống').max(200),
+  title: z.string().min(1).max(200),
   done: z.boolean().default(false),
   dueDate: zIsoDatetime.nullable().optional(),
   createdAt: zIsoDatetime,
@@ -30,13 +31,13 @@ export const CreateTasksBulkBodySchema = z
 // UPDATE
 export const UpdateTaskBodySchema = z
   .object({
-    title: z.string().min(1, 'Tiêu đề không được để trống').max(200).optional(),
+    title: z.string().min(1).max(200).optional(),
     done: z.boolean().optional(),
     dueDate: zIsoDatetime.nullable().optional(),
   })
   .strict()
   .refine((data) => Object.keys(data).length > 0, {
-    message: 'Ít nhất phải có một trường được cập nhật',
+    message: ValidationErrorCode.AT_LEAST_ONE_FIELD,
   })
 
 // RESPONSES

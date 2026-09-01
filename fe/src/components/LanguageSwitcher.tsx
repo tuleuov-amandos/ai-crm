@@ -1,10 +1,11 @@
 "use client";
 
 import { useTransition } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Languages } from "lucide-react";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing, type Locale } from "@/i18n/routing";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -18,17 +19,28 @@ const LABELS: Record<Locale, string> = {
   en: "English",
 };
 
-export function LanguageSwitcher() {
+interface LanguageSwitcherProps {
+  /** Overrides the trigger width/spacing. Defaults to a full-width trigger
+   *  (sidebar). Pass e.g. "w-auto" for compact navbar/auth placements. */
+  className?: string;
+}
+
+export function LanguageSwitcher({ className }: LanguageSwitcherProps) {
   const locale = useLocale() as Locale;
   const pathname = usePathname();
   const router = useRouter();
+  const t = useTranslations("common");
   const [isPending, startTransition] = useTransition();
 
   const onChange = (next: string) => {
     if (next === locale) return;
+    // Keep query params across the locale switch. Reading them here (in the
+    // click handler) avoids the useSearchParams() Suspense boundary.
+    const search =
+      typeof window !== "undefined" ? window.location.search : "";
     startTransition(() => {
       // pathname здесь уже без префикса локали — next-intl подставит нужный
-      router.replace(pathname, { locale: next as Locale });
+      router.replace(`${pathname}${search}`, { locale: next as Locale });
     });
   };
 
@@ -36,8 +48,8 @@ export function LanguageSwitcher() {
     <Select value={locale} onValueChange={onChange} disabled={isPending}>
       <SelectTrigger
         size="sm"
-        className="h-8 w-full gap-2 text-xs"
-        aria-label="Сменить язык"
+        className={cn("h-8 w-full gap-2 text-xs", className)}
+        aria-label={t("switchLanguage")}
       >
         <Languages size={14} className="shrink-0 text-muted-foreground" />
         <SelectValue />

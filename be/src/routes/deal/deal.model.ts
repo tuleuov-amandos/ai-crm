@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { zIsoDatetime, zDate } from 'src/common/utils/zod.util'
+import { ValidationErrorCode } from 'src/common/errors'
 
 // export const DealStageEnum = z.enum(['PROSPECT', 'QUALIFIED', 'PROPOSAL', 'CLOSED_WON', 'CLOSED_LOST'])
 
@@ -68,7 +69,7 @@ export const UpdateDealBodySchema = z
     note: z.string().nullable().optional(),
   })
   .strict()
-  .refine((data) => Object.keys(data).length > 0, { message: 'Ít nhất phải có một trường được cập nhật' })
+  .refine((data) => Object.keys(data).length > 0, { message: ValidationErrorCode.AT_LEAST_ONE_FIELD })
 
 export const UpdateDealResSchema = CreateDealResSchema
 

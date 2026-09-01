@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import TargetCursor from "@/components/TargetCursor";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 interface FeatureItem {
   icon: ReactNode;
@@ -515,6 +516,8 @@ export default function LandingPage() {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
+            <LanguageSwitcher className="w-auto min-w-[7.5rem]" />
+
             {/* Theme Toggle */}
             <Button
               variant="ghost"
@@ -587,6 +590,7 @@ export default function LandingPage() {
               <a href="#ai-demo" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium py-1.5 text-muted-foreground hover:text-foreground border-b border-border/40">{t("nav.aiDemo")}</a>
               <a href="#roles-matrix" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium py-1.5 text-muted-foreground hover:text-foreground border-b border-border/40">{t("nav.permissions")}</a>
               <a href="#audit-logs" onClick={() => setMobileMenuOpen(false)} className="text-sm font-medium py-1.5 text-muted-foreground hover:text-foreground border-b border-border/40">{t("nav.auditLog")}</a>
+              <LanguageSwitcher className="w-full" />
               <div className="flex flex-col gap-2 pt-2">
                 {me ? (
                   <Button

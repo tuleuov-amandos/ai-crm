@@ -2,6 +2,7 @@
   "common": {
     "appName": "SalesFlow",
     "languageName": "English",
+    "switchLanguage": "Switch language",
     "cancel": "Cancel",
     "save": "Save",
     "add": "Add",
@@ -1304,6 +1305,18 @@
     "OPENAI_AUTH_ERROR": "The AI service is temporarily unavailable. Please contact an admin.",
     "OPENAI_RATE_LIMIT": "The AI service is busy right now. Please try again in a few minutes.",
     "OPENAI_ERROR": "The AI service is temporarily unavailable. Please try again.",
-    "AI_PERSIST_FAILED": "Failed to save the AI result. Please try again."
+    "AI_PERSIST_FAILED": "Failed to save the AI result. Please try again.",
+    "VALIDATION_FAILED": "Please check the form for errors.",
+    "VALIDATION_REQUIRED": "Please fill in all required fields.",
+    "VALIDATION_TOO_SHORT": "This value is too short.",
+    "VALIDATION_TOO_LONG": "This value is too long.",
+    "VALIDATION_INVALID_EMAIL": "Enter a valid email address.",
+    "VALIDATION_INVALID_TYPE": "This field has an invalid value.",
+    "VALIDATION_INVALID_ENUM": "The selected value is not allowed.",
+    "VALIDATION_NUMBER_MIN": "The value is below the allowed minimum.",
+    "VALIDATION_NUMBER_MAX": "The value is above the allowed maximum.",
+    "VALIDATION_UNRECOGNIZED_KEYS": "The request contains unknown fields.",
+    "VALIDATION_PASSWORD_MISMATCH": "Passwords do not match.",
+    "VALIDATION_AT_LEAST_ONE_FIELD": "Change at least one field."
   }
 }

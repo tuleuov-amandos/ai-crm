@@ -91,6 +91,28 @@ export enum AiErrorCode {
   PERSIST_FAILED = 'AI_PERSIST_FAILED',
 }
 
+/**
+ * Request-body / query validation failures (HTTP 422). Emitted by
+ * `MyZodValidationPipe` from the first Zod issue via
+ * `zodIssueToValidationCode` (see `./validation.ts`). The frontend localizes
+ * each code through the `errors` namespace; `path` in the response body names
+ * the offending field for debugging (field names are not localized yet).
+ */
+export enum ValidationErrorCode {
+  FAILED = 'VALIDATION_FAILED',
+  REQUIRED = 'VALIDATION_REQUIRED',
+  TOO_SHORT = 'VALIDATION_TOO_SHORT',
+  TOO_LONG = 'VALIDATION_TOO_LONG',
+  INVALID_EMAIL = 'VALIDATION_INVALID_EMAIL',
+  INVALID_TYPE = 'VALIDATION_INVALID_TYPE',
+  INVALID_ENUM = 'VALIDATION_INVALID_ENUM',
+  NUMBER_MIN = 'VALIDATION_NUMBER_MIN',
+  NUMBER_MAX = 'VALIDATION_NUMBER_MAX',
+  UNRECOGNIZED_KEYS = 'VALIDATION_UNRECOGNIZED_KEYS',
+  PASSWORD_MISMATCH = 'VALIDATION_PASSWORD_MISMATCH',
+  AT_LEAST_ONE_FIELD = 'VALIDATION_AT_LEAST_ONE_FIELD',
+}
+
 export type AppErrorCode =
   | AuthErrorCode
   | DealErrorCode
@@ -102,3 +124,4 @@ export type AppErrorCode =
   | ReportErrorCode
   | InvitationErrorCode
   | AiErrorCode
+  | ValidationErrorCode

@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { invitationsService } from "@/services/invitations.service";
 import { toast } from "sonner";
 import { SalesFlowLogo } from "@/components/SalesFlowLogo";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 function InviteContent() {
   const t = useTranslations("auth.invite");
@@ -251,11 +252,15 @@ export default function InvitePage() {
   const tc = useTranslations("auth.shared");
   return (
     <div
-      className="min-h-svh flex flex-col items-center justify-center px-4 py-16 bg-[#F8F8F7]"
+      className="relative min-h-svh flex flex-col items-center justify-center px-4 py-16 bg-[#F8F8F7]"
       style={{
         fontFamily: "Inter, system-ui, sans-serif",
       }}
     >
+      <div className="absolute right-4 top-4 z-50">
+        <LanguageSwitcher className="w-auto min-w-[7.5rem] bg-background/80 backdrop-blur" />
+      </div>
+
       <div className="w-full" style={{ maxWidth: 420 }}>
         {/* Brand Logo Header */}
         <div className="flex flex-col items-center mb-8 text-center">

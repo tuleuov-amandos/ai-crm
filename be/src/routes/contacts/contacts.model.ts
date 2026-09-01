@@ -1,5 +1,6 @@
 import z from 'zod'
 import { zIsoDatetime } from 'src/common/utils/zod.util'
+import { ValidationErrorCode } from 'src/common/errors'
 
 export const ContactTagConst = {
   Enterprise: 'Enterprise',
@@ -48,7 +49,7 @@ export type CreateContactResType = z.infer<typeof CreateContactResSchema>
 // ─────────────────────────────────────────
 export const UpdateContactBodySchema = CreateContactBodySchema.partial().refine(
   (data) => Object.keys(data).length > 0,
-  { message: 'Ít nhất phải có một trường được cập nhật' },
+  { message: ValidationErrorCode.AT_LEAST_ONE_FIELD },
 )
 
 export const UpdateContactResSchema = CreateContactResSchema // returns same as Create
@@ -127,20 +128,20 @@ export type GetContactsResType = z.infer<typeof GetContactsWithDealsActivitiesRe
 
 // Validation schema for each contact row imported from Excel
 export const BulkImportContactItemSchema = z.object({
-  name: z.string().min(2, 'Tên phải có ít nhất 2 ký tự'),
-  email: z.string().email('Email không đúng định dạng').optional().nullable().or(z.literal('')),
+  name: z.string().min(2),
+  email: z.string().email().optional().nullable().or(z.literal('')),
   phone: z.string().optional().nullable().or(z.literal('')),
   company: z.string().optional().nullable().or(z.literal('')),
   position: z.string().optional().nullable().or(z.literal('')),
   tags: z.array(z.string()).optional(),
-  ownerEmail: z.string().email('Email người sở hữu không đúng định dạng').optional().nullable().or(z.literal('')),
+  ownerEmail: z.string().email().optional().nullable().or(z.literal('')),
   dealTitle: z.string().optional().nullable().or(z.literal('')),
   dealValue: z
     .preprocess((val) => {
       if (val === '' || val === null || val === undefined) return null
       const parsed = Number(val)
       return isNaN(parsed) ? null : parsed
-    }, z.number().min(0, 'Giá trị deal không được âm').nullable())
+    }, z.number().min(0).nullable())
     .optional(),
   dealStage: z.string().optional().nullable().or(z.literal('')),
   dealNote: z.string().optional().nullable().or(z.literal('')),
