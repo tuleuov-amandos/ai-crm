@@ -67,6 +67,11 @@ if (!configServer.success) {
   console.log('Invalid environment variables:')
   // throw configServer.error;
   console.log(configServer.error)
+  // Under jest a process.exit(1) kills the worker ("test suite failed to run")
+  // instead of surfacing a normal failure — throw so it reads as a failed test.
+  if (process.env.NODE_ENV === 'test') {
+    throw new Error(`Invalid environment variables: ${configServer.error.message}`)
+  }
   process.exit(1)
 }
 

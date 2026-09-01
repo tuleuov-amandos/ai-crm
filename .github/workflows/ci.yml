@@ -21,6 +21,9 @@ jobs:
       # `prisma generate` читает DATABASE_URL через prisma.config.ts.
       # generate не подключается к БД — фиктивной строки достаточно.
       DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
+      # Юнит-тесты гоняют через jest-setup-env.ts с dummy env vars; NODE_ENV=test
+      # переводит src/common/config.ts на throw вместо process.exit(1).
+      NODE_ENV: test
     steps:
       - uses: actions/checkout@v4
 
