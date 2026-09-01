@@ -107,3 +107,7 @@ GitHub → Settings → Secrets and variables → Actions:
 - [ ] Логин через Google проходит, кука `accessToken` ставится на нужный домен.
 - [ ] Запросы с FE к `/api/*` доходят до backend (rewrite в `fe/next.config.ts`).
 - [ ] В ответах backend нет CORS-ошибок (совпадение `FRONTEND_URL` ↔ реальный origin).
+
+- npm warn allow-scripts: msw/sharp/unrs-resolver install-скрипты не одобрены явно.
+  Проверить, не влияет ли на рантайм (особенно sharp — обработка изображений).
+  Если нужно — `npm approve-scripts <pkg>` или явный allowlist в package.json.
