@@ -1,4 +1,10 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common'
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common'
 import { HashingService } from 'src/common/services/hashing.service'
 import { TokenService } from 'src/common/services/token.service'
 import { MailService } from 'src/common/services/mail.service'
@@ -9,6 +15,8 @@ import { CreateInvitationType, AcceptInvitationType, UpdateInvitationType } from
 import { v4 as uuidv4 } from 'uuid'
 import envConfig from 'src/common/config'
 import { PrismaService } from 'src/common/services/prisma.service'
+import { getRoleWeight, getRequesterRoleWeight } from 'src/common/constants/role-hierarchy.constant'
+import { AccessTokenPayload } from 'src/common/types/jwt.type'
 
 @Injectable()
 export class InvitationsService {
@@ -24,7 +32,7 @@ export class InvitationsService {
 
   // ─── CREATE INVITATION ────────────────────────────────────────────────────
 
-  async createInvitation(body: CreateInvitationType, tenantId: string) {
+  async createInvitation(body: CreateInvitationType, tenantId: string, currentUser: AccessTokenPayload) {
     const existingUser = await this.sharedUserRepo.findUniqueEmail(body.email)
     if (existingUser) {
       throw new ConflictException('Email này đã đăng ký tài khoản ở một workspace khác')
@@ -39,6 +47,9 @@ export class InvitationsService {
     })
     if (!dbRole) {
       throw new BadRequestException('Vai trò không hợp lệ')
+    }
+    if (getRoleWeight(dbRole.name) > getRequesterRoleWeight(currentUser.role)) {
+      throw new ForbiddenException('Bạn không thể mời người dùng với vai trò cao hơn vai trò của chính mình')
     }
     await this.invitationRepo.deleteManyByEmail(body.email)
     const token = uuidv4()
@@ -148,7 +159,7 @@ export class InvitationsService {
 
   // ─── UPDATE INVITATION ────────────────────────────────────────────────────
 
-  async updateInvitation(id: string, body: UpdateInvitationType, tenantId: string) {
+  async updateInvitation(id: string, body: UpdateInvitationType, tenantId: string, currentUser: AccessTokenPayload) {
     const invitation = await this.invitationRepo.findByIdAndTenant(id, tenantId)
     if (!invitation) {
       throw new NotFoundException('Không tìm thấy lời mời')
@@ -175,6 +186,9 @@ export class InvitationsService {
     if (body.role) {
       const dbRole = await this.prismaService.role.findFirst({ where: { tenantId, name: body.role } })
       if (!dbRole) throw new BadRequestException('Vai trò không hợp lệ')
+      if (getRoleWeight(dbRole.name) > getRequesterRoleWeight(currentUser.role)) {
+        throw new ForbiddenException('Bạn không thể gán vai trò cao hơn vai trò của chính mình')
+      }
       updateData.roleId = dbRole.id
     }
     const updatedInvitation = await this.invitationRepo.update(id, updateData)

@@ -1,6 +1,7 @@
 import { Controller, Post, Get, Patch, Delete, Body, Param, UseGuards, Res } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { Response } from 'express'
+import { Throttle } from '@nestjs/throttler'
 import { InvitationsService } from './invitations.service'
 import { CreateInvitationDto, AcceptInvitationDto, UpdateInvitationDto } from './invitations.dto'
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard'
@@ -11,6 +12,8 @@ import { CurrentUser } from 'src/common/decorators/current-user.decorator'
 import { AccessTokenPayload } from 'src/common/types/jwt.type'
 import { COOKIE_OPTIONS } from '../auth/auth.constants'
 
+const BRUTE_FORCE_GUARD_THROTTLE = { default: { limit: 5, ttl: 60000 } }
+
 @ApiTags('Invitations')
 @Controller('invitations')
 export class InvitationsController {
@@ -20,7 +23,7 @@ export class InvitationsController {
   @Roles(ROLE.ADMIN, ROLE.MANAGER)
   @Post()
   createInvitation(@Body() body: CreateInvitationDto, @CurrentUser() user: AccessTokenPayload) {
-    return this.invitationsService.createInvitation(body, user.tenantId)
+    return this.invitationsService.createInvitation(body, user.tenantId, user)
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -45,15 +48,17 @@ export class InvitationsController {
     @Body() body: UpdateInvitationDto,
     @CurrentUser() user: AccessTokenPayload,
   ) {
-    return this.invitationsService.updateInvitation(id, body, user.tenantId)
+    return this.invitationsService.updateInvitation(id, body, user.tenantId, user)
   }
 
   @Get('verify/:token')
+  @Throttle(BRUTE_FORCE_GUARD_THROTTLE)
   verifyToken(@Param('token') token: string) {
     return this.invitationsService.verifyInvitationToken(token)
   }
 
   @Post('accept')
+  @Throttle(BRUTE_FORCE_GUARD_THROTTLE)
   async acceptInvitation(@Body() body: AcceptInvitationDto, @Res({ passthrough: true }) res: Response) {
     const result = await this.invitationsService.acceptInvitation(body)
 

@@ -31,6 +31,7 @@ export class AuditLogsRepository {
   async getLogsByTenant(params: { tenantId: string; query: GetAuditLogsQueryType }) {
     return this.prismaService.auditLog.findMany({
       where: {
+        tenantId: params.tenantId,
         ...(params.query.action && { action: params.query.action }),
         ...(params.query.targetType && { targetType: params.query.targetType }),
         ...(params.query.userId && { userId: params.query.userId }),

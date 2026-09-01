@@ -31,7 +31,6 @@ import { SkipThrottle } from '@nestjs/throttler'
 @UseGuards(JwtAuthGuard)
 @ApiTags('Deals')
 @Controller('deals')
-@SkipThrottle()
 export class DealController {
   constructor(
     private readonly dealService: DealService,
@@ -104,6 +103,7 @@ export class DealController {
   }
 
   @Get(':id/ai-stream')
+  @SkipThrottle()
   async aiStream(@Param('id') dealId: string, @CurrentUser() user: AccessTokenPayload, @Res() res: Response) {
     // verify deal exists and belongs to tenant
     await this.dealService.getDealById(dealId, user.tenantId, user)

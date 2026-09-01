@@ -14,12 +14,10 @@ import {
   BulkImportContactsBodyDto,
 } from './contacts.dto'
 import { ZodSerializerDto } from 'nestjs-zod'
-import { SkipThrottle } from '@nestjs/throttler'
 
 @ApiTags('Contacts')
 @Controller('contacts')
 @UseGuards(JwtAuthGuard)
-@SkipThrottle()
 export class ContactsController {
   constructor(private readonly contactService: ContactsService) {}
 

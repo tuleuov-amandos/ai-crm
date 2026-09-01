@@ -4,6 +4,7 @@ import { PrismaClient } from '../generated/prisma-client/client'
 import { DealStage, ActivityType, AiSuggestionType } from '../generated/prisma-client/enums'
 import 'dotenv/config'
 import { PrismaPg } from '@prisma/adapter-pg'
+import { getDatabaseSsl } from 'src/common/utils/database-ssl.util'
 
 // Жёсткий предохранитель: seed стирает и перезаписывает данные (main() начинается
 // с deleteMany по всем таблицам). В production это недопустимо — прерываемся до
@@ -15,9 +16,7 @@ if (process.env.NODE_ENV === 'production') {
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes('amazonaws.com')
-    ? { rejectUnauthorized: false }
-    : undefined
+  ssl: process.env.DATABASE_URL ? getDatabaseSsl(process.env.DATABASE_URL) : undefined,
 })
 
 const prisma = new PrismaClient({ adapter })
