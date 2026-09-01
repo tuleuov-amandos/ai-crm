@@ -6,6 +6,7 @@ import { usersService, RoleDto, RolePermission } from "@/services/users.service"
 import { useMe } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import { useApiError } from "@/hooks/useApiError";
 import {
   Dialog,
   DialogContent,
@@ -69,6 +70,7 @@ const getGroupedPermissionsText = (t: Translate, rolePermissions: RolePermission
 export default function RolesPage() {
   const t = useTranslations("roles");
   const tCommon = useTranslations("common");
+  const getApiError = useApiError();
   const queryClient = useQueryClient();
   const { data: me } = useMe();
   const isAdmin = me?.role === "ADMIN";
@@ -117,9 +119,7 @@ export default function RolesPage() {
       queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
     },
     onError: (err: unknown) => {
-      const error = err as { response?: { data?: { message?: string } } };
-      const msg = error.response?.data?.message || t("toastPermsFail");
-      toast.error(msg);
+      toast.error(getApiError(err, t("toastPermsFail")));
     },
   });
 
@@ -134,9 +134,7 @@ export default function RolesPage() {
       refetchRoles();
     },
     onError: (err: unknown) => {
-      const error = err as { response?: { data?: { message?: string } } };
-      const msg = error.response?.data?.message || t("toastCreateFail");
-      toast.error(msg);
+      toast.error(getApiError(err, t("toastCreateFail")));
     },
   });
 
@@ -151,9 +149,7 @@ export default function RolesPage() {
       queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
     },
     onError: (err: unknown) => {
-      const error = err as { response?: { data?: { message?: string } } };
-      const msg = error.response?.data?.message || t("toastUpdateFail");
-      toast.error(msg);
+      toast.error(getApiError(err, t("toastUpdateFail")));
     },
   });
 
@@ -166,9 +162,7 @@ export default function RolesPage() {
       refetchRoles();
     },
     onError: (err: unknown) => {
-      const error = err as { response?: { data?: { message?: string } } };
-      const msg = error.response?.data?.message || t("toastDeleteFail");
-      toast.error(msg);
+      toast.error(getApiError(err, t("toastDeleteFail")));
     },
   });
 

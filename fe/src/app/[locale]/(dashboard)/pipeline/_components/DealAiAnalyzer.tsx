@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import { useApiError } from "@/hooks/useApiError";
 import {
   Sparkles,
   Loader2,
@@ -37,6 +38,8 @@ interface DealAiAnalyzerProps {
 export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
   const tAi = useTranslations("pipeline.ai");
   const tCommon = useTranslations("common");
+  const tErr = useTranslations("errors");
+  const getApiError = useApiError();
   const locale = useLocale();
   const [note, setNote] = useState(() => tAi("meetingNote"));
   const [phase, setPhase] = useState<Phase>("idle");
@@ -149,7 +152,12 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
       eventSource.addEventListener("ai-error", (e) => {
         try {
           const data = JSON.parse(e.data);
-          setErrorMsg(data.message || tAi("errors.aiProcessing"));
+          const reason: string | undefined = data.reason;
+          setErrorMsg(
+            reason && tErr.has(reason)
+              ? tErr(reason, data)
+              : data.message || tAi("errors.aiProcessing"),
+          );
         } catch {
           setErrorMsg(tAi("errors.aiFailure"));
         }
@@ -165,11 +173,8 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
       };
 
     } catch (err) {
-      const error = err as { response?: { data?: { message?: string } } };
       console.error("Error triggering analyze:", err);
-      setErrorMsg(
-        error.response?.data?.message || tAi("errors.startFailed")
-      );
+      setErrorMsg(getApiError(err, tAi("errors.startFailed")));
       setPhase("idle");
     }
   };

@@ -1,4 +1,5 @@
-import { Injectable, ForbiddenException } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
+import { AppException, ReportErrorCode } from 'src/common/errors'
 import { AccessTokenPayload } from 'src/common/types/jwt.type'
 import { DealStage } from '../../../../generated/prisma-client/enums'
 import { UpdateKpiTargetDto } from '../reports.dto'
@@ -17,7 +18,10 @@ export class TeamReportService {
   async getTeamPerformance(startDateStr: string | undefined, endDateStr: string | undefined, user: AccessTokenPayload) {
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('read', subject('Report', { view: 'team' } as any))) {
-      throw new ForbiddenException('Bạn không có quyền xem báo cáo hiệu suất')
+      throw AppException.forbidden(
+        ReportErrorCode.FORBIDDEN_TEAM,
+        'You do not have permission to view the team performance report',
+      )
     }
 
     const { start, end } = parseDates(startDateStr, endDateStr)
@@ -79,7 +83,10 @@ export class TeamReportService {
   async updateKpiTarget(dto: UpdateKpiTargetDto, user: AccessTokenPayload) {
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('update', 'KpiTarget')) {
-      throw new ForbiddenException('Bạn không có quyền cập nhật KPI target.')
+      throw AppException.forbidden(
+        ReportErrorCode.FORBIDDEN_KPI_UPDATE,
+        'You do not have permission to update the KPI target',
+      )
     }
 
     return this.reportsRepo.upsertKpiTarget(user.tenantId, dto.userId, dto.month, dto.year, dto.target)

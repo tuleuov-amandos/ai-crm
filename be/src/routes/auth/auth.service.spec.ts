@@ -1,8 +1,21 @@
 jest.mock('uuid', () => ({ v4: jest.fn(() => 'mocked-uuid') }))
 
 import { Test, TestingModule } from '@nestjs/testing'
-import { UnauthorizedException } from '@nestjs/common'
+import { HttpException, HttpStatus } from '@nestjs/common'
+import { AuthErrorCode } from 'src/common/errors'
 import { AuthService } from './auth.service'
+
+const expectAppError = async (promise: Promise<unknown>, code: AuthErrorCode, status: HttpStatus) => {
+  const err: unknown = await promise.then(
+    () => {
+      throw new Error('expected promise to reject')
+    },
+    (e: unknown) => e,
+  )
+  expect(err).toBeInstanceOf(HttpException)
+  expect((err as HttpException).getStatus()).toBe(status)
+  expect(((err as HttpException).getResponse() as { code: string }).code).toBe(code)
+}
 import { PrismaService } from 'src/common/services/prisma.service'
 import { HashingService } from 'src/common/services/hashing.service'
 import { SharedUserRepository } from 'src/common/repositories/shared-user.repo'
@@ -57,8 +70,10 @@ describe('AuthService', () => {
 
   describe('validateGoogleUser', () => {
     it('rejects an unverified email even if the caller claims emailVerified', async () => {
-      await expect(service.validateGoogleUser({ ...googleProfile, emailVerified: false })).rejects.toThrow(
-        UnauthorizedException,
+      await expectAppError(
+        service.validateGoogleUser({ ...googleProfile, emailVerified: false }),
+        AuthErrorCode.GOOGLE_EMAIL_NOT_VERIFIED,
+        HttpStatus.UNAUTHORIZED,
       )
 
       expect(mockPrismaService.account.findUnique).not.toHaveBeenCalled()
@@ -84,7 +99,11 @@ describe('AuthService', () => {
         role: { name: 'ADMIN' },
       })
 
-      await expect(service.validateGoogleUser(googleProfile)).rejects.toThrow(UnauthorizedException)
+      await expectAppError(
+        service.validateGoogleUser(googleProfile),
+        AuthErrorCode.EMAIL_REGISTERED_WITH_PASSWORD,
+        HttpStatus.UNAUTHORIZED,
+      )
 
       expect(mockPrismaService.account.create).not.toHaveBeenCalled()
     })

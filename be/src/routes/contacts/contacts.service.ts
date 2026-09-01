@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
+import { AppException, ContactErrorCode } from 'src/common/errors'
 import { ContactsRepository } from './contacts.repo'
 import { CreateContactBodyType, ContactTagType, GetContactsQueryType } from './contacts.model'
 import { RedisService } from 'src/common/services/redis.service'
@@ -33,7 +34,10 @@ export class ContactsService {
     const ability = await this.caslAbilityFactory.createForUser(user)
 
     if (ability.cannot('read', 'Contact')) {
-      throw new ForbiddenException('Bạn không có quyền xem danh sách liên hệ')
+      throw AppException.forbidden(
+        ContactErrorCode.FORBIDDEN_LIST,
+        'You do not have permission to view the contacts list',
+      )
     }
 
     const filters: { ownerId?: string } = {}
@@ -54,13 +58,13 @@ export class ContactsService {
   async getContactById(contactId: string, tenantId: string, user: { userId: string; role: string; tenantId: string }) {
     const contact = await this.contactRepository.findOne(contactId)
     if (!contact) {
-      throw new NotFoundException('Liên hệ không tồn tại')
+      throw AppException.notFound(ContactErrorCode.NOT_FOUND, 'Contact not found')
     }
 
     const ability = await this.caslAbilityFactory.createForUser(user)
     // Use subject() helper to map database model type
     if (ability.cannot('read', subject('Contact', contact))) {
-      throw new NotFoundException('Liên hệ không tồn tại') // Return 404 to prevent ID scanning
+      throw AppException.notFound(ContactErrorCode.NOT_FOUND, 'Contact not found') // Return 404 to prevent ID scanning
     }
 
     return contact
@@ -96,12 +100,12 @@ export class ContactsService {
   ) {
     const oldContact = await this.contactRepository.findOne(contactId)
     if (!oldContact) {
-      throw new NotFoundException('Liên hệ không tồn tại')
+      throw AppException.notFound(ContactErrorCode.NOT_FOUND, 'Contact not found')
     }
 
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('update', subject('Contact', oldContact))) {
-      throw new NotFoundException('Liên hệ không tồn tại') // Security 404
+      throw AppException.notFound(ContactErrorCode.NOT_FOUND, 'Contact not found') // Security 404
     }
 
     const result = await this.contactRepository.update(contactId, body)
@@ -125,12 +129,12 @@ export class ContactsService {
   async delete(contactId: string, tenantId: string, user: { userId: string; role: string; tenantId: string }) {
     const oldContact = await this.contactRepository.findOne(contactId)
     if (!oldContact) {
-      throw new NotFoundException('Liên hệ không tồn tại')
+      throw AppException.notFound(ContactErrorCode.NOT_FOUND, 'Contact not found')
     }
 
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('delete', subject('Contact', oldContact))) {
-      throw new NotFoundException('Liên hệ không tồn tại')
+      throw AppException.notFound(ContactErrorCode.NOT_FOUND, 'Contact not found')
     }
 
     const result = await this.contactRepository.delete(contactId)
@@ -156,12 +160,12 @@ export class ContactsService {
   async restore(contactId: string, tenantId: string, user: { userId: string; role: string; tenantId: string }) {
     const exits = await this.contactRepository.findDeleted(contactId)
     if (!exits) {
-      throw new NotFoundException('Liên hệ không tồn tại')
+      throw AppException.notFound(ContactErrorCode.NOT_FOUND, 'Contact not found')
     }
 
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('update', subject('Contact', exits))) {
-      throw new NotFoundException('Liên hệ không tồn tại')
+      throw AppException.notFound(ContactErrorCode.NOT_FOUND, 'Contact not found')
     }
 
     const result = await this.contactRepository.restore(contactId)

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import { useApiError } from "@/hooks/useApiError";
 import { Edit2, Users } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar,
@@ -53,6 +54,7 @@ export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabPro
   const t = useTranslations("reports.team");
   const tUnits = useTranslations("reports.units");
   const tCommon = useTranslations("common");
+  const getApiError = useApiError();
   const shortValue = useShortValue();
   const queryClient = useQueryClient();
   const { data: me } = useMe();
@@ -87,8 +89,7 @@ export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabPro
       setIsModalOpen(false);
     },
     onError: (err: unknown) => {
-      const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error.response?.data?.message || t("toastError"));
+      toast.error(getApiError(err, t("toastError")));
     },
   });
 

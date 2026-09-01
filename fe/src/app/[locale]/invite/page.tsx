@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useApiError } from "@/hooks/useApiError";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2, AlertCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { SalesFlowLogo } from "@/components/SalesFlowLogo";
 
 function InviteContent() {
   const t = useTranslations("auth.invite");
+  const getApiError = useApiError();
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -47,16 +49,14 @@ function InviteContent() {
         const data = await invitationsService.verify(token);
         setInviteData(data);
       } catch (err) {
-        const error = err as { response?: { data?: { message?: string } } };
-        const msg = error.response?.data?.message || t("errorInvalidOrExpired");
-        setVerifyError(msg);
+        setVerifyError(getApiError(err, t("errorInvalidOrExpired")));
       } finally {
         setVerifying(false);
       }
     };
 
     checkToken();
-  }, [token, t]);
+  }, [token, t, getApiError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,9 +90,7 @@ function InviteContent() {
       toast.success(t("successActivated"));
       router.push("/");
     } catch (err) {
-      const error = err as { response?: { data?: { message?: string } } };
-      const msg = error.response?.data?.message || t("errorRegisterFailed");
-      setFormError(msg);
+      setFormError(getApiError(err, t("errorRegisterFailed")));
       setSubmitting(false);
     }
   };

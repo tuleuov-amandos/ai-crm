@@ -1,6 +1,15 @@
-import { UnauthorizedException } from '@nestjs/common'
+import { HttpException, HttpStatus } from '@nestjs/common'
 import { Profile } from 'passport-google-oauth20'
+import { AuthErrorCode } from 'src/common/errors'
 import { GoogleStrategy } from './google.strategy'
+
+const expectAuthError = (done: jest.Mock, code: AuthErrorCode, status: HttpStatus) => {
+  const err = done.mock.calls[0][0] as HttpException
+  expect(err).toBeInstanceOf(HttpException)
+  expect(err.getStatus()).toBe(status)
+  expect((err.getResponse() as { code: string }).code).toBe(code)
+  expect(done.mock.calls[0][1]).toBe(false)
+}
 
 jest.mock('src/common/config', () => ({
   __esModule: true,
@@ -33,7 +42,7 @@ describe('GoogleStrategy', () => {
 
     strategy.validate('token', 'refresh', profile, done)
 
-    expect(done).toHaveBeenCalledWith(expect.any(UnauthorizedException), false)
+    expectAuthError(done, AuthErrorCode.GOOGLE_EMAIL_NOT_VERIFIED, HttpStatus.UNAUTHORIZED)
   })
 
   it('rejects when there is no email at all', () => {
@@ -42,7 +51,7 @@ describe('GoogleStrategy', () => {
 
     strategy.validate('token', 'refresh', profile, done)
 
-    expect(done).toHaveBeenCalledWith(expect.any(UnauthorizedException), false)
+    expectAuthError(done, AuthErrorCode.GOOGLE_EMAIL_NOT_VERIFIED, HttpStatus.UNAUTHORIZED)
   })
 
   it('accepts a verified email and passes it through', () => {

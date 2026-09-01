@@ -9,6 +9,7 @@ import {
   UpdateActivityBodyType,
 } from "@/lib/validations/activities.scheme";
 import { ApiError } from "@/types/error.type";
+import { useApiError } from "@/hooks/useApiError";
 import {
   useInfiniteQuery,
   useMutation,
@@ -95,6 +96,7 @@ export const useDealActivities = (dealId: string) => {
 export const useCreateContactActivity = (contactId: string) => {
   const queryClient = useQueryClient();
   const t = useTranslations("activities.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: (body: CreateActivityForContactBodyType) =>
@@ -108,8 +110,7 @@ export const useCreateContactActivity = (contactId: string) => {
       toast.success(t("createSuccess"));
     },
     onError: (error: ApiError) => {
-      const message = error.response?.data.message ?? t("createError");
-      toast.error(message);
+      toast.error(getApiError(error, t("createError")));
     },
   });
 };
@@ -120,6 +121,7 @@ export const useCreateContactActivity = (contactId: string) => {
 export const useCreateDealActivity = (dealId: string) => {
   const queryClient = useQueryClient();
   const t = useTranslations("activities.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: (body: CreateActivityForDealBodyType) =>
@@ -132,8 +134,7 @@ export const useCreateDealActivity = (dealId: string) => {
       toast.success(t("createSuccess"));
     },
     onError: (error: ApiError) => {
-      const message = error.response?.data.message ?? t("createError");
-      toast.error(message);
+      toast.error(getApiError(error, t("createError")));
     },
   });
 };
@@ -144,6 +145,7 @@ export const useCreateDealActivity = (dealId: string) => {
 export const useUpdateActivity = () => {
   const queryClient = useQueryClient();
   const t = useTranslations("activities.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: UpdateActivityBodyType }) =>
@@ -154,8 +156,7 @@ export const useUpdateActivity = () => {
       toast.success(t("updateSuccess"));
     },
     onError: (error: ApiError) => {
-      const message = error.response?.data.message ?? t("updateError");
-      toast.error(message);
+      toast.error(getApiError(error, t("updateError")));
     },
   });
 };
@@ -166,6 +167,7 @@ export const useUpdateActivity = () => {
 export const useDeleteActivity = () => {
   const queryClient = useQueryClient();
   const t = useTranslations("activities.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: (activityId: string) => activitiesService.delete(activityId),
@@ -174,8 +176,7 @@ export const useDeleteActivity = () => {
       toast.success(t("deleteSuccess"));
     },
     onError: (error: ApiError) => {
-      const message = error.response?.data.message ?? t("deleteError");
-      toast.error(message);
+      toast.error(getApiError(error, t("deleteError")));
     },
   });
 };

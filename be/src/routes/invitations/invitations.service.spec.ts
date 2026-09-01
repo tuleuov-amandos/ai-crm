@@ -1,8 +1,21 @@
 jest.mock('uuid', () => ({ v4: jest.fn(() => 'mocked-uuid') }))
 
 import { Test, TestingModule } from '@nestjs/testing'
-import { ForbiddenException } from '@nestjs/common'
+import { HttpException, HttpStatus } from '@nestjs/common'
+import { InvitationErrorCode } from 'src/common/errors'
 import { InvitationsService } from './invitations.service'
+
+const expectAppError = async (promise: Promise<unknown>, code: InvitationErrorCode, status: HttpStatus) => {
+  const err: unknown = await promise.then(
+    () => {
+      throw new Error('expected promise to reject')
+    },
+    (e: unknown) => e,
+  )
+  expect(err).toBeInstanceOf(HttpException)
+  expect((err as HttpException).getStatus()).toBe(status)
+  expect(((err as HttpException).getResponse() as { code: string }).code).toBe(code)
+}
 import { HashingService } from 'src/common/services/hashing.service'
 import { TokenService } from 'src/common/services/token.service'
 import { MailService } from 'src/common/services/mail.service'
@@ -73,9 +86,11 @@ describe('InvitationsService', () => {
       mockSharedUserRepo.findTenantUnique.mockResolvedValue({ id: tenantId, name: 'Acme' })
       mockPrismaService.role.findFirst.mockResolvedValue({ id: 'role-admin', name: ROLE.ADMIN, tenantId })
 
-      await expect(
+      await expectAppError(
         service.createInvitation({ email: 'new@acme.com', role: ROLE.ADMIN }, tenantId, managerUser),
-      ).rejects.toThrow(ForbiddenException)
+        InvitationErrorCode.ROLE_ABOVE_SELF,
+        HttpStatus.FORBIDDEN,
+      )
 
       expect(mockInvitationRepo.create).not.toHaveBeenCalled()
       expect(mockMailService.sendInvitationEmail).not.toHaveBeenCalled()
@@ -103,9 +118,11 @@ describe('InvitationsService', () => {
       mockSharedUserRepo.findTenantUnique.mockResolvedValue({ id: tenantId, name: 'Acme' })
       mockPrismaService.role.findFirst.mockResolvedValue({ id: 'role-sales', name: ROLE.SALES_REP, tenantId })
 
-      await expect(
+      await expectAppError(
         service.createInvitation({ email: 'new@acme.com', role: ROLE.SALES_REP }, tenantId, unknownRoleUser),
-      ).rejects.toThrow(ForbiddenException)
+        InvitationErrorCode.ROLE_ABOVE_SELF,
+        HttpStatus.FORBIDDEN,
+      )
 
       expect(mockInvitationRepo.create).not.toHaveBeenCalled()
     })
@@ -120,8 +137,10 @@ describe('InvitationsService', () => {
       })
       mockPrismaService.role.findFirst.mockResolvedValue({ id: 'role-admin', name: ROLE.ADMIN, tenantId })
 
-      await expect(service.updateInvitation('inv-1', { role: ROLE.ADMIN }, tenantId, managerUser)).rejects.toThrow(
-        ForbiddenException,
+      await expectAppError(
+        service.updateInvitation('inv-1', { role: ROLE.ADMIN }, tenantId, managerUser),
+        InvitationErrorCode.ROLE_ABOVE_SELF,
+        HttpStatus.FORBIDDEN,
       )
 
       expect(mockInvitationRepo.update).not.toHaveBeenCalled()

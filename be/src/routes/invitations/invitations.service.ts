@@ -1,10 +1,5 @@
-import {
-  Injectable,
-  ConflictException,
-  NotFoundException,
-  BadRequestException,
-  ForbiddenException,
-} from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
+import { AppException, InvitationErrorCode, RoleErrorCode } from 'src/common/errors'
 import { HashingService } from 'src/common/services/hashing.service'
 import { TokenService } from 'src/common/services/token.service'
 import { MailService } from 'src/common/services/mail.service'
@@ -49,12 +44,15 @@ export class InvitationsService {
     const existingUser = await this.sharedUserRepo.findUniqueEmail(body.email)
     if (existingUser) {
       log.warn({ event: 'invitation.create.rejected', email: body.email, tenantId, reason: 'user_exists' })
-      throw new ConflictException('Email này đã đăng ký tài khoản ở một workspace khác')
+      throw AppException.conflict(
+        InvitationErrorCode.EMAIL_IN_OTHER_WORKSPACE,
+        'This email is already registered in another workspace',
+      )
     }
     const tenant = await this.sharedUserRepo.findTenantUnique(tenantId)
     if (!tenant) {
       log.warn({ event: 'invitation.create.rejected', tenantId, reason: 'tenant_not_found' })
-      throw new NotFoundException('Không tìm thấy workspace')
+      throw AppException.notFound(InvitationErrorCode.WORKSPACE_NOT_FOUND, 'Workspace not found')
     }
     // Find Role in tenant based on submitted name
     const dbRole = await this.prismaService.role.findFirst({
@@ -62,11 +60,14 @@ export class InvitationsService {
     })
     if (!dbRole) {
       log.warn({ event: 'invitation.create.rejected', email: body.email, tenantId, reason: 'invalid_role' })
-      throw new BadRequestException('Vai trò không hợp lệ')
+      throw AppException.badRequest(RoleErrorCode.INVALID, 'Invalid role')
     }
     if (getRoleWeight(dbRole.name) > getRequesterRoleWeight(currentUser.role)) {
       log.warn({ event: 'invitation.create.rejected', email: body.email, tenantId, reason: 'role_escalation' })
-      throw new ForbiddenException('Bạn không thể mời người dùng với vai trò cao hơn vai trò của chính mình')
+      throw AppException.forbidden(
+        InvitationErrorCode.ROLE_ABOVE_SELF,
+        'You cannot invite a user with a role higher than your own',
+      )
     }
     await this.invitationRepo.deleteManyByEmail(body.email)
     const token = uuidv4()
@@ -111,7 +112,10 @@ export class InvitationsService {
     const invitation = await this.invitationRepo.findByIdAndTenant(id, tenantId)
     if (!invitation) {
       log.warn({ event: 'invitation.revoke.rejected', invitationId: id, tenantId, reason: 'not_found' })
-      throw new NotFoundException('Không tìm thấy lời mời hoặc lời mời không thuộc workspace này')
+      throw AppException.notFound(
+        InvitationErrorCode.NOT_FOUND,
+        'Invitation not found or does not belong to this workspace',
+      )
     }
 
     log.info({ event: 'invitation.revoked', invitationId: id, tenantId })
@@ -126,16 +130,19 @@ export class InvitationsService {
     const invitation = await this.invitationRepo.findByToken(token)
     if (!invitation) {
       log.warn({ event: 'invitation.verify.rejected', reason: 'invalid' })
-      throw new BadRequestException('Lời mời không hợp lệ hoặc link đã hỏng')
+      throw AppException.badRequest(InvitationErrorCode.TOKEN_INVALID, 'Invitation is invalid or the link is broken')
     }
     if (invitation.status !== 'PENDING') {
       log.warn({ event: 'invitation.verify.rejected', invitationId: invitation.id, reason: 'not_pending' })
-      throw new BadRequestException('Lời mời này đã được chấp nhận hoặc đã bị hủy')
+      throw AppException.badRequest(
+        InvitationErrorCode.ALREADY_RESOLVED,
+        'This invitation has already been accepted or cancelled',
+      )
     }
     if (invitation.expiresAt < new Date()) {
       await this.invitationRepo.updateStatus(invitation.id, 'EXPIRED')
       log.warn({ event: 'invitation.verify.rejected', invitationId: invitation.id, reason: 'expired' })
-      throw new BadRequestException('Lời mời này đã hết hạn (quá 7 ngày)')
+      throw AppException.badRequest(InvitationErrorCode.EXPIRED, 'This invitation has expired (older than 7 days)')
     }
     log.info({
       event: 'invitation.verified',
@@ -157,7 +164,7 @@ export class InvitationsService {
     const invitation = await this.invitationRepo.findByTokenOnly(body.token)
     if (!invitation || invitation.status !== 'PENDING' || invitation.expiresAt < new Date()) {
       log.warn({ event: 'invitation.accept.rejected', reason: 'invalid_or_expired' })
-      throw new BadRequestException('Lời mời không hợp lệ hoặc đã hết hạn')
+      throw AppException.badRequest(InvitationErrorCode.TOKEN_INVALID, 'Invitation is invalid or has expired')
     }
     const existingUser = await this.sharedUserRepo.findUniqueEmail(invitation.email)
     if (existingUser) {
@@ -167,7 +174,10 @@ export class InvitationsService {
         email: invitation.email,
         reason: 'user_exists',
       })
-      throw new ConflictException('Email này đã đăng ký tài khoản ở một workspace khác')
+      throw AppException.conflict(
+        InvitationErrorCode.EMAIL_IN_OTHER_WORKSPACE,
+        'This email is already registered in another workspace',
+      )
     }
     const hashedPassword = await this.hashingService.hash(body.password)
     const newUser = await this.sharedUserRepo.createUserAndAcceptInvitation({
@@ -202,7 +212,7 @@ export class InvitationsService {
       userId: newUser.id,
     })
     return {
-      message: 'Đăng ký tài khoản thành công',
+      message: 'Account registered successfully',
       accessToken,
       refreshToken,
     }
@@ -214,11 +224,14 @@ export class InvitationsService {
     const invitation = await this.invitationRepo.findByIdAndTenant(id, tenantId)
     if (!invitation) {
       log.warn({ event: 'invitation.update.rejected', invitationId: id, tenantId, reason: 'not_found' })
-      throw new NotFoundException('Không tìm thấy lời mời')
+      throw AppException.notFound(InvitationErrorCode.NOT_FOUND, 'Invitation not found')
     }
     if (invitation.status !== 'PENDING') {
       log.warn({ event: 'invitation.update.rejected', invitationId: id, tenantId, reason: 'not_pending' })
-      throw new BadRequestException('Chỉ có thể chỉnh sửa lời mời đang ở trạng thái chờ kích hoạt')
+      throw AppException.badRequest(
+        InvitationErrorCode.NOT_PENDING,
+        'Only invitations in the pending state can be edited',
+      )
     }
     const updateData: {
       token: string
@@ -231,16 +244,20 @@ export class InvitationsService {
     }
     if (body.email && body.email !== invitation.email) {
       const existingUser = await this.sharedUserRepo.findUniqueEmail(body.email)
-      if (existingUser) throw new ConflictException('Email này đã đăng ký tài khoản')
+      if (existingUser) throw AppException.conflict(InvitationErrorCode.EMAIL_TAKEN, 'This email is already registered')
       const existingInv = await this.invitationRepo.findDuplicateEmail(body.email, tenantId, id)
-      if (existingInv) throw new ConflictException('Đã có một lời mời khác cho email này')
+      if (existingInv)
+        throw AppException.conflict(InvitationErrorCode.DUPLICATE, 'Another invitation already exists for this email')
       updateData.email = body.email
     }
     if (body.role) {
       const dbRole = await this.prismaService.role.findFirst({ where: { tenantId, name: body.role } })
-      if (!dbRole) throw new BadRequestException('Vai trò không hợp lệ')
+      if (!dbRole) throw AppException.badRequest(RoleErrorCode.INVALID, 'Invalid role')
       if (getRoleWeight(dbRole.name) > getRequesterRoleWeight(currentUser.role)) {
-        throw new ForbiddenException('Bạn không thể gán vai trò cao hơn vai trò của chính mình')
+        throw AppException.forbidden(
+          InvitationErrorCode.ROLE_ABOVE_SELF,
+          'You cannot assign a role higher than your own',
+        )
       }
       updateData.roleId = dbRole.id
     }

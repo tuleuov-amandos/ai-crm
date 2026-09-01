@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useRef } from "react";
 import { useTranslations } from "next-intl";
+import { useApiError } from "@/hooks/useApiError";
 import {
   Dialog,
   DialogContent,
@@ -54,6 +55,7 @@ const SYSTEM_FIELD_KEYS = [
 export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelDialogProps) {
   const t = useTranslations("contacts.import");
   const tCommon = useTranslations("common");
+  const getApiError = useApiError();
 
   const systemFieldsList = SYSTEM_FIELD_KEYS.map((key) => ({
     key,
@@ -390,8 +392,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
       handleReset();
       onOpenChange(false);
     } catch (error) {
-      const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err?.response?.data?.message || t("toasts.importError"));
+      toast.error(getApiError(error, t("toasts.importError")));
     }
   };
 

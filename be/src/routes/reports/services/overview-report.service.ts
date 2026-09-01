@@ -1,4 +1,5 @@
-import { Injectable, ForbiddenException } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
+import { AppException, ReportErrorCode } from 'src/common/errors'
 import { AccessTokenPayload } from 'src/common/types/jwt.type'
 import { DealStage } from '../../../../generated/prisma-client/enums'
 import { ReportsRepository } from '../reports.repo'
@@ -16,7 +17,10 @@ export class OverviewReportService {
   async getOverview(startDateStr: string | undefined, endDateStr: string | undefined, user: AccessTokenPayload) {
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('read', subject('Report', { view: 'overview' } as any))) {
-      throw new ForbiddenException('Bạn không có quyền xem báo cáo tổng quan')
+      throw AppException.forbidden(
+        ReportErrorCode.FORBIDDEN_OVERVIEW,
+        'You do not have permission to view the overview report',
+      )
     }
 
     const userFilter = {}

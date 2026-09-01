@@ -1,4 +1,5 @@
-import { Injectable, ForbiddenException } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
+import { AppException, ReportErrorCode } from 'src/common/errors'
 import { AccessTokenPayload } from 'src/common/types/jwt.type'
 import { ActivityType } from '../../../../generated/prisma-client/enums'
 import { ReportsRepository } from '../reports.repo'
@@ -20,7 +21,10 @@ export class ActivityReportService {
   ) {
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('read', subject('Report', { view: 'activity' } as any))) {
-      throw new ForbiddenException('Bạn không có quyền xem báo cáo hoạt động')
+      throw AppException.forbidden(
+        ReportErrorCode.FORBIDDEN_ACTIVITY,
+        'You do not have permission to view the activity report',
+      )
     }
 
     const userFilter = ability.cannot('read', subject('Activity', { userId: 'other' } as any))

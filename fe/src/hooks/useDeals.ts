@@ -5,6 +5,7 @@ import { dealsService } from "@/services/deals.service";
 import { useDealPipelineStore } from "@/stores/dealCards-store";
 import { useShallow } from 'zustand/react/shallow'
 import { ApiError } from "@/lib/types/error";
+import { useApiError } from "@/hooks/useApiError";
 import {
   CreateDealBodyType,
   DealStage,
@@ -83,6 +84,7 @@ export const useGetDealDetail = (id: string) => {
 export const useCreateDeal = () => {
   const queryClient = useQueryClient();
   const t = useTranslations("pipeline.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: (data: CreateDealBodyType) => dealsService.create(data),
@@ -92,8 +94,7 @@ export const useCreateDeal = () => {
       toast.success(t("createSuccess"));
     },
     onError: (error: ApiError) => {
-      const message = error.response?.data.message ?? t("createError");
-      toast.error(message);
+      toast.error(getApiError(error, t("createError")));
     },
   });
 };
@@ -104,6 +105,7 @@ export const useCreateDeal = () => {
 export const useUpdateDealStage = () => {
   const queryClient = useQueryClient();
   const t = useTranslations("pipeline.toasts");
+  const getApiError = useApiError();
   const { rollbackMoveDeal } = useDealPipelineStore();
 
   return useMutation({
@@ -121,8 +123,7 @@ export const useUpdateDealStage = () => {
     // if API fails -> rollback
     onError: (error: ApiError, { id, from, to }) => {
       rollbackMoveDeal(id, from, to);
-      const message = error.response?.data.message ?? t("stageError");
-      toast.error(message);
+      toast.error(getApiError(error, t("stageError")));
     },
 
     onSuccess: () => {
@@ -138,6 +139,7 @@ export const useUpdateDealStage = () => {
 export const useUpdateDeal = (dealId: string) => {
   const queryClient = useQueryClient();
   const t = useTranslations("pipeline.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: (data: UpdateDealBodyType) => dealsService.update(dealId, data),
@@ -148,8 +150,7 @@ export const useUpdateDeal = (dealId: string) => {
       toast.success(t("updateSuccess"));
     },
     onError: (error: ApiError) => {
-      const message = error.response?.data.message ?? t("updateError");
-      toast.error(message);
+      toast.error(getApiError(error, t("updateError")));
     },
   });
 };
@@ -160,6 +161,7 @@ export const useUpdateDeal = (dealId: string) => {
 export const useDeleteDeal = () => {
   const queryClient = useQueryClient();
   const t = useTranslations("pipeline.toasts");
+  const getApiError = useApiError();
   const { removeDeal } = useDealPipelineStore();
 
   return useMutation({
@@ -179,8 +181,7 @@ export const useDeleteDeal = () => {
     onError: (error: ApiError) => {
       // rollback: refetch pipeline to restore accidentally deleted deal
       queryClient.invalidateQueries({ queryKey: dealKeys.pipeline() });
-      const message = error.response?.data.message ?? t("deleteError");
-      toast.error(message);
+      toast.error(getApiError(error, t("deleteError")));
     },
   });
 };

@@ -1,4 +1,5 @@
-import { ConflictException, Injectable, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
+import { AppException, AuthErrorCode } from 'src/common/errors'
 import { PrismaService } from 'src/common/services/prisma.service'
 import { HashingService } from 'src/common/services/hashing.service'
 import { LoginBodyType, RegisterBodyType } from './auth.model'
@@ -39,14 +40,17 @@ export class AuthService {
 
     if (existSlug) {
       log.warn({ event: 'register.conflict', email: body.email, slug, reason: 'slug_taken' })
-      throw new ConflictException('Tên công ty đã tồn tại, vui lòng chọn tên khác')
+      throw AppException.conflict(
+        AuthErrorCode.COMPANY_NAME_TAKEN,
+        'Company name is already taken, please choose another',
+      )
     }
 
     const existUser = await this.authRepository.findUserByEmail(body.email)
 
     if (existUser) {
       log.warn({ event: 'register.conflict', email: body.email, reason: 'email_taken' })
-      throw new ConflictException('Email đã được sử dụng, vui lòng chọn email khác')
+      throw AppException.conflict(AuthErrorCode.EMAIL_TAKEN, 'Email is already in use, please choose another')
     }
 
     const hashedPassword = await this.hashingService.hash(body.password)
@@ -69,14 +73,13 @@ export class AuthService {
 
     if (!user) {
       log.warn({ event: 'login.failed', email: body.email, reason: 'user_not_found' })
-      throw new UnauthorizedException('Email hoặc mật khẩu không đúng')
+      throw AppException.unauthorized(AuthErrorCode.INVALID_CREDENTIALS, 'Incorrect email or password')
     }
 
     const isPasswordValid = await this.hashingService.compare(body.password, user.password)
     if (!isPasswordValid) {
       log.warn({ event: 'login.failed', email: body.email, userId: user.id, reason: 'bad_password' })
-      throw new UnprocessableEntityException({
-        message: 'Sai mật khẩu. Vui lòng thử lại.',
+      throw AppException.unprocessable(AuthErrorCode.WRONG_PASSWORD, 'Wrong password. Please try again.', {
         path: 'password',
       })
     }
@@ -94,7 +97,7 @@ export class AuthService {
     // The refresh token value itself is a credential — never logged.
     await this.redisService.delete(`auth:refresh:${refreshToken}`)
     log.info({ event: 'logout' })
-    return { message: 'Đăng xuất thành công' }
+    return { message: 'Signed out successfully' }
   }
 
   async generateTokens({ userId, role, tenantId }: AccessTokenPayloadCreate) {
@@ -120,7 +123,7 @@ export class AuthService {
   async refreshToken(refreshToken: string, res: ExpressResponse) {
     if (!refreshToken) {
       log.warn({ event: 'refresh.failed', reason: 'no_token' })
-      throw new UnauthorizedException('Không tìm thấy refresh token')
+      throw AppException.unauthorized(AuthErrorCode.REFRESH_TOKEN_MISSING, 'Refresh token not found')
     }
 
     let userId: string
@@ -129,13 +132,16 @@ export class AuthService {
       userId = decoded.userId
     } catch {
       log.warn({ event: 'refresh.failed', reason: 'invalid' })
-      throw new UnauthorizedException('Refresh token không hợp lệ hoặc đã hết hạn')
+      throw AppException.unauthorized(AuthErrorCode.REFRESH_TOKEN_INVALID, 'Refresh token is invalid or has expired')
     }
 
     const storedToken = await this.redisService.get(`auth:refresh:${refreshToken}`)
     if (!storedToken) {
       log.warn({ event: 'refresh.failed', userId, reason: 'not_in_store' })
-      throw new UnauthorizedException('Refresh token không tồn tại trong phiên làm việc')
+      throw AppException.unauthorized(
+        AuthErrorCode.REFRESH_TOKEN_NOT_IN_STORE,
+        'Refresh token does not exist in the current session',
+      )
     }
 
     await this.redisService.delete(`auth:refresh:${refreshToken}`)
@@ -157,7 +163,7 @@ export class AuthService {
     })
 
     log.info({ event: 'refresh.success', userId, tenantId: storedToken.tenantId })
-    return { message: 'Refresh token thành công' }
+    return { message: 'Token refreshed successfully' }
   }
 
   async getProfile(userId: string) {
@@ -224,7 +230,7 @@ export class AuthService {
     // the caller.
     if (!emailVerified) {
       log.warn({ event: 'google.login', email, outcome: 'rejected_unverified' })
-      throw new UnauthorizedException('Email Google chưa được xác minh')
+      throw AppException.unauthorized(AuthErrorCode.GOOGLE_EMAIL_NOT_VERIFIED, 'Google email is not verified')
     }
     // 1. Check Google linked account
     const account = await this.prismaService.account.findUnique({
@@ -258,7 +264,10 @@ export class AuthService {
       // attacker's account. Linking a Google identity to an existing
       // password account must be an explicit, authenticated action taken
       // from account settings, not an implicit side effect of login.
-      throw new UnauthorizedException('Email này đã được đăng ký bằng mật khẩu, vui lòng đăng nhập bằng mật khẩu')
+      throw AppException.unauthorized(
+        AuthErrorCode.EMAIL_REGISTERED_WITH_PASSWORD,
+        'This email is already registered with a password, please sign in with your password',
+      )
     }
     // 3. If it's a completely new account
     const invitation = await this.prismaService.invitation.findFirst({

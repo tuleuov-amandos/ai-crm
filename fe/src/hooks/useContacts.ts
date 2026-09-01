@@ -6,6 +6,7 @@ import {
 } from "@/lib/validations/contacts.scheme";
 import { contactsService, BulkImportContactItem } from "@/services/contacts.service";
 import { ApiError } from "@/types/error.type";
+import { useApiError } from "@/hooks/useApiError";
 import {
   useInfiniteQuery,
   useMutation,
@@ -84,6 +85,7 @@ export const useGetContact = (id: string) => {
 export const useCreateContact = () => {
   const queryClient = useQueryClient();
   const t = useTranslations("contacts.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: (data: CreateContactBodyType) => contactsService.create(data),
@@ -92,8 +94,7 @@ export const useCreateContact = () => {
       toast.success(t("createSuccess"))
     },
     onError: (error: ApiError) => {
-      const message = error.response?.data.message || t("createError")
-      toast.error(message)
+      toast.error(getApiError(error, t("createError")))
     },
   })
 }
@@ -104,6 +105,7 @@ export const useCreateContact = () => {
 export const useUpdateContact = () => {
   const queryClient = useQueryClient();
   const t = useTranslations("contacts.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateContactBodyType }) => contactsService.update(id, data),
@@ -114,8 +116,7 @@ export const useUpdateContact = () => {
       toast.success(t("updateSuccess"))
     },
     onError: (error: ApiError) => {
-      const message = error.response?.data.message || t("updateError")
-      toast.error(message)
+      toast.error(getApiError(error, t("updateError")))
     },
   })
 }
@@ -126,6 +127,7 @@ export const useUpdateContact = () => {
 export const useDeleteContact = () => {
   const queryClient = useQueryClient();
   const t = useTranslations("contacts.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: (id: string) => contactsService.delete(id),
@@ -134,8 +136,7 @@ export const useDeleteContact = () => {
       toast.success(t("deleteSuccess"))
     },
     onError: (error: ApiError) => {
-      const message = error.response?.data.message || t("deleteError")
-      toast.error(message)
+      toast.error(getApiError(error, t("deleteError")))
     },
   })
 }

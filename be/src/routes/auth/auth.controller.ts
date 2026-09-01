@@ -66,7 +66,7 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     })
     log.info({ event: 'login.cookies_set', email: body.email })
-    return { message: 'Đăng nhập thành công' }
+    return { message: 'Signed in successfully' }
   }
 
   @Post('logout')
@@ -101,7 +101,7 @@ export class AuthController {
   @Roles(ROLE.MANAGER)
   @Get('admin')
   getAdminProfile(@CurrentUser() user: AccessTokenPayload) {
-    return { message: 'Đường dẫn cho ADMIN', user }
+    return { message: 'ADMIN route', user }
   }
 
   @Get('google')

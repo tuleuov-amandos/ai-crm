@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { invitationsService } from "@/services/invitations.service";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { useApiError } from "@/hooks/useApiError";
 
 export const invitationKeys = {
   all: ["invitations"] as const,
@@ -21,6 +22,7 @@ export const useGetInvitations = () => {
 export const useCreateInvitation = () => {
   const queryClient = useQueryClient();
   const t = useTranslations("settings.invitations.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: ({ email, role }: { email: string; role: string }) =>
@@ -30,9 +32,7 @@ export const useCreateInvitation = () => {
       queryClient.invalidateQueries({ queryKey: invitationKeys.lists() });
     },
     onError: (error: unknown) => {
-      const err = error as { response?: { data?: { message?: string } } };
-      const msg = err.response?.data?.message || t("sendError");
-      toast.error(msg);
+      toast.error(getApiError(error, t("sendError")));
     },
   });
 };
@@ -40,6 +40,7 @@ export const useCreateInvitation = () => {
 export const useRevokeInvitation = () => {
   const queryClient = useQueryClient();
   const t = useTranslations("settings.invitations.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: (id: string) => invitationsService.revoke(id),
@@ -48,9 +49,7 @@ export const useRevokeInvitation = () => {
       queryClient.invalidateQueries({ queryKey: invitationKeys.lists() });
     },
     onError: (error: unknown) => {
-      const err = error as { response?: { data?: { message?: string } } };
-      const msg = err.response?.data?.message || t("revokeError");
-      toast.error(msg);
+      toast.error(getApiError(error, t("revokeError")));
     },
   });
 };
@@ -58,6 +57,7 @@ export const useRevokeInvitation = () => {
 export const useUpdateInvitation = () => {
   const queryClient = useQueryClient();
   const t = useTranslations("settings.invitations.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: ({ id, email, role }: { id: string; email?: string; role?: string }) =>
@@ -67,9 +67,7 @@ export const useUpdateInvitation = () => {
       queryClient.invalidateQueries({ queryKey: invitationKeys.lists() });
     },
     onError: (error: unknown) => {
-      const err = error as { response?: { data?: { message?: string } } };
-      const msg = err.response?.data?.message || t("updateError");
-      toast.error(msg);
+      toast.error(getApiError(error, t("updateError")));
     },
   });
 };

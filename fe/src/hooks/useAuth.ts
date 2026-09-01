@@ -2,6 +2,7 @@
 import { LoginBodyType, RegisterBodyType } from "@/lib/validations/auth.schema";
 import { authService } from "@/services/auth.service";
 import { ApiError } from "@/types/error.type";
+import { useApiError } from "@/hooks/useApiError";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -10,6 +11,7 @@ import { toast } from "sonner";
 export const useLogin = () => {
   const router = useRouter();
   const t = useTranslations("auth.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: (data: LoginBodyType) => {
@@ -22,16 +24,7 @@ export const useLogin = () => {
     },
 
     onError: (error: ApiError) => {
-      const message = error.response?.data.message || t("loginError");
-      // let message = "Login failed";
-
-      // if (typeof data?.message === "string") {
-      //   message = data.message;
-      // } else if (Array.isArray(data?.message) && data.message.length > 0) {
-      //   // Get message from the first element in array
-      //   message = data.message[0]?.message || "Login failed";
-      // }
-      toast.error(message);
+      toast.error(getApiError(error, t("loginError")));
     },
   });
 };
@@ -54,6 +47,7 @@ export const useLogout = () => {
 export const useRegister = () => {
   const router = useRouter();
   const t = useTranslations("auth.toasts");
+  const getApiError = useApiError();
   return useMutation({
     mutationFn: (data: RegisterBodyType) => {
       return authService.register(data);
@@ -63,8 +57,7 @@ export const useRegister = () => {
       router.push("/login");
     },
     onError: (error: ApiError) => {
-      const message = error?.response?.data?.message || t("registerError");
-      toast.error(message);
+      toast.error(getApiError(error, t("registerError")));
     },
   });
 };

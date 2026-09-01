@@ -1,4 +1,5 @@
-import { Injectable, ForbiddenException } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
+import { AppException, DashboardErrorCode } from 'src/common/errors'
 import { DealStage } from '../../../generated/prisma-client/enums'
 import { DashboardPeriodType, DashboardResType } from './dashboard.model'
 import { RedisService } from 'src/common/services/redis.service'
@@ -74,7 +75,7 @@ export class DashboardService {
   ): Promise<DashboardResType> {
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('read', 'Deal')) {
-      throw new ForbiddenException('Bạn không có quyền truy cập dữ liệu dashboard')
+      throw AppException.forbidden(DashboardErrorCode.FORBIDDEN, 'You do not have permission to access dashboard data')
     }
 
     // Get the current cache version of the Tenant
