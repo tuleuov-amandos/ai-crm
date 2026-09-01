@@ -1,10 +1,12 @@
 "use client";
 
 import { Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 
 export function EmptyState() {
+  const t = useTranslations("activities");
   return (
     <div className="flex flex-col items-center justify-center py-20 px-8 text-center">
       <svg
@@ -31,14 +33,14 @@ export function EmptyState() {
         className="text-foreground mb-1.5"
         style={{ fontSize: 15, fontWeight: 500 }}
       >
-        Chưa có hoạt động nào
+        {t("empty.title")}
       </p>
       <p className="text-muted-foreground mb-5" style={{ fontSize: 13 }}>
-        Bắt đầu log hoạt động đầu tiên với khách hàng của bạn
+        {t("empty.description")}
       </p>
       <Button size="sm" className="gap-1.5" style={{ fontSize: 13 }}>
         <Plus size={13} />
-        Thêm hoạt động
+        {t("newActivity")}
       </Button>
     </div>
   );

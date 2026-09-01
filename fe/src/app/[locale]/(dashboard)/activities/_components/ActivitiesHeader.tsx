@@ -1,6 +1,7 @@
 "use client";
 
 import { Calendar, ChevronDown, Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 
@@ -11,13 +12,14 @@ export function ActivitiesHeader({
   dateRangeLabel: string;
   onNewActivity?: () => void;
 }) {
+  const t = useTranslations("activities");
   return (
     <header className="h-14 shrink-0 border-b bg-background flex items-center justify-between px-6 gap-4">
       <h2
         className="text-foreground"
         style={{ fontSize: 15, fontWeight: 600, margin: 0 }}
       >
-        Activities
+        {t("title")}
       </h2>
 
       <div className="flex items-center gap-2">
@@ -37,7 +39,7 @@ export function ActivitiesHeader({
           onClick={onNewActivity}
         >
           <Plus size={13} />
-          Thêm hoạt động
+          {t("newActivity")}
         </Button>
       </div>
     </header>

@@ -12,6 +12,8 @@ import {
   Users,
 } from "lucide-react";
 
+import { useTranslations, useLocale } from "next-intl";
+
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -71,8 +73,13 @@ export function ActivityCard({
   onEdit,
   onDelete,
 }: ActivityCardProps) {
+  const t = useTranslations("activities.card");
+  const tType = useTranslations("activities.types");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
   const [expanded, setExpanded] = useState(false);
   const meta = TYPE_META[activity.type];
+  const typeLabel = tType(activity.type.toLowerCase() as Lowercase<ActivityType>);
   const isLong = activity.note.length > NOTE_MAX_LEN;
   const displayNote = expanded
     ? activity.note
@@ -82,7 +89,7 @@ export function ActivityCard({
   const avatarColor = getAvatarColor(activity.user.id);
 
   // Format date cho display
-  const formattedDate = new Date(activity.date).toLocaleString("vi-VN", {
+  const formattedDate = new Date(activity.date).toLocaleString(locale, {
     hour: "2-digit",
     minute: "2-digit",
     day: "numeric",
@@ -113,7 +120,7 @@ export function ActivityCard({
                 color: meta.badgeText,
               }}
             >
-              {meta.label}
+              {typeLabel}
             </span>
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground" style={{ fontSize: 11 }}>
@@ -126,7 +133,7 @@ export function ActivityCard({
                   <DropdownMenuTrigger asChild>
                     <button
                       className="text-muted-foreground hover:text-foreground transition-colors p-0.5 bg-transparent border-0 cursor-pointer"
-                      aria-label="Tùy chọn hoạt động"
+                      aria-label={t("optionsAria")}
                     >
                       <MoreHorizontal size={13} />
                     </button>
@@ -138,7 +145,7 @@ export function ActivityCard({
                         className="gap-2 cursor-pointer"
                       >
                         <Pencil size={13} />
-                        <span style={{ fontSize: 12 }}>Chỉnh sửa</span>
+                        <span style={{ fontSize: 12 }}>{tCommon("edit")}</span>
                       </DropdownMenuItem>
                     )}
                     {onEdit && onDelete && <DropdownMenuSeparator />}
@@ -148,7 +155,7 @@ export function ActivityCard({
                         className="gap-2 cursor-pointer text-destructive focus:text-destructive"
                       >
                         <Trash2 size={13} />
-                        <span style={{ fontSize: 12 }}>Xóa</span>
+                        <span style={{ fontSize: 12 }}>{tCommon("delete")}</span>
                       </DropdownMenuItem>
                     )}
                   </DropdownMenuContent>
@@ -200,7 +207,7 @@ export function ActivityCard({
                 className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 border border-border text-muted-foreground bg-[#F8F8F7] dark:bg-muted"
                 style={{ fontSize: 11 }}
               >
-                Deal: {activity.deal.title}
+                {t("dealPrefix", { title: activity.deal.title })}
               </span>
             </div>
           )}
@@ -217,7 +224,7 @@ export function ActivityCard({
                 className="text-primary ml-1 bg-transparent border-0 cursor-pointer p-0"
                 style={{ fontSize: 12, fontWeight: 500 }}
               >
-                {expanded ? "Thu gọn" : "Xem thêm →"}
+                {expanded ? t("collapse") : t("expand")}
               </button>
             )}
           </p>
@@ -232,16 +239,16 @@ export function ActivityCard({
                   className="shrink-0"
                 />
                 <p style={{ fontSize: 11, color: "var(--primary)", lineHeight: 1.5 }}>
-                  <span style={{ fontWeight: 500 }}>AI Suggestions</span>
+                  <span style={{ fontWeight: 500 }}>{t("aiSuggestions")}</span>
                   {" · "}
-                  Có gợi ý AI cho deal này
+                  {t("aiHint")}
                 </p>
               </div>
               <button
                 className="shrink-0 text-primary bg-transparent border-0 cursor-pointer whitespace-nowrap"
                 style={{ fontSize: 11, fontWeight: 500 }}
               >
-                Xem →
+                {t("view")}
               </button>
             </div>
           )}

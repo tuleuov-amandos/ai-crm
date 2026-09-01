@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -36,21 +37,30 @@ interface ParsedRow {
   errors: string[];
 }
 
-const systemFieldsList = [
-  { key: "name", label: "Họ và tên *", required: true },
-  { key: "email", label: "Email", required: false },
-  { key: "phone", label: "Số điện thoại", required: false },
-  { key: "company", label: "Công ty", required: false },
-  { key: "position", label: "Chức vụ", required: false },
-  { key: "tags", label: "Tags (Nhãn)", required: false },
-  { key: "ownerEmail", label: "Email người sở hữu", required: false },
-  { key: "dealTitle", label: "Tên Deal đi kèm", required: false },
-  { key: "dealValue", label: "Giá trị Deal (VND)", required: false },
-  { key: "dealStage", label: "Trạng thái Deal", required: false },
-  { key: "dealNote", label: "Ghi chú Deal", required: false }
-];
+const SYSTEM_FIELD_KEYS = [
+  "name",
+  "email",
+  "phone",
+  "company",
+  "position",
+  "tags",
+  "ownerEmail",
+  "dealTitle",
+  "dealValue",
+  "dealStage",
+  "dealNote",
+] as const;
 
 export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelDialogProps) {
+  const t = useTranslations("contacts.import");
+  const tCommon = useTranslations("common");
+
+  const systemFieldsList = SYSTEM_FIELD_KEYS.map((key) => ({
+    key,
+    label: t(`fields.${key}`),
+    required: key === "name",
+  }));
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [step, setStep] = useState<"upload" | "mapping" | "preview">("upload");
@@ -65,57 +75,71 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
 
   // 1. Automatically generate sample Excel file and download client-side
   const handleDownloadTemplate = () => {
+    const H = {
+      name: t("template.headerName"),
+      email: t("template.headerEmail"),
+      phone: t("template.headerPhone"),
+      company: t("template.headerCompany"),
+      position: t("template.headerPosition"),
+      tags: t("template.headerTags"),
+      ownerEmail: t("template.headerOwnerEmail"),
+      dealTitle: t("template.headerDealTitle"),
+      dealValue: t("template.headerDealValue"),
+      dealStage: t("template.headerDealStage"),
+      dealNote: t("template.headerDealNote"),
+    };
+
     const templateData = [
       {
-        "Họ và tên *": "Nguyễn Văn A",
-        "Email": "nguyenvana@gmail.com",
-        "Số điện thoại": "0987654321",
-        "Công ty": "Công ty Cổ phần ABC",
-        "Chức vụ": "Trưởng phòng Kinh doanh",
-        "Tags (Chỉ nhận: Vip, Tiềm năng, Enterprise - phân cách bằng dấu phẩy)": "Vip, Tiềm năng",
-        "Email người sở hữu": "sales_member@example.com",
-        "Tên Deal đi kèm": "Hợp đồng thiết kế Web 2026",
-        "Giá trị Deal (VND)": 15000000,
-        "Trạng thái Deal": "Thương lượng",
-        "Ghi chú Deal": "Khách hàng muốn triển khai sớm"
+        [H.name]: t("template.row1Name"),
+        [H.email]: "example@example.com",
+        [H.phone]: "0987654321",
+        [H.company]: t("template.row1Company"),
+        [H.position]: t("template.row1Position"),
+        [H.tags]: "Vip, Tiềm năng",
+        [H.ownerEmail]: "sales_member@example.com",
+        [H.dealTitle]: t("template.row1DealTitle"),
+        [H.dealValue]: 15000000,
+        [H.dealStage]: t("template.row1DealStage"),
+        [H.dealNote]: t("template.row1DealNote"),
       },
       {
-        "Họ và tên *": "Trần Thị B",
-        "Email": "tranthib@gmail.com",
-        "Số điện thoại": "0912345678",
-        "Công ty": "",
-        "Chức vụ": "",
-        "Tags (Chỉ nhận: Vip, Tiềm năng, Enterprise - phân cách bằng dấu phẩy)": "Enterprise",
-        "Email người sở hữu": "",
-        "Tên Deal đi kèm": "",
-        "Giá trị Deal (VND)": 0,
-        "Trạng thái Deal": "",
-        "Ghi chú Deal": ""
-      }
+        [H.name]: t("template.row2Name"),
+        [H.email]: "example2@example.com",
+        [H.phone]: "0912345678",
+        [H.company]: "",
+        [H.position]: "",
+        [H.tags]: "Enterprise",
+        [H.ownerEmail]: "",
+        [H.dealTitle]: "",
+        [H.dealValue]: 0,
+        [H.dealStage]: "",
+        [H.dealNote]: "",
+      },
     ];
 
     const worksheet = XLSX.utils.json_to_sheet(templateData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Template Contacts");
-    XLSX.writeFile(workbook, "Mau_Import_Contacts.xlsx");
-    toast.success("Đã tải xuống file mẫu thành công!");
+    XLSX.utils.book_append_sheet(workbook, worksheet, t("template.sheetName"));
+    XLSX.writeFile(workbook, t("template.fileName"));
+    toast.success(t("toasts.templateDownloaded"));
   };
 
   // Automatch columns using local synonyms algorithm first
   const autoMatchSynonyms = (headers: string[]) => {
     const mapped: Record<string, string | null> = {};
     const systemFields = [
-      { key: "name", synonyms: ["Họ và tên", "Tên liên hệ", "Name", "Tên", "Họ tên"] },
-      { key: "email", synonyms: ["Email", "Địa chỉ email", "Hòm thư"] },
-      { key: "phone", synonyms: ["Số điện thoại", "Điện thoại", "Phone", "SĐT"] },
-      { key: "company", synonyms: ["Công ty", "Company", "Doanh nghiệp"] },
-      { key: "position", synonyms: ["Chức vụ", "Position", "Vai trò"] },
-      { key: "tags", synonyms: ["Tags", "Nhãn", "Tag"] },
-      { key: "ownerEmail", synonyms: ["Email người sở hữu", "Owner Email", "Chủ sở hữu"] },
-      { key: "dealTitle", synonyms: ["Tên Deal đi kèm", "Tên Deal", "Deal Title", "Cơ hội"] },
-      { key: "dealValue", synonyms: ["Giá trị Deal (VND)", "Giá trị Deal", "Giá trị", "Value", "Giá trị cơ hội"] },
-      { key: "dealStage", synonyms: ["Trạng thái Deal", "Trạng thái", "Stage", "Trạng thái cơ hội"] },
-      { key: "dealNote", synonyms: ["Ghi chú Deal", "Ghi chú", "Note"] }
+      { key: "name", synonyms: ["Họ và tên", "Tên liên hệ", "Name", "Tên", "Họ tên", "Имя и фамилия", "Имя", "ФИО", "Контакт"] },
+      { key: "email", synonyms: ["Email", "Địa chỉ email", "Hòm thư", "Эл. почта", "Почта"] },
+      { key: "phone", synonyms: ["Số điện thoại", "Điện thoại", "Phone", "SĐT", "Телефон", "Номер телефона", "Тел"] },
+      { key: "company", synonyms: ["Công ty", "Company", "Doanh nghiệp", "Компания", "Организация"] },
+      { key: "position", synonyms: ["Chức vụ", "Position", "Vai trò", "Должность"] },
+      { key: "tags", synonyms: ["Tags", "Nhãn", "Tag", "Теги", "Метки"] },
+      { key: "ownerEmail", synonyms: ["Email người sở hữu", "Owner Email", "Chủ sở hữu", "Email ответственного", "Ответственный"] },
+      { key: "dealTitle", synonyms: ["Tên Deal đi kèm", "Tên Deal", "Deal Title", "Cơ hội", "Название связанной сделки", "Название сделки", "Сделка"] },
+      { key: "dealValue", synonyms: ["Giá trị Deal (VND)", "Giá trị Deal", "Giá trị", "Value", "Giá trị cơ hội", "Сумма сделки (VND)", "Сумма сделки", "Сумма", "Стоимость"] },
+      { key: "dealStage", synonyms: ["Trạng thái Deal", "Trạng thái", "Stage", "Trạng thái cơ hội", "Этап сделки", "Этап", "Статус сделки"] },
+      { key: "dealNote", synonyms: ["Ghi chú Deal", "Ghi chú", "Note", "Заметка по сделке", "Заметка", "Комментарий"] }
     ];
 
     let allMatched = true;
@@ -153,7 +177,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
         const rawJson = XLSX.utils.sheet_to_json(worksheet) as any[];
 
         if (rawJson.length === 0) {
-          toast.error("File Excel trống hoặc không có dữ liệu!");
+          toast.error(t("toasts.emptyFile"));
           return;
         }
 
@@ -162,7 +186,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
         const headers = firstRow ? firstRow.filter(Boolean).map(String) : [];
 
         if (headers.length === 0) {
-          toast.error("Không tìm thấy tiêu đề cột trong file của bạn!");
+          toast.error(t("toasts.noHeaders"));
           return;
         }
 
@@ -203,7 +227,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
             setCustomMappings(initialCustomMappings);
             setStep("mapping");
           } catch (err) {
-            console.error("Lỗi AI Auto-mapping:", err);
+            console.error("AI auto-mapping error:", err);
             // Fallback to manual mapping
             setAiMappings({});
             setStep("mapping");
@@ -212,8 +236,8 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
           }
         }
       } catch (err) {
-        console.error("Lỗi đọc file:", err);
-        toast.error("Không thể đọc file Excel. Vui lòng kiểm tra lại định dạng file!");
+        console.error("File read error:", err);
+        toast.error(t("toasts.readError"));
       }
     };
 
@@ -244,19 +268,19 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
 
       // Validate Name is required
       if (!nameVal || String(nameVal).trim() === "") {
-        errors.push("Tên không được để trống");
+        errors.push(t("rowErrors.nameRequired"));
       }
 
       // Validate Email format
       const emailStr = emailVal ? String(emailVal).trim() : "";
       if (emailStr && !emailRegex.test(emailStr)) {
-        errors.push(`Email '${emailStr}' sai định dạng`);
+        errors.push(t("rowErrors.emailFormat", { email: emailStr }));
       }
 
       // Validate Owner Email format
       const ownerEmailStr = ownerEmailVal ? String(ownerEmailVal).trim() : "";
       if (ownerEmailStr && !emailRegex.test(ownerEmailStr)) {
-        errors.push(`Email chủ sở hữu '${ownerEmailStr}' sai định dạng`);
+        errors.push(t("rowErrors.ownerEmailFormat", { email: ownerEmailStr }));
       }
 
       // Validate Deal Value
@@ -264,19 +288,19 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
       if (dealValueRaw !== undefined && dealValueRaw !== "") {
         dealValue = Number(dealValueRaw);
         if (isNaN(dealValue) || dealValue < 0) {
-          errors.push("Giá trị Deal phải là số không âm");
+          errors.push(t("rowErrors.dealValue"));
           dealValue = null;
         }
       }
 
       // Validate Tags
       const tags = tagsVal
-        ? String(tagsVal).split(",").map(t => t.trim()).filter(Boolean)
+        ? String(tagsVal).split(",").map((s) => s.trim()).filter(Boolean)
         : [];
 
       tags.forEach(tag => {
         if (!allowedTags.includes(tag)) {
-          errors.push(`Tag '${tag}' không hợp lệ. Chỉ chấp nhận: Enterprise, Vip, Tiềm năng`);
+          errors.push(t("rowErrors.tagInvalid", { tag, allowed: allowedTags.join(", ") }));
         }
       });
 
@@ -326,7 +350,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
 
     const fileExtension = file.name.split(".").pop()?.toLowerCase();
     if (fileExtension !== "xlsx" && fileExtension !== "xls" && fileExtension !== "csv") {
-      toast.error("Chỉ chấp nhận các định dạng file .xlsx, .xls hoặc .csv!");
+      toast.error(t("toasts.unsupportedFormat"));
       return;
     }
 
@@ -346,7 +370,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
 
   const handleApplyMapping = () => {
     if (!customMappings["name"]) {
-      toast.error("Trường 'Họ và tên' bắt buộc phải được ánh xạ!");
+      toast.error(t("toasts.nameFieldRequired"));
       return;
     }
     parseExcelRows(rawExcelRows, customMappings);
@@ -356,18 +380,18 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
   const handleConfirmImport = async () => {
     const validRows = rows.filter(r => r.isValid);
     if (validRows.length === 0) {
-      toast.error("Không tìm thấy dòng dữ liệu nào hợp lệ để import!");
+      toast.error(t("toasts.noValidRows"));
       return;
     }
 
     try {
       const result = await bulkImport(validRows);
-      toast.success(`Import thành công ${result.count} liên hệ vào hệ thống!`);
+      toast.success(t("toasts.importSuccess", { count: result.count }));
       handleReset();
       onOpenChange(false);
     } catch (error) {
       const err = error as { response?: { data?: { message?: string } } };
-      toast.error(err?.response?.data?.message || "Import thất bại. Vui lòng thử lại!");
+      toast.error(err?.response?.data?.message || t("toasts.importError"));
     }
   };
 
@@ -383,12 +407,12 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
       <DialogContent className="sm:max-w-6xl max-h-[90vh] flex flex-col p-6">
         <DialogHeader className="shrink-0">
           <DialogTitle className="text-lg font-semibold flex items-center gap-2">
-            <span>Import Contacts từ Excel / CSV</span>
-            {step === "mapping" && <span className="text-xs font-normal bg-primary/10 text-primary px-2.5 py-0.5 rounded-full border border-primary/20">Ánh xạ cột AI</span>}
-            {step === "preview" && <span className="text-xs font-normal bg-green-50 text-green-700 px-2.5 py-0.5 rounded-full border border-green-200">Xem trước dữ liệu</span>}
+            <span>{t("title")}</span>
+            {step === "mapping" && <span className="text-xs font-normal bg-primary/10 text-primary px-2.5 py-0.5 rounded-full border border-primary/20">{t("badgeMapping")}</span>}
+            {step === "preview" && <span className="text-xs font-normal bg-green-50 text-green-700 px-2.5 py-0.5 rounded-full border border-green-200">{t("badgePreview")}</span>}
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
-            Tự động đối chiếu thông tin tiêu đề cột thô bằng trí tuệ nhân tạo (AI) và chuyển đổi dữ liệu nhanh chóng vào CRM.
+            {t("description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -396,7 +420,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
         {step === "upload" && !isMappingPending && (
           <div className="flex flex-col gap-3 my-3 shrink-0">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-muted-foreground">Chọn hoặc kéo thả file dữ liệu:</span>
+              <span className="text-xs font-medium text-muted-foreground">{t("chooseOrDrag")}</span>
               <Button
                 variant="outline"
                 size="sm"
@@ -404,7 +428,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
                 className="gap-1.5 text-xs h-8 cursor-pointer border-border text-muted-foreground hover:text-foreground"
               >
                 <Download size={13} />
-                Tải file mẫu (.xlsx)
+                {t("downloadTemplate")}
               </Button>
             </div>
 
@@ -429,10 +453,14 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
             >
               <Upload size={32} className={`mb-3 transition-colors ${isDragging ? "text-primary" : "text-muted-foreground/60"}`} />
               <p className="text-xs font-medium text-foreground mb-1">
-                Kéo thả file Excel hoặc CSV vào đây
+                {t("dropzoneTitle")}
               </p>
               <p className="text-[10px] text-muted-foreground">
-                Hoặc <span className="text-primary hover:underline font-semibold">chọn file từ máy tính</span> (hỗ trợ .xlsx, .xls, .csv)
+                {t.rich("dropzoneHint", {
+                  browse: (chunks) => (
+                    <span className="text-primary hover:underline font-semibold">{chunks}</span>
+                  ),
+                })}
               </p>
             </div>
           </div>
@@ -442,8 +470,8 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
         {isMappingPending && (
           <div className="flex flex-col items-center justify-center p-12 bg-muted/20 border border-dashed rounded-xl my-6 shrink-0">
             <Loader2 className="animate-spin text-primary mb-3" size={32} />
-            <p className="text-xs font-semibold text-foreground">Đang xử lý phân tích tiêu đề cột bằng AI...</p>
-            <p className="text-[10px] text-muted-foreground mt-1">Hệ thống đang tự động tìm mối tương quan giữa các cột thô</p>
+            <p className="text-xs font-semibold text-foreground">{t("aiProcessing")}</p>
+            <p className="text-[10px] text-muted-foreground mt-1">{t("aiProcessingHint")}</p>
           </div>
         )}
 
@@ -453,9 +481,9 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
             <div className="bg-primary/5 border border-primary/15 rounded-xl p-4 flex items-start gap-3">
               <FileSpreadsheet size={20} className="text-primary mt-0.5" />
               <div>
-                <h4 className="text-xs font-semibold text-foreground">Phân tích cột bằng AI hoàn tất</h4>
+                <h4 className="text-xs font-semibold text-foreground">{t("mappingDoneTitle")}</h4>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Chúng tôi đã tự động nhận diện các cột thô từ file Excel của bạn. Bạn hãy kiểm tra lại và chỉnh sửa qua dropdown nếu cần thiết.
+                  {t("mappingDoneHint")}
                 </p>
               </div>
             </div>
@@ -464,9 +492,9 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
               <table className="w-full text-xs text-left border-collapse">
                 <thead className="bg-muted text-muted-foreground font-semibold border-b border-border/75">
                   <tr>
-                    <th className="p-3 w-1/3">Trường thông tin CRM</th>
-                    <th className="p-3">Cột tương ứng trong file Excel của bạn</th>
-                    <th className="p-3 text-center w-24">Trạng thái</th>
+                    <th className="p-3 w-1/3">{t("colCrmField")}</th>
+                    <th className="p-3">{t("colExcelColumn")}</th>
+                    <th className="p-3 text-center w-24">{t("colStatus")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60">
@@ -485,7 +513,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
                             onChange={(e) => setCustomMappings({ ...customMappings, [field.key]: e.target.value })}
                             className="w-full max-w-md h-9 px-3 rounded-lg border border-border bg-background text-xs focus:ring-1 focus:ring-primary focus:border-primary outline-none cursor-pointer"
                           >
-                            <option value="">-- Bỏ qua cột này / Không import --</option>
+                            <option value="">{t("skipColumn")}</option>
                             {rawHeaders.map((header) => (
                               <option key={header} value={header}>{header}</option>
                             ))}
@@ -495,15 +523,15 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
                           {mappedValue ? (
                             isMatchedByAi ? (
                               <span className="inline-flex px-2 py-0.5 rounded-full text-[9px] bg-green-50 text-green-700 border border-green-200 font-semibold shadow-2xs">
-                                AI Match
+                                {t("statusAiMatch")}
                               </span>
                             ) : (
                               <span className="inline-flex px-2 py-0.5 rounded-full text-[9px] bg-sky-50 text-sky-700 border border-sky-200 font-semibold shadow-2xs">
-                                Manual
+                                {t("statusManual")}
                               </span>
                             )
                           ) : (
-                            <span className="text-[10px] text-muted-foreground italic">Trống</span>
+                            <span className="text-[10px] text-muted-foreground italic">{t("statusEmpty")}</span>
                           )}
                         </td>
                       </tr>
@@ -524,7 +552,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
                 <FileSpreadsheet size={20} className="text-green-600 shrink-0" />
                 <div className="flex flex-col gap-0.5">
                   <span className="font-semibold text-foreground max-w-[260px] truncate">{fileName}</span>
-                  <span className="text-[10px] text-muted-foreground">Đã ánh xạ cột thành công</span>
+                  <span className="text-[10px] text-muted-foreground">{t("mappedSuccess")}</span>
                 </div>
               </div>
               <Button
@@ -534,7 +562,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
                 className="h-8 px-2.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg cursor-pointer gap-1.5"
               >
                 <Trash2 size={13} />
-                Chọn file khác
+                {t("chooseAnotherFile")}
               </Button>
             </div>
 
@@ -542,18 +570,18 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
             {totalRows > 0 && (
               <div className="flex gap-4 p-3 bg-muted/50 rounded-lg border text-xs mb-3 shrink-0 font-medium">
                 <div className="flex items-center gap-1.5 text-foreground">
-                  <span>Tổng số:</span>
-                  <strong className="text-sm font-semibold">{totalRows} dòng</strong>
+                  <span>{t("summaryTotal")}</span>
+                  <strong className="text-sm font-semibold">{t("summaryRows", { count: totalRows })}</strong>
                 </div>
                 <div className="flex items-center gap-1.5 text-green-600">
                   <CheckCircle size={14} />
-                  <span>Hợp lệ:</span>
+                  <span>{t("summaryValid")}</span>
                   <strong className="text-sm font-semibold">{validRowsCount}</strong>
                 </div>
                 {invalidRowsCount > 0 && (
                   <div className="flex items-center gap-1.5 text-destructive">
                     <AlertCircle size={14} />
-                    <span>Không hợp lệ (bị bỏ qua):</span>
+                    <span>{t("summaryInvalid")}</span>
                     <strong className="text-sm font-semibold">{invalidRowsCount}</strong>
                   </div>
                 )}
@@ -565,21 +593,21 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
               {rows.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-8">
                   <FileSpreadsheet size={44} className="stroke-[1.2] mb-3 text-muted-foreground/60" />
-                  <p className="text-xs">Không có dữ liệu xem trước.</p>
+                  <p className="text-xs">{t("noPreviewData")}</p>
                 </div>
               ) : (
                 <table className="w-full text-[11px] text-left border-collapse min-w-[800px]">
                   <thead className="bg-muted sticky top-0 font-semibold border-b text-muted-foreground uppercase tracking-wider h-8">
                     <tr>
-                      <th className="px-3 border-r w-12 text-center">Dòng</th>
-                      <th className="px-3 border-r">Họ tên *</th>
-                      <th className="px-3 border-r">Email</th>
-                      <th className="px-3 border-r">Điện thoại</th>
-                      <th className="px-3 border-r">Công ty</th>
-                      <th className="px-3 border-r">Deal Title</th>
-                      <th className="px-3 border-r text-right">Trị giá Deal</th>
-                      <th className="px-3 border-r text-center">Trạng thái Deal</th>
-                      <th className="px-3 text-center">Trạng thái dòng</th>
+                      <th className="px-3 border-r w-12 text-center">{t("previewColRow")}</th>
+                      <th className="px-3 border-r">{t("previewColName")}</th>
+                      <th className="px-3 border-r">{t("previewColEmail")}</th>
+                      <th className="px-3 border-r">{t("previewColPhone")}</th>
+                      <th className="px-3 border-r">{t("previewColCompany")}</th>
+                      <th className="px-3 border-r">{t("previewColDealTitle")}</th>
+                      <th className="px-3 border-r text-right">{t("previewColDealValue")}</th>
+                      <th className="px-3 border-r text-center">{t("previewColDealStage")}</th>
+                      <th className="px-3 text-center">{t("previewColRowStatus")}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -604,7 +632,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
                         <td className="px-3 py-1.5">
                           {row.isValid ? (
                             <span className="flex items-center justify-center text-green-600 gap-1 font-semibold text-[10px]">
-                              <CheckCircle size={12} /> Hợp lệ
+                              <CheckCircle size={12} /> {t("rowValid")}
                             </span>
                           ) : (
                             <div className="flex flex-col gap-0.5 text-destructive font-medium text-[10px]">
@@ -636,7 +664,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
                 className="text-xs h-9 cursor-pointer gap-1.5 border-border"
               >
                 <ArrowLeft size={13} />
-                Quay lại Upload
+                {t("backToUpload")}
               </Button>
             )}
             {step === "preview" && rawHeaders.length > 0 && (
@@ -647,7 +675,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
                 className="text-xs h-9 cursor-pointer gap-1.5 border-border"
               >
                 <ArrowLeft size={13} />
-                Sửa Ánh xạ cột
+                {t("editMapping")}
               </Button>
             )}
           </div>
@@ -662,7 +690,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
               }}
               className="text-xs h-9 cursor-pointer border border-transparent hover:bg-muted"
             >
-              Hủy bỏ
+              {tCommon("cancel")}
             </Button>
 
             {step === "mapping" && (
@@ -672,7 +700,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
                 onClick={handleApplyMapping}
                 className="text-xs h-9 cursor-pointer gap-1.5 bg-primary text-white"
               >
-                Xem trước dữ liệu
+                {t("previewCta")}
                 <ChevronRight size={13} />
               </Button>
             )}
@@ -685,7 +713,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
                 disabled={isPending || validRowsCount === 0}
                 className="text-xs h-9 cursor-pointer bg-primary text-white"
               >
-                {isPending ? "Đang import..." : `Xác nhận Import (${validRowsCount} dòng)`}
+                {isPending ? t("importing") : t("confirmImport", { count: validRowsCount })}
               </Button>
             )}
           </div>

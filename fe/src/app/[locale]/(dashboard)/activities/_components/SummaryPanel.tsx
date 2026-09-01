@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { FileText, Mail, Phone, Users } from "lucide-react";
 import type { ReactNode } from "react";
+import { useTranslations } from "next-intl";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,35 +26,30 @@ interface SummaryPanelProps {
 
 const TYPE_ROWS: {
   type: ActivityType;
-  label: string;
   icon: ReactNode;
   color: string;
   bg: string;
 }[] = [
   {
     type: "CALL",
-    label: "Cuộc gọi",
     icon: <Phone size={13} />,
     color: "#16A05B",
     bg: "#E1F5EE",
   },
   {
     type: "EMAIL",
-    label: "Email",
     icon: <Mail size={13} />,
     color: "#534AB7",
     bg: "#EEEDFE",
   },
   {
     type: "MEETING",
-    label: "Gặp mặt",
     icon: <Users size={13} />,
     color: "#B45309",
     bg: "#FAEEDA",
   },
   {
     type: "NOTE",
-    label: "Ghi chú",
     icon: <FileText size={13} />,
     color: "#6B6B67",
     bg: "#F1EFE8",
@@ -123,6 +119,8 @@ function UserSkeletonRows() {
 // ─────────────────────────────────────────
 
 export function SummaryPanel({ activities, isLoading }: SummaryPanelProps) {
+  const t = useTranslations("activities");
+  const tType = useTranslations("activities.types");
   // ── Count by type — useMemo to avoid recalculation on each render (req 10.1) ──
   const counts = useMemo(() => {
     return activities.reduce<Record<string, number>>((acc, a) => {
@@ -157,7 +155,7 @@ export function SummaryPanel({ activities, isLoading }: SummaryPanelProps) {
           className="text-foreground mb-3"
           style={{ fontSize: 13, fontWeight: 600 }}
         >
-          Tổng hoạt động
+          {t("summary.totalActivities")}
         </p>
 
         <div className="space-y-2.5">
@@ -176,7 +174,7 @@ export function SummaryPanel({ activities, isLoading }: SummaryPanelProps) {
                   className="flex-1 text-muted-foreground"
                   style={{ fontSize: 12 }}
                 >
-                  {row.label}
+                  {tType(row.type.toLowerCase() as Lowercase<ActivityType>)}
                 </span>
                 <span
                   className="text-foreground"
@@ -192,7 +190,7 @@ export function SummaryPanel({ activities, isLoading }: SummaryPanelProps) {
         {/* Total row */}
         {!isLoading && (
           <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
-            <span style={{ fontSize: 11, color: "var(--muted-foreground)" }}>Tổng</span>
+            <span style={{ fontSize: 11, color: "var(--muted-foreground)" }}>{t("summary.total")}</span>
             <span style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>
               {total}
             </span>
@@ -206,7 +204,7 @@ export function SummaryPanel({ activities, isLoading }: SummaryPanelProps) {
           className="text-foreground mb-3"
           style={{ fontSize: 13, fontWeight: 600 }}
         >
-          Top nhân viên
+          {t("summary.topStaff")}
         </p>
 
         <div className="space-y-2">
@@ -228,7 +226,7 @@ export function SummaryPanel({ activities, isLoading }: SummaryPanelProps) {
                   className="text-muted-foreground"
                   style={{ fontSize: 12 }}
                 >
-                  Chưa có dữ liệu
+                  {t("summary.noData")}
                 </span>
               </div>
             ))
@@ -269,7 +267,7 @@ export function SummaryPanel({ activities, isLoading }: SummaryPanelProps) {
                     className="text-muted-foreground"
                     style={{ fontSize: 11 }}
                   >
-                    {user.count} hoạt động
+                    {t("summary.activityCount", { count: user.count })}
                   </span>
                 </div>
               );

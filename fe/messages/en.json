@@ -8,7 +8,10 @@
     "edit": "Edit",
     "loading": "Loading…",
     "done": "Done",
-    "unknownError": "Unknown error"
+    "unknownError": "Unknown error",
+    "delete": "Delete",
+    "reset": "Reset",
+    "saving": "Saving…"
   },
   "auth": {
     "validation": {
@@ -273,6 +276,262 @@
       },
       "toasts": {
         "dealUpdated": "Deal updated"
+      }
+    }
+  },
+  "contacts": {
+    "title": "Contacts",
+    "searchPlaceholder": "Search contacts…",
+    "filter": "Filter",
+    "allTags": "All tags",
+    "tagPrefix": "Tag: {tag}",
+    "importExcel": "Import Excel",
+    "addContact": "Add contact",
+    "detail": {
+      "notFound": "Contact not found",
+      "activitiesNotFound": "Activities not found",
+      "assign": "Assign",
+      "addDeal": "Add deal"
+    },
+    "table": {
+      "colContact": "Contact",
+      "colCompany": "Company",
+      "colEmail": "Email",
+      "colPhone": "Phone",
+      "colTags": "Tags",
+      "colDeals": "Deals",
+      "colValue": "Value",
+      "colCreated": "Created",
+      "colLastActivity": "Last activity",
+      "dealsCount": "{count, plural, one {# deal} other {# deals}}",
+      "loadingMore": "Loading more contacts…",
+      "scrollToLoadMore": "Scroll down to load more",
+      "allLoaded": "All contacts loaded ({count})",
+      "footerCount": "{count, plural, one {# contact} other {# contacts}}",
+      "viewDetails": "View details",
+      "emptyTitle": "No contacts yet",
+      "emptyDescription": "Add your first contact to start managing customers"
+    },
+    "form": {
+      "nameLabel": "Contact name",
+      "namePlaceholder": "Enter contact name",
+      "emailLabel": "Email",
+      "emailPlaceholder": "Enter email",
+      "phoneLabel": "Phone",
+      "phonePlaceholder": "Enter phone number",
+      "companyLabel": "Company",
+      "companyPlaceholder": "Enter company name",
+      "positionLabel": "Position",
+      "positionPlaceholder": "Enter job title",
+      "tagsLabel": "Tags",
+      "tagsPlaceholder": "Select contact tags",
+      "validation": {
+        "nameMin": "Contact name must be at least 2 characters.",
+        "nameMax": "Contact name must be at most 100 characters.",
+        "emailInvalid": "Invalid email address."
+      }
+    },
+    "dialog": {
+      "createTitle": "New contact",
+      "editTitle": "Edit contact",
+      "createDescription": "Fill in the new contact details in the form below and click Add contact to create it.",
+      "editDescription": "Update the contact details in the form below and click Save to apply changes."
+    },
+    "infoPanel": {
+      "editInfo": "Edit details",
+      "deleteContact": "Delete contact",
+      "noTags": "No tags",
+      "positionAtCompany": "{position} at {company}",
+      "infoEmail": "Email",
+      "infoPhone": "Phone",
+      "infoCompany": "Company",
+      "infoPosition": "Position",
+      "infoCreatedAt": "Created",
+      "statDeals": "Deals",
+      "statActivities": "Activities",
+      "statValue": "Value",
+      "contactInfoHeading": "Contact information",
+      "relatedDeals": "Related deals",
+      "viewAll": "View all",
+      "deleteConfirmTitle": "Confirm contact deletion",
+      "deleteConfirmDescription": "Are you sure you want to delete the contact <b>{name}</b>? This action cannot be undone."
+    },
+    "import": {
+      "title": "Import contacts from Excel / CSV",
+      "badgeMapping": "AI column mapping",
+      "badgePreview": "Data preview",
+      "description": "AI automatically matches raw column headers and quickly imports the data into the CRM.",
+      "chooseOrDrag": "Choose a data file or drag and drop it:",
+      "downloadTemplate": "Download template (.xlsx)",
+      "dropzoneTitle": "Drag and drop an Excel or CSV file here",
+      "dropzoneHint": "Or <browse>choose a file from your computer</browse> (.xlsx, .xls, .csv supported)",
+      "aiProcessing": "AI is analyzing the column headers…",
+      "aiProcessingHint": "The system is automatically matching your raw columns",
+      "mappingDoneTitle": "AI column analysis complete",
+      "mappingDoneHint": "We automatically detected the columns from your Excel file. Review them and adjust the mapping via the dropdowns if needed.",
+      "colCrmField": "CRM field",
+      "colExcelColumn": "Matching column in your Excel file",
+      "colStatus": "Status",
+      "skipColumn": "— Skip this column / Don't import —",
+      "statusAiMatch": "AI match",
+      "statusManual": "Manual",
+      "statusEmpty": "Empty",
+      "mappedSuccess": "Columns mapped successfully",
+      "chooseAnotherFile": "Choose another file",
+      "summaryTotal": "Total:",
+      "summaryRows": "{count, plural, one {# row} other {# rows}}",
+      "summaryValid": "Valid:",
+      "summaryInvalid": "Invalid (skipped):",
+      "previewColRow": "Row",
+      "previewColName": "Name *",
+      "previewColEmail": "Email",
+      "previewColPhone": "Phone",
+      "previewColCompany": "Company",
+      "previewColDealTitle": "Deal title",
+      "previewColDealValue": "Deal value",
+      "previewColDealStage": "Deal stage",
+      "previewColRowStatus": "Row status",
+      "noPreviewData": "No preview data.",
+      "rowValid": "Valid",
+      "backToUpload": "Back to upload",
+      "editMapping": "Edit column mapping",
+      "previewCta": "Preview data",
+      "importing": "Importing…",
+      "confirmImport": "Confirm import ({count, plural, one {# row} other {# rows}})",
+      "fields": {
+        "name": "Full name *",
+        "email": "Email",
+        "phone": "Phone",
+        "company": "Company",
+        "position": "Position",
+        "tags": "Tags",
+        "ownerEmail": "Owner email",
+        "dealTitle": "Linked deal title",
+        "dealValue": "Deal value (VND)",
+        "dealStage": "Deal stage",
+        "dealNote": "Deal note"
+      },
+      "toasts": {
+        "templateDownloaded": "Template downloaded.",
+        "emptyFile": "The Excel file is empty or has no data.",
+        "noHeaders": "No column headers found in your file.",
+        "readError": "Couldn't read the Excel file. Please check the file format.",
+        "unsupportedFormat": "Only .xlsx, .xls or .csv files are supported.",
+        "nameFieldRequired": "The 'Full name' field must be mapped.",
+        "noValidRows": "No valid rows to import.",
+        "importSuccess": "Imported {count} contacts.",
+        "importError": "Import failed. Please try again."
+      },
+      "rowErrors": {
+        "nameRequired": "Name cannot be empty",
+        "emailFormat": "Email '{email}' has an invalid format",
+        "ownerEmailFormat": "Owner email '{email}' has an invalid format",
+        "dealValue": "Deal value must be a non-negative number",
+        "tagInvalid": "Tag '{tag}' is not allowed. Allowed values: {allowed}"
+      },
+      "template": {
+        "fileName": "Contacts_Import_Template.xlsx",
+        "sheetName": "Contacts template",
+        "headerName": "Full name *",
+        "headerEmail": "Email",
+        "headerPhone": "Phone",
+        "headerCompany": "Company",
+        "headerPosition": "Position",
+        "headerTags": "Tags (allowed: Vip, Tiềm năng, Enterprise — comma-separated)",
+        "headerOwnerEmail": "Owner email",
+        "headerDealTitle": "Linked deal title",
+        "headerDealValue": "Deal value (VND)",
+        "headerDealStage": "Deal stage",
+        "headerDealNote": "Deal note",
+        "row1Name": "John Smith",
+        "row1Company": "Acme Inc.",
+        "row1Position": "Head of Sales",
+        "row1DealTitle": "Website redesign 2026",
+        "row1DealStage": "Proposal",
+        "row1DealNote": "Customer wants to launch as soon as possible",
+        "row2Name": "Jane Doe"
+      }
+    }
+  },
+  "activities": {
+    "title": "Activities",
+    "newActivity": "Add activity",
+    "loadMore": "Load more",
+    "dateRangeAll": "All",
+    "deleteTitle": "Delete activity",
+    "deleteDescription": "Are you sure you want to delete the activity \"{title}\"? This action cannot be undone.",
+    "deleting": "Deleting…",
+    "today": "Today — {date}",
+    "yesterday": "Yesterday — {date}",
+    "types": {
+      "call": "Call",
+      "email": "Email",
+      "meeting": "Meeting",
+      "note": "Note"
+    },
+    "filters": {
+      "all": "All",
+      "showData": "Show data",
+      "emptyState": "Empty state",
+      "allStaff": "All staff",
+      "allContacts": "All contacts",
+      "last7Days": "Last 7 days"
+    },
+    "form": {
+      "createTitle": "New activity",
+      "editTitle": "Edit activity",
+      "typeLabel": "Activity type",
+      "typePlaceholder": "Select activity type",
+      "titleLabel": "Title",
+      "titlePlaceholder": "Enter a title (optional)",
+      "noteLabel": "Content",
+      "notePlaceholder": "Enter the activity details…",
+      "dateLabel": "Date & time",
+      "createCta": "Add activity",
+      "saveChanges": "Save changes",
+      "validation": {
+        "noteRequired": "Content cannot be empty"
+      }
+    },
+    "card": {
+      "optionsAria": "Activity options",
+      "dealPrefix": "Deal: {title}",
+      "collapse": "Show less",
+      "expand": "Show more →",
+      "aiSuggestions": "AI suggestions",
+      "aiHint": "There are AI suggestions for this deal",
+      "view": "View →"
+    },
+    "empty": {
+      "title": "No activities yet",
+      "description": "Log your first activity with a customer"
+    },
+    "summary": {
+      "totalActivities": "Total activities",
+      "total": "Total",
+      "topStaff": "Top staff",
+      "noData": "No data",
+      "activityCount": "{count, plural, one {# activity} other {# activities}}"
+    },
+    "timeline": {
+      "history": "Activity history",
+      "collapse": "Show less",
+      "expand": "Show more"
+    },
+    "log": {
+      "titlePlaceholder": "Activity title (optional)",
+      "activityTime": "Activity time",
+      "saving": "Saving…",
+      "submit": "Save activity",
+      "placeholder": {
+        "call": "Call notes… what was discussed, the outcome, next steps…",
+        "email": "Email summary… subject, key points, the client's reply…",
+        "meeting": "Meeting notes… agenda, discussion, decisions, action items…",
+        "noteDeal": "Internal note… important information about this deal…",
+        "noteContact": "Internal note… important information about this contact…"
+      },
+      "validation": {
+        "noteRequired": "Content cannot be empty"
       }
     }
   }

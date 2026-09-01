@@ -1,13 +1,14 @@
 import { Controller, useForm } from "react-hook-form";
 import {
   Contact,
-  CreateContactBodySchema,
   CreateContactBodyType,
   ContactTagConst,
   ContactTagType,
 } from "@/lib/validations/contacts.scheme";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { useTranslations } from "next-intl";
+import { z } from "zod";
 import {
   Field,
   FieldError,
@@ -24,6 +25,33 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown, Tag } from "lucide-react";
 
+const buildContactFormSchema = (tv: (key: string) => string) =>
+  z
+    .object({
+      name: z
+        .string()
+        .min(2, tv("nameMin"))
+        .max(100, tv("nameMax")),
+      email: z
+        .string()
+        .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, tv("emailInvalid"))
+        .optional()
+        .nullable(),
+      phone: z.string().optional().nullable(),
+      company: z.string().optional().nullable(),
+      position: z.string().optional().nullable(),
+      tags: z
+        .array(
+          z.enum([
+            ContactTagConst.Enterprise,
+            ContactTagConst.Vip,
+            ContactTagConst.Potential,
+          ]),
+        )
+        .optional(),
+    })
+    .strict();
+
 interface ContactFormProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -39,8 +67,12 @@ const CONTACT_TAG_COLOR: Record<ContactTagType, string> = {
 };
 
 function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
+  const t = useTranslations("contacts.form");
+  const tCommon = useTranslations("common");
+  const tv = useTranslations("contacts.form.validation");
+  const contactFormSchema = useMemo(() => buildContactFormSchema(tv), [tv]);
   const form = useForm<CreateContactBodyType>({
-    resolver: zodResolver(CreateContactBodySchema),
+    resolver: zodResolver(contactFormSchema),
     defaultValues: {
       name: defaultValues?.name ?? "",
       email: defaultValues?.email ?? "",
@@ -73,14 +105,14 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor="form-rhf-contact-name">
-                  Tên liên hệ <span className="text-destructive">*</span>
+                  {t("nameLabel")} <span className="text-destructive">*</span>
                 </FieldLabel>
                 <Input
                   {...field}
                   value={field.value ?? ""}
                   id="form-rhf-contact-name"
                   aria-invalid={fieldState.invalid}
-                  placeholder="Nhập tên liên hệ"
+                  placeholder={t("namePlaceholder")}
                   autoComplete="off"
                   className="w-full"
                 />
@@ -96,13 +128,13 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="form-rhf-contact-email">Email</FieldLabel>
+              <FieldLabel htmlFor="form-rhf-contact-email">{t("emailLabel")}</FieldLabel>
               <Input
                 {...field}
                 value={field.value ?? ""}
                 id="form-rhf-contact-email"
                 aria-invalid={fieldState.invalid}
-                placeholder="Nhập email"
+                placeholder={t("emailPlaceholder")}
                 autoComplete="off"
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -117,14 +149,14 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor="form-rhf-contact-phone">
-                Số điện thoại
+                {t("phoneLabel")}
               </FieldLabel>
               <Input
                 {...field}
                 value={field.value ?? ""}
                 id="form-rhf-contact-phone"
                 aria-invalid={fieldState.invalid}
-                placeholder="Nhập số điện thoại"
+                placeholder={t("phonePlaceholder")}
                 autoComplete="off"
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -139,14 +171,14 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor="form-rhf-contact-company">
-                Công ty
+                {t("companyLabel")}
               </FieldLabel>
               <Input
                 {...field}
                 value={field.value ?? ""}
                 id="form-rhf-contact-company"
                 aria-invalid={fieldState.invalid}
-                placeholder="Nhập tên công ty"
+                placeholder={t("companyPlaceholder")}
                 autoComplete="off"
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -161,14 +193,14 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor="form-rhf-contact-position">
-                Vị trí
+                {t("positionLabel")}
               </FieldLabel>
               <Input
                 {...field}
                 value={field.value ?? ""}
                 id="form-rhf-contact-position"
                 aria-invalid={fieldState.invalid}
-                placeholder="Nhập vị trí công việc"
+                placeholder={t("positionPlaceholder")}
                 autoComplete="off"
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -183,7 +215,7 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="form-rhf-contact-tags">Tags (Nhãn)</FieldLabel>
+                <FieldLabel htmlFor="form-rhf-contact-tags">{t("tagsLabel")}</FieldLabel>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
@@ -209,7 +241,7 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
                       ) : (
                         <span className="text-muted-foreground flex items-center gap-1.5">
                           <Tag className="size-4 opacity-50" />
-                          Chọn nhãn liên hệ
+                          {t("tagsPlaceholder")}
                         </span>
                       )}
                       <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground opacity-50" />
@@ -249,7 +281,7 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
           onClick={() => form.reset()}
           className="cursor-pointer"
         >
-          Reset
+          {tCommon("reset")}
         </Button>
         <Button
           type="submit"
@@ -257,7 +289,7 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
           disabled={isPending}
           className="cursor-pointer"
         >
-          {isPending ? "Đang xử lý..." : "Lưu"}
+          {isPending ? tCommon("saving") : tCommon("save")}
         </Button>
       </div>
     </form>

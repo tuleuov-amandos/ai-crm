@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Table,
   TableBody,
@@ -13,7 +14,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Eye, Pencil, Plus, Users } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { getInitials, relativeTime } from "@/lib/helper";
+import { formatCurrency, getInitials, relativeTime } from "@/lib/helper";
 import {
   Contact,
   ContactTagConst,
@@ -31,18 +32,20 @@ interface ContactTableProps {
   fetchNextPage?: () => void;
 }
 
-const TABLE_COLUMNS = [
-  "Liên hệ",
-  "Công ty",
-  "Email",
-  "Số điện thoại",
-  "Tags",
-  "Deals",
-  "Giá trị",
-  "Ngày tạo",
-  "Hoạt động cuối",
-  "",
-] as const;
+function getTableColumns(t: (key: string) => string): string[] {
+  return [
+    t("colContact"),
+    t("colCompany"),
+    t("colEmail"),
+    t("colPhone"),
+    t("colTags"),
+    t("colDeals"),
+    t("colValue"),
+    t("colCreated"),
+    t("colLastActivity"),
+    "",
+  ];
+}
 
 const CONTACT_TAG_COLOR: Record<ContactTagType, string> = {
   [ContactTagConst.Enterprise]: "bg-blue-100 text-blue-800 border-blue-200",
@@ -51,12 +54,14 @@ const CONTACT_TAG_COLOR: Record<ContactTagType, string> = {
 };
 
 function ContactTableSkeleton() {
+  const t = useTranslations("contacts.table");
+  const tableColumns = getTableColumns(t);
   return (
     <>
       <Table className="min-w-[1200px]">
         <TableHeader>
           <TableRow className="hover:bg-transparent border-b border-border/60">
-            {TABLE_COLUMNS.map((col, idx) => (
+            {tableColumns.map((col, idx) => (
               <TableHead
                 key={idx}
                 className="px-4 py-3 text-muted-foreground uppercase"
@@ -263,6 +268,10 @@ function ContactTable({
   isFetchingNextPage,
   fetchNextPage,
 }: ContactTableProps) {
+  const t = useTranslations("contacts.table");
+  const tContacts = useTranslations("contacts");
+  const tCommon = useTranslations("common");
+  const tableColumns = getTableColumns(t);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -301,11 +310,11 @@ function ContactTable({
           <Table className="min-w-[1200px]">
             <TableHeader>
               <TableRow className="hover:bg-transparent border-b border-border/60">
-                {TABLE_COLUMNS.map((col, idx) => (
+                {tableColumns.map((col, idx) => (
                   <TableHead
                     key={idx}
                     className={`px-4 py-3 text-muted-foreground uppercase ${
-                      idx === TABLE_COLUMNS.length - 1 ? "w-[80px]" : ""
+                      idx === tableColumns.length - 1 ? "w-[80px]" : ""
                     }`}
                     style={{
                       fontSize: 11,
@@ -409,8 +418,7 @@ function ContactTable({
                     className="px-4 py-3 text-foreground"
                     style={{ fontSize: 12, fontWeight: 500 }}
                   >
-                    {contact.deals.length} deal
-                    {contact.deals.length > 1 ? "s" : ""}
+                    {t("dealsCount", { count: contact.deals.length })}
                   </TableCell>
 
                   {/* ── Value ── */}
@@ -418,10 +426,9 @@ function ContactTable({
                     className="px-4 py-3 text-foreground"
                     style={{ fontSize: 12, fontWeight: 600 }}
                   >
-                    {contact.deals
-                      .reduce((total, deal) => total + deal.value, 0)
-                      .toLocaleString()}
-                    đ
+                    {formatCurrency(
+                      contact.deals.reduce((total, deal) => total + deal.value, 0),
+                    )}
                   </TableCell>
 
                   {/* ── Created date ── */}
@@ -452,7 +459,7 @@ function ContactTable({
                           e.stopPropagation();
                           onDirect(contact.id);
                         }}
-                        title="Xem chi tiết"
+                        title={t("viewDetails")}
                       >
                         <Eye size={14} />
                       </Button>
@@ -464,7 +471,7 @@ function ContactTable({
                           e.stopPropagation();
                           onEdit(contact);
                         }}
-                        title="Chỉnh sửa"
+                        title={tCommon("edit")}
                       >
                         <Pencil size={13} />
                       </Button>
@@ -480,15 +487,15 @@ function ContactTable({
               {isFetchingNextPage ? (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent animate-[spin_0.6s_linear_infinite]" />
-                  Đang tải thêm liên hệ...
+                  {t("loadingMore")}
                 </div>
               ) : hasNextPage ? (
                 <span className="text-xs text-muted-foreground opacity-60">
-                  Cuộn xuống để tải thêm
+                  {t("scrollToLoadMore")}
                 </span>
               ) : (
                 <span className="text-xs text-muted-foreground opacity-40">
-                  Đã tải hết danh sách liên hệ ({contacts.length})
+                  {t("allLoaded", { count: contacts.length })}
                 </span>
               )}
             </div>
@@ -500,7 +507,7 @@ function ContactTable({
             >
             <div className="flex items-center gap-1.5 min-w-20">
               <Users size={12} className="shrink-0" />
-              {contacts.length} liên hệ
+              {t("footerCount", { count: contacts.length })}
             </div>
             {/*             
             <Pagination>
@@ -539,13 +546,13 @@ function ContactTable({
             className="text-foreground mb-1.5"
             style={{ fontSize: 15, fontWeight: 600 }}
           >
-            Chưa có liên hệ nào
+            {t("emptyTitle")}
           </p>
           <p
             className="text-muted-foreground mb-6 max-w-xs"
             style={{ fontSize: 13 }}
           >
-            Thêm liên hệ đầu tiên để bắt đầu quản lý khách hàng
+            {t("emptyDescription")}
           </p>
           <Button
             size="sm"
@@ -553,7 +560,7 @@ function ContactTable({
             onClick={() => onAdd?.()}
           >
             <Plus size={13} />
-            Thêm liên hệ
+            {tContacts("addContact")}
           </Button>
         </div>
       )}

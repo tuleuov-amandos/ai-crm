@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { format, isToday, isYesterday } from "date-fns";
+import { isToday, isYesterday } from "date-fns";
+import { useTranslations, useFormatter } from "next-intl";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -40,24 +41,16 @@ import {
 // Helpers
 // ─────────────────────────────────────────
 
-/** Format date into Vietnamese labels: "Hôm nay" (Today), "Hôm qua" (Yesterday), or full date */
-function formatDateLabel(date: Date): string {
-  if (isToday(date)) {
-    return `Hôm nay — ${format(date, "d 'tháng' M, yyyy")}`;
-  }
-  if (isYesterday(date)) {
-    return `Hôm qua — ${format(date, "d 'tháng' M, yyyy")}`;
-  }
-  return format(date, "d 'tháng' M, yyyy");
-}
-
 /** Group flat ActivityItem[] by calendar day, sort dates descending */
-function groupActivitiesByDate(activities: ActivityItem[]): ActivityGroup[] {
+function groupActivitiesByDate(
+  activities: ActivityItem[],
+  formatDateLabel: (date: Date) => string,
+): ActivityGroup[] {
   const groups: Record<string, ActivityGroup> = {};
 
   for (const activity of activities) {
     const d = new Date(activity.date);
-    const dayKey = format(d, "yyyy-MM-dd");
+    const dayKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
     if (!groups[dayKey]) {
       groups[dayKey] = {
@@ -107,6 +100,21 @@ function TimelineSkeleton() {
 // Page
 // ─────────────────────────────────────────
 export default function Activities() {
+  const t = useTranslations("activities");
+  const tCommon = useTranslations("common");
+  const format = useFormatter();
+
+  const formatDateLabel = (date: Date): string => {
+    const day = format.dateTime(date, {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    if (isToday(date)) return t("today", { date: day });
+    if (isYesterday(date)) return t("yesterday", { date: day });
+    return day;
+  };
+
   // ── Filter state ─────────────────────────────────────────────────────────
   const [activeFilter, setActiveFilter] = useState<"all" | ActivityType>("all");
   const [showEmpty, setShowEmpty] = useState(false);
@@ -143,7 +151,8 @@ export default function Activities() {
 
   // ── Group by day for timeline ────────────────────────────────
   const groups = useMemo(
-    () => (showEmpty ? [] : groupActivitiesByDate(allActivities)),
+    () => (showEmpty ? [] : groupActivitiesByDate(allActivities, formatDateLabel)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [allActivities, showEmpty],
   );
 
@@ -170,7 +179,7 @@ export default function Activities() {
   return (
     <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
       <ActivitiesHeader
-        dateRangeLabel="Tất cả"
+        dateRangeLabel={t("dateRangeAll")}
         onNewActivity={handleOpenCreate}
       />
 
@@ -211,7 +220,7 @@ export default function Activities() {
                       {isFetchingNextPage && (
                         <Loader2 size={12} className="animate-spin" />
                       )}
-                      Tải thêm hoạt động
+                      {t("loadMore")}
                     </Button>
                   </div>
                 )}
@@ -243,20 +252,21 @@ export default function Activities() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xóa hoạt động</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa hoạt động &quot;
-              {activityToDelete?.title ||
-                (activityToDelete?.note
-                  ? activityToDelete.note.slice(0, 40) +
-                    (activityToDelete.note.length > 40 ? "..." : "")
-                  : "")}
-              &quot;? Hành động này không thể hoàn tác.
+              {t("deleteDescription", {
+                title:
+                  activityToDelete?.title ||
+                  (activityToDelete?.note
+                    ? activityToDelete.note.slice(0, 40) +
+                      (activityToDelete.note.length > 40 ? "..." : "")
+                    : ""),
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteActivity.isPending}>
-              Hủy
+              {tCommon("cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
@@ -275,10 +285,10 @@ export default function Activities() {
               {deleteActivity.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Đang xóa...
+                  {t("deleting")}
                 </>
               ) : (
-                "Xóa"
+                tCommon("delete")
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

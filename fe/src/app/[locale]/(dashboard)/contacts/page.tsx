@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+import { useTranslations } from "next-intl";
 import { useDebounceValue } from "usehooks-ts";
 import { ChevronDown, Filter, Plus, Search, FileSpreadsheet } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const ContactsPage = () => {
+  const t = useTranslations("contacts");
   const [search, setSearch] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | undefined>(undefined);
   const router = useRouter();
@@ -47,14 +49,14 @@ const ContactsPage = () => {
               className="text-foreground tracking-tight"
               style={{ fontSize: 15, fontWeight: 600, lineHeight: 1 }}
             >
-              Contacts
+              {t("title")}
             </h1>
 
             <div className="flex items-center gap-2">
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
                 <Input
-                  placeholder="Tìm kiếm liên hệ..."
+                  placeholder={t("searchPlaceholder")}
                   className="h-8 pl-8 w-44 text-xs bg-background border-border"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -67,7 +69,7 @@ const ContactsPage = () => {
                 className="h-8 gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs"
               >
                 <Filter size={13} />
-                Lọc theo
+                {t("filter")}
               </Button>
 
               <DropdownMenu>
@@ -77,7 +79,7 @@ const ContactsPage = () => {
                     size="sm"
                     className="h-8 gap-1 border-border text-muted-foreground hover:text-foreground text-xs cursor-pointer"
                   >
-                    {selectedTag ? `Tag: ${selectedTag}` : "Tất cả tags"}
+                    {selectedTag ? t("tagPrefix", { tag: selectedTag }) : t("allTags")}
                     <ChevronDown size={12} />
                   </Button>
                 </DropdownMenuTrigger>
@@ -86,7 +88,7 @@ const ContactsPage = () => {
                     className="cursor-pointer text-xs"
                     onClick={() => setSelectedTag(undefined)}
                   >
-                    Tất cả tags
+                    {t("allTags")}
                   </DropdownMenuItem>
                   {Object.values(ContactTagConst).map((tag) => (
                     <DropdownMenuItem
@@ -107,7 +109,7 @@ const ContactsPage = () => {
                 onClick={() => setIsImportOpen(true)}
               >
                 <FileSpreadsheet size={13} className="text-green-600" />
-                Import Excel
+                {t("importExcel")}
               </Button>
 
               <Button
@@ -116,7 +118,7 @@ const ContactsPage = () => {
                 onClick={() => setDialog({ isOpen: true })}
               >
                 <Plus size={13} />
-                Thêm liên hệ
+                {t("addContact")}
               </Button>
             </div>
           </header>

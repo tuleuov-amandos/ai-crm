@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Phone, Mail, Users, FileText, Clock } from "lucide-react";
 import {
   ActivityType,
@@ -20,31 +21,27 @@ interface ActivityTimelineProps {
 
 const TYPE_CONFIG: Record<
   ActivityType,
-  { iconBg: string; iconColor: string; icon: typeof Phone; label: string }
+  { iconBg: string; iconColor: string; icon: typeof Phone }
 > = {
   [ActivityType.MEETING]: {
     iconBg: "#FEF3E2",
     iconColor: "#854F0B",
     icon: Users,
-    label: "Cuộc họp",
   },
   [ActivityType.EMAIL]: {
     iconBg: "#EEEDFE",
     iconColor: "#534AB7",
     icon: Mail,
-    label: "Email",
   },
   [ActivityType.CALL]: {
     iconBg: "#E8F5E0",
     iconColor: "#3B6D11",
     icon: Phone,
-    label: "Cuộc gọi",
   },
   [ActivityType.NOTE]: {
     iconBg: "#F1EFE8",
     iconColor: "#9B9B96",
     icon: FileText,
-    label: "Ghi chú",
   },
 };
 
@@ -54,6 +51,8 @@ export default function ActivityTimeline({
   isPendingSubmit,
   entityType = "contact",
 }: ActivityTimelineProps) {
+  const t = useTranslations("activities.timeline");
+  const tType = useTranslations("activities.types");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const toggleExpand = (id: string) =>
@@ -73,7 +72,7 @@ export default function ActivityTimeline({
         className="px-6 pt-5 pb-2 text-muted-foreground uppercase"
         style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em" }}
       >
-        Lịch sử hoạt động
+        {t("history")}
       </p>
 
       {/* Timeline items */}
@@ -147,7 +146,7 @@ export default function ActivityTimeline({
                         background: config.iconBg,
                       }}
                     >
-                      {config.label}
+                      {tType(item.type.toLowerCase() as Lowercase<ActivityType>)}
                     </span>
                   </div>
                 </div>
@@ -169,7 +168,7 @@ export default function ActivityTimeline({
                     className="text-primary bg-transparent border-0 cursor-pointer p-0"
                     style={{ fontSize: 11, marginBottom: 0 }}
                   >
-                    {isExpanded ? "Rút gọn" : "Xem thêm"}
+                    {isExpanded ? t("collapse") : t("expand")}
                   </button>
                 )}
               </div>

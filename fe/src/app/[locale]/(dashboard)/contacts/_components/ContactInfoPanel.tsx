@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useDeleteContact } from "@/hooks/useContacts";
 import {
@@ -45,6 +46,8 @@ interface ContactInfoPanelProps {
 }
 
 export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
+  const t = useTranslations("contacts.infoPanel");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const deleteContact = useDeleteContact();
 
@@ -60,37 +63,37 @@ export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
     }
   };
   const infoRows = [
-    { key: "email", icon: Mail, label: "Email", value: contact.email || "" },
-    { key: "phone", icon: Phone, label: "Phone", value: contact.phone || "" },
+    { key: "email", icon: Mail, label: t("infoEmail"), value: contact.email || "" },
+    { key: "phone", icon: Phone, label: t("infoPhone"), value: contact.phone || "" },
     {
       key: "company",
       icon: Building2,
-      label: "Công ty",
+      label: t("infoCompany"),
       value: contact.company || "",
     },
     {
       key: "position",
       icon: Briefcase,
-      label: "Chức vụ",
+      label: t("infoPosition"),
       value: contact.position || "",
     },
     {
       key: "createdAt",
       icon: Calendar,
-      label: "Ngày tạo",
+      label: t("infoCreatedAt"),
       value: relativeTime(contact.createdAt) || "",
     },
   ];
   const states = [
-    { key: "deals", label: "Deals", value: contact.deals.length },
+    { key: "deals", label: t("statDeals"), value: contact.deals.length },
     {
       key: "activities",
-      label: "Activities",
+      label: t("statActivities"),
       value: contact.activities.length,
     },
     {
       key: "value",
-      label: "Giá trị",
+      label: t("statValue"),
       value: formatCurrency(
         contact.deals.reduce((sum, deal) => sum + deal.value, 0),
       ),
@@ -112,13 +115,13 @@ export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
                 style={{ fontSize: 12 }}
               >
                 <Edit2 size={11} />
-                Chỉnh sửa
+                {tCommon("edit")}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)} className="cursor-pointer" style={{ fontSize: 12 }}>
                 <Edit2 size={13} className="mr-1.5" />
-                Chỉnh sửa thông tin
+                {t("editInfo")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 variant="destructive"
@@ -127,7 +130,7 @@ export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
                 style={{ fontSize: 12 }}
               >
                 <Trash2 size={13} className="mr-1.5" />
-                Xóa liên hệ
+                {t("deleteContact")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -164,7 +167,10 @@ export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
               {contact.name}
             </p>
             <p className="text-muted-foreground" style={{ fontSize: 12 }}>
-              {contact.position} tại {contact.company}
+              {t("positionAtCompany", {
+                position: contact.position ?? "",
+                company: contact.company ?? "",
+              })}
             </p>
           </div>
 
@@ -184,7 +190,7 @@ export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
                 </span>
               ))
             ) : (
-              <span className="text-xs text-muted-foreground italic">Không có tags</span>
+              <span className="text-xs text-muted-foreground italic">{t("noTags")}</span>
             )}
           </div>
         </div>
@@ -227,7 +233,7 @@ export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
           className="text-muted-foreground uppercase mb-3"
           style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em" }}
         >
-          Thông tin liên hệ
+          {t("contactInfoHeading")}
         </p>
         <div className="space-y-2.5">
           {infoRows.map((row) => {
@@ -268,13 +274,13 @@ export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
             className="text-muted-foreground uppercase"
             style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em" }}
           >
-            Deals liên quan
+            {t("relatedDeals")}
           </p>
           <button
             className="flex items-center gap-0.5 text-primary bg-transparent border-0 cursor-pointer p-0"
             style={{ fontSize: 11 }}
           >
-            Xem tất cả
+            {t("viewAll")}
             <ChevronRight size={11} />
           </button>
         </div>
@@ -315,15 +321,18 @@ export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa liên hệ</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteConfirmTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa liên hệ <strong>{contact.name}</strong>? Hành động này không thể hoàn tác.
+              {t.rich("deleteConfirmDescription", {
+                name: contact.name,
+                b: (chunks) => <strong>{chunks}</strong>,
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="cursor-pointer">Hủy</AlertDialogCancel>
+            <AlertDialogCancel className="cursor-pointer">{tCommon("cancel")}</AlertDialogCancel>
             <AlertDialogAction variant="destructive" onClick={handleDelete} className="cursor-pointer">
-              Xóa liên hệ
+              {t("deleteContact")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

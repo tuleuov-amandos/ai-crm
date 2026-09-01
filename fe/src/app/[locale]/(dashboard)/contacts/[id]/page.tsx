@@ -1,5 +1,6 @@
 "use client";
 import { ArrowLeft, Plus, MoreHorizontal, UserPlus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { ContactInfoPanel } from "../_components/ContactInfoPanel";
 import ActivityTimeline from "@/components/activities/ActivityTimeline";
@@ -12,6 +13,7 @@ import { useContactActivities, useCreateContactActivity } from "@/hooks/useActiv
 import { CreateActivityForContactBodyType } from "@/lib/validations/activities.scheme";
 
 export default function ContactDetailPage() {
+  const t = useTranslations("contacts");
   // Get contact ID from URL params
   const params = useParams();
   const id = params.id as string;
@@ -36,10 +38,10 @@ export default function ContactDetailPage() {
   };
 
   if (!contact) {
-    return <div>Contact not found</div>;
+    return <div>{t("detail.notFound")}</div>;
   }
   if (!activities) {
-    return <div>Activities not found</div>;
+    return <div>{t("detail.activitiesNotFound")}</div>;
   }
 
   return (
@@ -68,7 +70,7 @@ export default function ContactDetailPage() {
               className="text-muted-foreground hover:text-foreground transition-colors"
               style={{ textDecoration: "none", fontSize: 13 }}
             >
-              Contacts
+              {t("title")}
             </Link>
             <span className="text-muted-foreground/50" style={{ fontSize: 11 }}>
               /
@@ -90,12 +92,12 @@ export default function ContactDetailPage() {
             className="h-8 gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs"
           >
             <UserPlus size={13} />
-            Phân công
+            {t("detail.assign")}
           </Button>
 
           <Button size="sm" className="h-8 gap-1.5 text-xs">
             <Plus size={13} />
-            Thêm deal
+            {t("detail.addDeal")}
           </Button>
 
           <Button

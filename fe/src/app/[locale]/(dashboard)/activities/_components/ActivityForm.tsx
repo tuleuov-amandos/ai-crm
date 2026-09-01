@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -32,9 +34,9 @@ import {
 } from "@/components/ui/select";
 
 import {
-  ActivityFormSchema,
   ActivityFormValues,
   ActivityType,
+  ActivityTypeEnum,
 } from "@/lib/validations/activities.scheme";
 import {
   useCreateContactActivity,
@@ -63,14 +65,22 @@ interface ActivityFormProps {
 }
 
 // ─────────────────────────────────────────
-// Type meta cho Select options
+// Select options — order for the type dropdown (labels via next-intl)
 // ─────────────────────────────────────────
-const TYPE_OPTIONS: { value: ActivityType; label: string }[] = [
-  { value: ActivityType.CALL, label: "Cuộc gọi" },
-  { value: ActivityType.EMAIL, label: "Email" },
-  { value: ActivityType.MEETING, label: "Gặp mặt" },
-  { value: ActivityType.NOTE, label: "Ghi chú" },
+const TYPE_OPTION_VALUES: ActivityType[] = [
+  ActivityType.CALL,
+  ActivityType.EMAIL,
+  ActivityType.MEETING,
+  ActivityType.NOTE,
 ];
+
+const buildActivityFormSchema = (tv: (key: string) => string) =>
+  z.object({
+    type: ActivityTypeEnum,
+    title: z.string().nullable().optional(),
+    note: z.string().min(1, tv("noteRequired")),
+    date: z.date().optional(),
+  });
 
 // ─────────────────────────────────────────
 // Helpers
@@ -95,6 +105,18 @@ export function ActivityForm({
   activity,
   context,
 }: ActivityFormProps) {
+  const t = useTranslations("activities.form");
+  const tType = useTranslations("activities.types");
+  const tCommon = useTranslations("common");
+  const activityFormSchema = useMemo(
+    () => buildActivityFormSchema((key) => t(`validation.${key}`)),
+    [t],
+  );
+  const typeOptions = TYPE_OPTION_VALUES.map((value) => ({
+    value,
+    label: tType(value.toLowerCase() as Lowercase<ActivityType>),
+  }));
+
   const isEditMode = !!activity;
 
   // ── Mutations — instantiate all, use based on context ──────────────────
@@ -114,7 +136,7 @@ export function ActivityForm({
 
   // ── Form setup ──────────────────────────────────────────────────────────
   const form = useForm<ActivityFormValues>({
-    resolver: zodResolver(ActivityFormSchema),
+    resolver: zodResolver(activityFormSchema),
     defaultValues: {
       type: ActivityType.CALL,
       title: "",
@@ -170,7 +192,7 @@ export function ActivityForm({
           // temporarily do nothing (needs contactId or dealId)
           // In future can show additional UI to select contact/deal
           console.warn(
-            "Global context chưa được hỗ trợ tạo activity trực tiếp",
+            "Global context does not support creating an activity directly",
           );
           return;
         }
@@ -189,7 +211,7 @@ export function ActivityForm({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle style={{ fontSize: 15 }}>
-            {isEditMode ? "Chỉnh sửa hoạt động" : "Thêm hoạt động mới"}
+            {isEditMode ? t("editTitle") : t("createTitle")}
           </DialogTitle>
         </DialogHeader>
 
@@ -205,7 +227,7 @@ export function ActivityForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel style={{ fontSize: 12 }}>
-                    Loại hoạt động <span className="text-destructive">*</span>
+                    {t("typeLabel")} <span className="text-destructive">*</span>
                   </FormLabel>
                   <Select
                     value={field.value}
@@ -214,11 +236,11 @@ export function ActivityForm({
                   >
                     <FormControl>
                       <SelectTrigger className="w-full h-9">
-                        <SelectValue placeholder="Chọn loại hoạt động" />
+                        <SelectValue placeholder={t("typePlaceholder")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {TYPE_OPTIONS.map((opt) => (
+                      {typeOptions.map((opt) => (
                         <SelectItem key={opt.value} value={opt.value}>
                           {opt.label}
                         </SelectItem>
@@ -236,10 +258,10 @@ export function ActivityForm({
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel style={{ fontSize: 12 }}>Tiêu đề</FormLabel>
+                  <FormLabel style={{ fontSize: 12 }}>{t("titleLabel")}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Nhập tiêu đề (tuỳ chọn)"
+                      placeholder={t("titlePlaceholder")}
                       className="h-9"
                       style={{ fontSize: 13 }}
                       disabled={isPending}
@@ -259,11 +281,11 @@ export function ActivityForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel style={{ fontSize: 12 }}>
-                    Nội dung <span className="text-destructive">*</span>
+                    {t("noteLabel")} <span className="text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Nhập nội dung hoạt động..."
+                      placeholder={t("notePlaceholder")}
                       className="min-h-[96px] resize-none"
                       style={{ fontSize: 13 }}
                       disabled={isPending}
@@ -282,7 +304,7 @@ export function ActivityForm({
               name="date"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel style={{ fontSize: 12 }}>Thời gian</FormLabel>
+                  <FormLabel style={{ fontSize: 12 }}>{t("dateLabel")}</FormLabel>
                   <FormControl>
                     <Input
                       type="datetime-local"
@@ -319,7 +341,7 @@ export function ActivityForm({
                 disabled={isPending}
                 style={{ fontSize: 12 }}
               >
-                Huỷ
+                {tCommon("cancel")}
               </Button>
               <Button
                 type="submit"
@@ -328,7 +350,7 @@ export function ActivityForm({
                 style={{ fontSize: 12 }}
               >
                 {isPending && <Loader2 size={13} className="animate-spin" />}
-                {isEditMode ? "Lưu thay đổi" : "Thêm hoạt động"}
+                {isEditMode ? t("saveChanges") : t("createCta")}
               </Button>
             </DialogFooter>
           </form>

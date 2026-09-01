@@ -11,6 +11,8 @@ import {
   ChevronDown,
 } from "lucide-react";
 
+import { useTranslations } from "next-intl";
+
 import { cn } from "@/lib/utils";
 
 import { ActivityType } from "./types";
@@ -66,16 +68,17 @@ export function ActivitiesFilters({
   showEmpty: boolean;
   onToggleEmpty: () => void;
 }) {
+  const t = useTranslations("activities");
   const filterPills: {
     key: "all" | ActivityType;
     label: string;
     icon?: ReactNode;
   }[] = [
-    { key: "all", label: "Tất cả" },
-    { key: "CALL", label: "Cuộc gọi", icon: <Phone size={11} /> },
-    { key: "EMAIL", label: "Email", icon: <Mail size={11} /> },
-    { key: "MEETING", label: "Gặp mặt", icon: <Users size={11} /> },
-    { key: "NOTE", label: "Ghi chú", icon: <FileText size={11} /> },
+    { key: "all", label: t("filters.all") },
+    { key: "CALL", label: t("types.call"), icon: <Phone size={11} /> },
+    { key: "EMAIL", label: t("types.email"), icon: <Mail size={11} /> },
+    { key: "MEETING", label: t("types.meeting"), icon: <Users size={11} /> },
+    { key: "NOTE", label: t("types.note"), icon: <FileText size={11} /> },
   ];
 
   return (
@@ -98,14 +101,14 @@ export function ActivitiesFilters({
           title="Toggle empty state (dev)"
         >
           <ExternalLink size={10} />
-          {showEmpty ? "Hiện dữ liệu" : "Empty state"}
+          {showEmpty ? t("filters.showData") : t("filters.emptyState")}
         </button>
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        <DropdownBtn label="Tất cả nhân viên" />
-        <DropdownBtn label="Tất cả liên hệ" />
-        <DropdownBtn label="7 ngày qua" />
+        <DropdownBtn label={t("filters.allStaff")} />
+        <DropdownBtn label={t("filters.allContacts")} />
+        <DropdownBtn label={t("filters.last7Days")} />
       </div>
     </div>
   );

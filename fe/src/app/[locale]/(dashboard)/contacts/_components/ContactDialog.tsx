@@ -5,6 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useTranslations } from "next-intl";
 import { useCreateContact, useUpdateContact } from "@/hooks/useContacts";
 import { Contact, CreateContactBodyType } from "@/lib/validations/contacts.scheme";
 import ContactForm from "./ContactForm";
@@ -20,6 +21,7 @@ function ContactDialog({
   onOpenChange,
   onCreated,
 }: ContactDialogProps) {
+  const t = useTranslations("contacts.dialog");
   const { mutateAsync: createContact, isPending: isCreating } =
     useCreateContact();
   const { mutateAsync: updateContact, isPending: isUpdating } =
@@ -31,7 +33,7 @@ function ContactDialog({
   async function handleSubmit(data: CreateContactBodyType) {
     console.log("isEditing:", isEditing);
     console.log("contact id:", contact?.id);
-    console.log("data gửi lên:", data);
+    console.log("data payload:", data);
     try {
       if (isEditing && contact?.id) {
         await updateContact({ id: contact.id, data });
@@ -49,11 +51,9 @@ function ContactDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Chỉnh sửa" : "Tạo mới"}</DialogTitle>
+          <DialogTitle>{isEditing ? t("editTitle") : t("createTitle")}</DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? "Cập nhật thông tin liên hệ vào form bên dưới và nhấn Lưu thay đổi để cập nhật liên hệ."
-              : "Điền thông tin liên hệ mới vào form bên dưới và nhấn Thêm liên hệ để tạo liên hệ."}
+            {isEditing ? t("editDescription") : t("createDescription")}
           </DialogDescription>
         </DialogHeader>
         <ContactForm

@@ -8,7 +8,10 @@
     "edit": "Редактировать",
     "loading": "Загрузка…",
     "done": "Готово",
-    "unknownError": "Неизвестная ошибка"
+    "unknownError": "Неизвестная ошибка",
+    "delete": "Удалить",
+    "reset": "Сбросить",
+    "saving": "Сохранение…"
   },
   "auth": {
     "validation": {
@@ -273,6 +276,262 @@
       },
       "toasts": {
         "dealUpdated": "Сделка обновлена"
+      }
+    }
+  },
+  "contacts": {
+    "title": "Контакты",
+    "searchPlaceholder": "Поиск контактов…",
+    "filter": "Фильтры",
+    "allTags": "Все теги",
+    "tagPrefix": "Тег: {tag}",
+    "importExcel": "Импорт из Excel",
+    "addContact": "Добавить контакт",
+    "detail": {
+      "notFound": "Контакт не найден",
+      "activitiesNotFound": "Активности не найдены",
+      "assign": "Назначить",
+      "addDeal": "Добавить сделку"
+    },
+    "table": {
+      "colContact": "Контакт",
+      "colCompany": "Компания",
+      "colEmail": "Email",
+      "colPhone": "Телефон",
+      "colTags": "Теги",
+      "colDeals": "Сделки",
+      "colValue": "Стоимость",
+      "colCreated": "Создан",
+      "colLastActivity": "Последняя активность",
+      "dealsCount": "{count, plural, one {# сделка} few {# сделки} many {# сделок} other {# сделки}}",
+      "loadingMore": "Загружаем ещё контакты…",
+      "scrollToLoadMore": "Прокрутите вниз, чтобы загрузить ещё",
+      "allLoaded": "Все контакты загружены ({count})",
+      "footerCount": "{count, plural, one {# контакт} few {# контакта} many {# контактов} other {# контакта}}",
+      "viewDetails": "Открыть",
+      "emptyTitle": "Пока нет контактов",
+      "emptyDescription": "Добавьте первый контакт, чтобы начать вести клиентов"
+    },
+    "form": {
+      "nameLabel": "Имя контакта",
+      "namePlaceholder": "Введите имя контакта",
+      "emailLabel": "Email",
+      "emailPlaceholder": "Введите email",
+      "phoneLabel": "Телефон",
+      "phonePlaceholder": "Введите номер телефона",
+      "companyLabel": "Компания",
+      "companyPlaceholder": "Введите название компании",
+      "positionLabel": "Должность",
+      "positionPlaceholder": "Введите должность",
+      "tagsLabel": "Теги",
+      "tagsPlaceholder": "Выберите теги контакта",
+      "validation": {
+        "nameMin": "Имя контакта должно содержать не менее 2 символов.",
+        "nameMax": "Имя контакта не может быть длиннее 100 символов.",
+        "emailInvalid": "Некорректный адрес email."
+      }
+    },
+    "dialog": {
+      "createTitle": "Новый контакт",
+      "editTitle": "Редактировать контакт",
+      "createDescription": "Заполните данные нового контакта в форме ниже и нажмите «Добавить контакт», чтобы создать его.",
+      "editDescription": "Обновите данные контакта в форме ниже и нажмите «Сохранить», чтобы применить изменения."
+    },
+    "infoPanel": {
+      "editInfo": "Редактировать данные",
+      "deleteContact": "Удалить контакт",
+      "noTags": "Без тегов",
+      "positionAtCompany": "{position} в {company}",
+      "infoEmail": "Email",
+      "infoPhone": "Телефон",
+      "infoCompany": "Компания",
+      "infoPosition": "Должность",
+      "infoCreatedAt": "Дата создания",
+      "statDeals": "Сделки",
+      "statActivities": "Активности",
+      "statValue": "Стоимость",
+      "contactInfoHeading": "Контактная информация",
+      "relatedDeals": "Связанные сделки",
+      "viewAll": "Показать все",
+      "deleteConfirmTitle": "Подтвердите удаление контакта",
+      "deleteConfirmDescription": "Вы уверены, что хотите удалить контакт <b>{name}</b>? Это действие нельзя отменить."
+    },
+    "import": {
+      "title": "Импорт контактов из Excel / CSV",
+      "badgeMapping": "AI-сопоставление колонок",
+      "badgePreview": "Предпросмотр данных",
+      "description": "AI автоматически сопоставит заголовки колонок и быстро загрузит данные в CRM.",
+      "chooseOrDrag": "Выберите файл с данными или перетащите его сюда:",
+      "downloadTemplate": "Скачать шаблон (.xlsx)",
+      "dropzoneTitle": "Перетащите файл Excel или CSV сюда",
+      "dropzoneHint": "Или <browse>выберите файл на компьютере</browse> (поддерживаются .xlsx, .xls, .csv)",
+      "aiProcessing": "AI анализирует заголовки колонок…",
+      "aiProcessingHint": "Система автоматически ищет соответствия между колонками",
+      "mappingDoneTitle": "AI-анализ колонок завершён",
+      "mappingDoneHint": "Мы автоматически распознали колонки из вашего файла Excel. Проверьте результат и при необходимости измените сопоставление в списках.",
+      "colCrmField": "Поле CRM",
+      "colExcelColumn": "Соответствующая колонка в файле Excel",
+      "colStatus": "Статус",
+      "skipColumn": "— Пропустить эту колонку / Не импортировать —",
+      "statusAiMatch": "AI-совпадение",
+      "statusManual": "Вручную",
+      "statusEmpty": "Пусто",
+      "mappedSuccess": "Колонки успешно сопоставлены",
+      "chooseAnotherFile": "Выбрать другой файл",
+      "summaryTotal": "Всего:",
+      "summaryRows": "{count, plural, one {# строка} few {# строки} many {# строк} other {# строки}}",
+      "summaryValid": "Корректных:",
+      "summaryInvalid": "Некорректных (пропущены):",
+      "previewColRow": "Строка",
+      "previewColName": "Имя *",
+      "previewColEmail": "Email",
+      "previewColPhone": "Телефон",
+      "previewColCompany": "Компания",
+      "previewColDealTitle": "Название сделки",
+      "previewColDealValue": "Сумма сделки",
+      "previewColDealStage": "Этап сделки",
+      "previewColRowStatus": "Статус строки",
+      "noPreviewData": "Нет данных для предпросмотра.",
+      "rowValid": "Корректно",
+      "backToUpload": "Назад к загрузке",
+      "editMapping": "Изменить сопоставление",
+      "previewCta": "Предпросмотр данных",
+      "importing": "Импортируем…",
+      "confirmImport": "Подтвердить импорт ({count, plural, one {# строка} few {# строки} many {# строк} other {# строки}})",
+      "fields": {
+        "name": "Имя и фамилия *",
+        "email": "Email",
+        "phone": "Телефон",
+        "company": "Компания",
+        "position": "Должность",
+        "tags": "Теги",
+        "ownerEmail": "Email ответственного",
+        "dealTitle": "Название связанной сделки",
+        "dealValue": "Сумма сделки (VND)",
+        "dealStage": "Этап сделки",
+        "dealNote": "Заметка по сделке"
+      },
+      "toasts": {
+        "templateDownloaded": "Шаблон скачан.",
+        "emptyFile": "Файл Excel пуст или не содержит данных.",
+        "noHeaders": "В файле не найдены заголовки колонок.",
+        "readError": "Не удалось прочитать файл Excel. Проверьте формат файла.",
+        "unsupportedFormat": "Поддерживаются только файлы .xlsx, .xls или .csv.",
+        "nameFieldRequired": "Поле «Имя и фамилия» обязательно для сопоставления.",
+        "noValidRows": "Нет корректных строк для импорта.",
+        "importSuccess": "Импортировано контактов: {count}.",
+        "importError": "Не удалось выполнить импорт. Попробуйте ещё раз."
+      },
+      "rowErrors": {
+        "nameRequired": "Имя не может быть пустым",
+        "emailFormat": "Email «{email}» имеет неверный формат",
+        "ownerEmailFormat": "Email ответственного «{email}» имеет неверный формат",
+        "dealValue": "Сумма сделки должна быть неотрицательным числом",
+        "tagInvalid": "Тег «{tag}» недопустим. Допустимые значения: {allowed}"
+      },
+      "template": {
+        "fileName": "Шаблон_импорта_контактов.xlsx",
+        "sheetName": "Шаблон контактов",
+        "headerName": "Имя и фамилия *",
+        "headerEmail": "Email",
+        "headerPhone": "Телефон",
+        "headerCompany": "Компания",
+        "headerPosition": "Должность",
+        "headerTags": "Теги (допустимо: Vip, Tiềm năng, Enterprise — через запятую)",
+        "headerOwnerEmail": "Email ответственного",
+        "headerDealTitle": "Название связанной сделки",
+        "headerDealValue": "Сумма сделки (VND)",
+        "headerDealStage": "Этап сделки",
+        "headerDealNote": "Заметка по сделке",
+        "row1Name": "Иван Иванов",
+        "row1Company": "ООО «Ромашка»",
+        "row1Position": "Руководитель отдела продаж",
+        "row1DealTitle": "Редизайн сайта 2026",
+        "row1DealStage": "Proposal",
+        "row1DealNote": "Клиент хочет запуск как можно скорее",
+        "row2Name": "Пётр Петров"
+      }
+    }
+  },
+  "activities": {
+    "title": "Активности",
+    "newActivity": "Добавить активность",
+    "loadMore": "Загрузить ещё",
+    "dateRangeAll": "Все",
+    "deleteTitle": "Удалить активность",
+    "deleteDescription": "Вы уверены, что хотите удалить активность «{title}»? Это действие нельзя отменить.",
+    "deleting": "Удаляем…",
+    "today": "Сегодня — {date}",
+    "yesterday": "Вчера — {date}",
+    "types": {
+      "call": "Звонок",
+      "email": "Email",
+      "meeting": "Встреча",
+      "note": "Заметка"
+    },
+    "filters": {
+      "all": "Все",
+      "showData": "Показать данные",
+      "emptyState": "Пустое состояние",
+      "allStaff": "Все сотрудники",
+      "allContacts": "Все контакты",
+      "last7Days": "Последние 7 дней"
+    },
+    "form": {
+      "createTitle": "Новая активность",
+      "editTitle": "Редактировать активность",
+      "typeLabel": "Тип активности",
+      "typePlaceholder": "Выберите тип активности",
+      "titleLabel": "Заголовок",
+      "titlePlaceholder": "Введите заголовок (необязательно)",
+      "noteLabel": "Содержание",
+      "notePlaceholder": "Введите содержание активности…",
+      "dateLabel": "Дата и время",
+      "createCta": "Добавить активность",
+      "saveChanges": "Сохранить изменения",
+      "validation": {
+        "noteRequired": "Содержание не может быть пустым"
+      }
+    },
+    "card": {
+      "optionsAria": "Действия с активностью",
+      "dealPrefix": "Сделка: {title}",
+      "collapse": "Свернуть",
+      "expand": "Показать ещё →",
+      "aiSuggestions": "AI-подсказки",
+      "aiHint": "Есть AI-подсказки по этой сделке",
+      "view": "Открыть →"
+    },
+    "empty": {
+      "title": "Пока нет активностей",
+      "description": "Запишите первую активность по вашему клиенту"
+    },
+    "summary": {
+      "totalActivities": "Всего активностей",
+      "total": "Итого",
+      "topStaff": "Топ сотрудников",
+      "noData": "Нет данных",
+      "activityCount": "{count, plural, one {# активность} few {# активности} many {# активностей} other {# активности}}"
+    },
+    "timeline": {
+      "history": "История активности",
+      "collapse": "Свернуть",
+      "expand": "Показать ещё"
+    },
+    "log": {
+      "titlePlaceholder": "Заголовок активности (необязательно)",
+      "activityTime": "Время активности",
+      "saving": "Сохраняем…",
+      "submit": "Сохранить активность",
+      "placeholder": {
+        "call": "Заметка о звонке… что обсудили, результат, следующие шаги…",
+        "email": "Краткое содержание письма… тема, суть, ответ клиента…",
+        "meeting": "Заметки о встрече… повестка, обсуждение, решения, задачи…",
+        "noteDeal": "Внутренняя заметка… важная информация об этой сделке…",
+        "noteContact": "Внутренняя заметка… важная информация об этом контакте…"
+      },
+      "validation": {
+        "noteRequired": "Содержание не может быть пустым"
       }
     }
   }
