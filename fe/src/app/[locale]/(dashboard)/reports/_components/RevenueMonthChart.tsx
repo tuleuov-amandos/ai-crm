@@ -6,11 +6,12 @@ import {
 } from "recharts";
 import { useTranslations } from "next-intl";
 import { ChartCard } from "./ChartCard";
-import { formatVndShort } from "@/lib/helper";
+import { useShortValue } from "@/lib/format";
 
 import { CustomTooltipProps } from "@/lib/types/chart";
 
 const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+  const shortValue = useShortValue();
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-white dark:bg-card border border-[#E8E7E2] dark:border-border rounded-lg shadow-md px-3 py-2.5 text-xs">
@@ -19,7 +20,7 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
         <div key={p.dataKey} className="flex items-center gap-2 mb-0.5">
           <span className="size-2 rounded-full shrink-0" style={{ background: p.color ?? p.fill }} />
           <span className="text-[#6B6B67] dark:text-muted-foreground">{p.name}:</span>
-          <span className="text-[#1A1A18] dark:text-foreground" style={{ fontWeight: 500 }}>{formatVndShort(Number(p.value))}</span>
+          <span className="text-[#1A1A18] dark:text-foreground" style={{ fontWeight: 500 }}>{shortValue(Number(p.value))}</span>
         </div>
       ))}
     </div>
@@ -39,6 +40,7 @@ import { EmptyState } from "./EmptyState";
 
 export function RevenueMonthChart({ data = [] }: RevenueMonthChartProps) {
   const t = useTranslations("reports.revenueMonth");
+  const shortValue = useShortValue();
   const isDataEmpty = !data || data.length === 0 || data.every(d => d.actual === 0 && d.target === 0);
 
   const LEGEND = [
@@ -85,7 +87,7 @@ export function RevenueMonthChart({ data = [] }: RevenueMonthChartProps) {
           <ComposedChart data={data} margin={{ top: 5, right: 16, left: 0, bottom: 5 }}>
             <CartesianGrid key="rm-grid"  strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis         key="rm-xaxis" dataKey="month" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
-            <YAxis         key="rm-yaxis" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={formatVndShort} width={44} domain={[0, yDomainMax]} />
+            <YAxis         key="rm-yaxis" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={shortValue} width={44} domain={[0, yDomainMax]} />
             <Tooltip       key="rm-tt"    content={<CustomTooltip />} />
             <Bar  key="rm-bar"  dataKey="actual" name={t("actual")} fill="#534AB7" radius={[4, 4, 0, 0]} maxBarSize={36} />
             <Line key="rm-line" type="monotone" dataKey="target" name={t("target")} stroke="#FBBF24" strokeWidth={2} strokeDasharray="5 3" dot={false} />

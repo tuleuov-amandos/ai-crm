@@ -10,7 +10,8 @@ import { Activity, TrendingUp } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ChartCard } from "./ChartCard";
 import { EmptyState } from "./EmptyState";
-import { formatVndShort, STAGE_COLORS } from "@/lib/helper";
+import { STAGE_COLORS } from "@/lib/helper";
+import { useShortValue } from "@/lib/format";
 import { reportsService } from "@/services/reports.service";
 
 function getFunnelColor(stageName: string): string {
@@ -25,6 +26,7 @@ import { CustomTooltipProps } from "@/lib/types/chart";
 
 const FunnelTooltip = ({ active, payload }: CustomTooltipProps) => {
   const t = useTranslations("reports.pipelineTab");
+  const shortValue = useShortValue();
   if (!active || !payload?.length) return null;
   const data = payload[0].payload as { stage: string; count: number; value: number; percentage: number };
   return (
@@ -37,7 +39,7 @@ const FunnelTooltip = ({ active, payload }: CustomTooltipProps) => {
         </div>
         <div className="flex justify-between gap-6">
           <span className="text-[#6B6B67] dark:text-muted-foreground">{t("tooltipValue")}</span>
-          <span className="text-[#1A1A18] dark:text-foreground font-semibold">{formatVndShort(data.value)}</span>
+          <span className="text-[#1A1A18] dark:text-foreground font-semibold">{shortValue(data.value)}</span>
         </div>
         <div className="flex justify-between gap-6">
           <span className="text-[#6B6B67] dark:text-muted-foreground">{t("tooltipConversion")}</span>
@@ -50,6 +52,7 @@ const FunnelTooltip = ({ active, payload }: CustomTooltipProps) => {
 
 const ForecastTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   const t = useTranslations("reports.pipelineTab");
+  const shortValue = useShortValue();
   if (!active || !payload?.length || label === undefined) return null;
   const labelStr = String(label);
   return (
@@ -61,7 +64,7 @@ const ForecastTooltip = ({ active, payload, label }: CustomTooltipProps) => {
             <span className="size-2 rounded-full shrink-0" style={{ background: p.color ?? p.fill }} />
             <span className="text-[#6B6B67] dark:text-muted-foreground">{p.name}:</span>
           </div>
-          <span className="text-[#1A1A18] dark:text-foreground font-semibold">{formatVndShort(Number(p.value))}</span>
+          <span className="text-[#1A1A18] dark:text-foreground font-semibold">{shortValue(Number(p.value))}</span>
         </div>
       ))}
     </div>
@@ -70,6 +73,7 @@ const ForecastTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 
 export function PipelineAnalysisTab() {
   const t = useTranslations("reports.pipelineTab");
+  const shortValue = useShortValue();
   const { data, isLoading } = useQuery({
     queryKey: ["reports", "pipeline-analysis"],
     queryFn: () => reportsService.getPipelineAnalysis(),
@@ -229,7 +233,7 @@ export function PipelineAnalysisTab() {
             <ComposedChart data={data.weightedForecast} margin={{ top: 10, right: 16, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={formatVndShort} width={50} />
+              <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={shortValue} width={50} />
               <Tooltip content={<ForecastTooltip />} />
               
               {/* Cum Actual Area */}

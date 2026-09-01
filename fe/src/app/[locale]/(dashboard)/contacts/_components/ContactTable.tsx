@@ -14,7 +14,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Eye, Pencil, Plus, Users } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { formatCurrency, getInitials, relativeTime } from "@/lib/helper";
+import { formatCurrency, getInitials } from "@/lib/helper";
+import { useRelativeTime } from "@/lib/format";
 import {
   Contact,
   ContactTagConst,
@@ -271,6 +272,7 @@ function ContactTable({
   const t = useTranslations("contacts.table");
   const tContacts = useTranslations("contacts");
   const tCommon = useTranslations("common");
+  const relativeTime = useRelativeTime();
   const tableColumns = getTableColumns(t);
   const observerTarget = useRef<HTMLDivElement>(null);
 

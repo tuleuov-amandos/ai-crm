@@ -16,7 +16,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { StageBadge } from "@/components/StageBage";
 import { GetContactResType, ContactTagConst, ContactTagType } from "@/lib/validations/contacts.scheme";
-import { formatCurrency, getInitials, relativeTime } from "@/lib/helper";
+import { formatCurrency, getInitials } from "@/lib/helper";
+import { useRelativeTime } from "@/lib/format";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +49,7 @@ interface ContactInfoPanelProps {
 export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
   const t = useTranslations("contacts.infoPanel");
   const tCommon = useTranslations("common");
+  const relativeTime = useRelativeTime();
   const router = useRouter();
   const deleteContact = useDeleteContact();
 

@@ -8,12 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Search, RefreshCw, Eye } from "lucide-react";
 import { useDebounceValue } from "usehooks-ts";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { AuditLogItem } from "@/services/audit-logs.service";
 import { formatDate } from "@/lib/helper";
 
 export default function AuditLogsPage() {
   const t = useTranslations("auditLogs");
+  const locale = useLocale();
   const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebounceValue(search, 300);
   const [action, setAction] = useState<string>("all");
@@ -105,7 +106,7 @@ export default function AuditLogsPage() {
                 {logs.map((log) => (
                   <TableRow key={log.id}>
                     <TableCell className="text-xs text-muted-foreground">
-                      {formatDate(log.createdAt)} <br />
+                      {formatDate(log.createdAt, locale)} <br />
                     </TableCell>
                     <TableCell className="text-sm font-medium text-[#1A1A18] dark:text-foreground">
                       {log.user?.name || t("system")}

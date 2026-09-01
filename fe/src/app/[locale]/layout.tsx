@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import "@/app/globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "./providers/queryProvider";
@@ -22,62 +23,60 @@ const geistInter = Geist({
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 const siteLocale = process.env.NEXT_PUBLIC_SITE_LOCALE || "ru_RU";
 
-export const metadata: Metadata = {
-  metadataBase: new URL(appUrl),
-  title: {
-    default: "SalesFlow - Hệ thống CRM Multi-tenant SaaS cho SME",
-    template: "%s | SalesFlow CRM",
-  },
-  description: "SalesFlow là hệ thống quản lý khách hàng (CRM) thông minh thế hệ mới dành cho doanh nghiệp vừa và nhỏ (SME) tại Việt Nam. Tích hợp AI phân tích phễu bán hàng, tự động hóa quy trình chăm sóc khách hàng và cô lập tenant dữ liệu an toàn tuyệt đối.",
-  keywords: [
-    "CRM",
-    "SaaS CRM",
-    "CRM Multi-tenant",
-    "quản lý khách hàng",
-    "phần mềm bán hàng",
-    "tự động hóa pipeline",
-    "Sales CRM",
-    "CRM thông minh",
-    "AI CRM",
-    "SalesFlow"
-  ],
-  authors: [{ name: "SalesFlow Team", url: appUrl }],
-  creator: "SalesFlow Developer Group",
-  publisher: "SalesFlow CRM",
-  alternates: {
-    canonical: "/",
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "metadata" });
+
+  return {
+    metadataBase: new URL(appUrl),
+    title: {
+      default: t("titleDefault"),
+      template: t("titleTemplate"),
+    },
+    description: t("description"),
+    keywords: t("keywords").split(",").map((k) => k.trim()),
+    authors: [{ name: "SalesFlow Team", url: appUrl }],
+    creator: "SalesFlow Developer Group",
+    publisher: "SalesFlow CRM",
+    alternates: {
+      canonical: "/",
+    },
+    robots: {
       index: true,
       follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-video-preview": -1,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+      },
     },
-  },
-  openGraph: {
-    title: "SalesFlow - Hệ thống CRM Multi-tenant SaaS cho SME",
-    description: "Hệ thống quản lý khách hàng CRM thông minh giúp tăng 30% doanh thu, tích hợp AI phân tích và tự động hóa quy trình bán hàng.",
-    url: appUrl,
-    siteName: "SalesFlow CRM",
-    locale: siteLocale,
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "SalesFlow - Hệ thống CRM Multi-tenant SaaS cho SME",
-    description: "Hệ thống quản lý khách hàng CRM thông minh giúp tăng 30% doanh thu, tích hợp AI phân tích và tự động hóa quy trình bán hàng.",
-    creator: "@salesflow",
-  },
-  icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
-    apple: "/favicon/apple-touch-icon.png",
-  },
-};
+    openGraph: {
+      title: t("ogTitle"),
+      description: t("ogDescription"),
+      url: appUrl,
+      siteName: "SalesFlow CRM",
+      locale: siteLocale,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: t("ogTitle"),
+      description: t("ogDescription"),
+      creator: "@salesflow",
+    },
+    icons: {
+      icon: "/favicon.ico",
+      shortcut: "/favicon.ico",
+      apple: "/favicon/apple-touch-icon.png",
+    },
+  };
+}
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));

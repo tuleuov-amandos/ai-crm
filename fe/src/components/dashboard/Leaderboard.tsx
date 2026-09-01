@@ -1,4 +1,7 @@
+"use client";
+
 import { ArrowRight, Users } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   Card,
   CardHeader,
@@ -11,15 +14,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getInitials, getAvatarColors, formatVndShort } from "@/lib/helper";
-
-const MOCK_REPS = [
-  { rank: 1, userId: "u1", name: "Trần Thị Hương", deals: 12, revenue: 420000000 },
-  { rank: 2, userId: "u2", name: "Nguyễn Quang",   deals: 9,  revenue: 315000000 },
-  { rank: 3, userId: "u3", name: "Phạm Thị Lan",   deals: 8,  revenue: 280000000 },
-  { rank: 4, userId: "u4", name: "Vũ Đức Minh",    deals: 6,  revenue: 195000000 },
-  { rank: 5, userId: "u5", name: "Lê Thị Thu",     deals: 5,  revenue: 140000000 },
-];
+import { getInitials, getAvatarColors } from "@/lib/helper";
+import { useShortValue } from "@/lib/format";
 
 const rankLabel = (r: number) =>
   r === 1 ? "🥇" : r === 2 ? "🥈" : r === 3 ? "🥉" : String(r);
@@ -35,15 +31,17 @@ interface LeaderboardProps {
   isLoading?: boolean;
 }
 
-export function Leaderboard({ reps = MOCK_REPS, isLoading = false }: LeaderboardProps) {
+export function Leaderboard({ reps = [], isLoading = false }: LeaderboardProps) {
+  const t = useTranslations("dashboard.leaderboard");
+  const shortValue = useShortValue();
   const maxRevenue = reps.reduce((max, r) => Math.max(max, r.revenue), 0) || 1;
   return (
     <Card className="shadow-none border-border/70 gap-0 py-0 h-full flex flex-col">
       <CardHeader className="border-b px-5 py-4">
         <div>
-          <CardTitle className="text-sm tracking-tight">Bảng xếp hạng</CardTitle>
+          <CardTitle className="text-sm tracking-tight">{t("title")}</CardTitle>
           <CardDescription className="text-xs mt-0.5">
-            Hiệu suất tháng này
+            {t("subtitle")}
           </CardDescription>
         </div>
       </CardHeader>
@@ -68,8 +66,8 @@ export function Leaderboard({ reps = MOCK_REPS, isLoading = false }: Leaderboard
       ) : reps.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center py-10 text-muted-foreground text-center px-4">
           <Users className="size-8 text-muted-foreground/40 mb-2" strokeWidth={1.5} />
-          <p style={{ fontSize: 13, fontWeight: 500 }} className="text-foreground">Chưa có dữ liệu xếp hạng</p>
-          <p style={{ fontSize: 11, marginTop: 2, maxWidth: 200 }} className="text-muted-foreground">Không có deal nào được chốt thành công trong kỳ này</p>
+          <p style={{ fontSize: 13, fontWeight: 500 }} className="text-foreground">{t("emptyTitle")}</p>
+          <p style={{ fontSize: 11, marginTop: 2, maxWidth: 200 }} className="text-muted-foreground">{t("emptyDescription")}</p>
         </div>
       ) : (
         <CardContent className="px-3 pt-2 pb-2 flex-1 space-y-0.5">
@@ -139,7 +137,7 @@ export function Leaderboard({ reps = MOCK_REPS, isLoading = false }: Leaderboard
                       className="text-muted-foreground"
                       style={{ fontSize: 11 }}
                     >
-                      {rep.deals} deals
+                      {t("dealsCount", { count: rep.deals })}
                     </span>
                   </div>
                 </div>
@@ -153,7 +151,7 @@ export function Leaderboard({ reps = MOCK_REPS, isLoading = false }: Leaderboard
                     color: isFirst ? "#534AB7" : "#1A1A18",
                   }}
                 >
-                  {formatVndShort(rep.revenue)}
+                  {shortValue(rep.revenue)}
                 </span>
               </div>
             );
@@ -167,7 +165,7 @@ export function Leaderboard({ reps = MOCK_REPS, isLoading = false }: Leaderboard
           size="sm"
           className="h-7 gap-1 text-primary hover:text-primary hover:bg-secondary/60 text-xs"
         >
-          Xem toàn bộ báo cáo
+          {t("viewFullReport")}
           <ArrowRight className="size-3" />
         </Button>
       </CardFooter>

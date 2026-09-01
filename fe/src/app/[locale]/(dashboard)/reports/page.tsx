@@ -19,7 +19,7 @@ import { TeamPerformanceTab } from "./_components/TeamPerformanceTab";
 import { PipelineAnalysisTab } from "./_components/PipelineAnalysisTab";
 import { ActivityReportTab } from "./_components/ActivityReportTab";
 import { reportsService } from "@/services/reports.service";
-import { formatVndShort } from "@/lib/helper";
+import { useShortValue } from "@/lib/format";
 
 // ── Tabs ─────────────────────────────────────────────────────────────────────
 type Tab = "overview" | "team" | "pipeline" | "activity";
@@ -65,6 +65,7 @@ function KpiCard({ label, value, delta, up, subtext }: KpiProps) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function ReportsPage() {
   const t = useTranslations("reports");
+  const shortValue = useShortValue();
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   
   // Date ranges default to entire 2026 to capture all seeded records
@@ -224,7 +225,7 @@ export default function ReportsPage() {
                     <div className="grid grid-cols-5 gap-4">
                       <KpiCard
                         label={t("overview.kpi.totalRevenue")}
-                        value={formatVndShort(overviewData.kpis.totalRevenue.value)}
+                        value={shortValue(overviewData.kpis.totalRevenue.value)}
                         delta={overviewData.kpis.totalRevenue.delta}
                         up={overviewData.kpis.totalRevenue.up}
                       />
@@ -242,7 +243,7 @@ export default function ReportsPage() {
                       />
                       <KpiCard
                         label={t("overview.kpi.avgDealSize")}
-                        value={formatVndShort(overviewData.kpis.avgDealSize.value)}
+                        value={shortValue(overviewData.kpis.avgDealSize.value)}
                         delta={overviewData.kpis.avgDealSize.delta}
                         up={overviewData.kpis.avgDealSize.up}
                       />

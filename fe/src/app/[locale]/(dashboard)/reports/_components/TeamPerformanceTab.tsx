@@ -11,7 +11,8 @@ import {
 } from "recharts";
 import { ChartCard } from "./ChartCard";
 import { EmptyState } from "./EmptyState";
-import { formatVndShort, getInitials, getAvatarColors } from "@/lib/helper";
+import { getInitials, getAvatarColors } from "@/lib/helper";
+import { useShortValue } from "@/lib/format";
 import { reportsService } from "@/services/reports.service";
 import { useMe } from "@/hooks/useAuth";
 import { CustomTooltipProps } from "@/lib/types/chart";
@@ -27,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+  const shortValue = useShortValue();
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-white dark:bg-card border border-[#E8E7E2] dark:border-border rounded-lg shadow-md px-3 py-2.5 text-xs">
@@ -35,7 +37,7 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
         <div key={p.dataKey} className="flex items-center gap-2 mb-0.5">
           <span className="size-2 rounded-full shrink-0" style={{ background: p.color ?? p.fill }} />
           <span className="text-[#6B6B67] dark:text-muted-foreground">{p.name}:</span>
-          <span className="text-[#1A1A18] dark:text-foreground" style={{ fontWeight: 500 }}>{formatVndShort(Number(p.value))}</span>
+          <span className="text-[#1A1A18] dark:text-foreground" style={{ fontWeight: 500 }}>{shortValue(Number(p.value))}</span>
         </div>
       ))}
     </div>
@@ -51,6 +53,7 @@ export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabPro
   const t = useTranslations("reports.team");
   const tUnits = useTranslations("reports.units");
   const tCommon = useTranslations("common");
+  const shortValue = useShortValue();
   const queryClient = useQueryClient();
   const { data: me } = useMe();
   const isAdminOrManager = me?.role === "ADMIN" || me?.role === "MANAGER";
@@ -158,7 +161,7 @@ export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabPro
             <BarChart data={teamData} margin={{ top: 5, right: 16, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={formatVndShort} width={44} />
+              <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={shortValue} width={44} />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="actual" name={t("actual")} fill="#534AB7" radius={[4, 4, 0, 0]} maxBarSize={30} />
               <Bar dataKey="target" name={t("target")} fill="#AFA9EC" radius={[4, 4, 0, 0]} maxBarSize={30} />
@@ -220,12 +223,12 @@ export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabPro
                       </td>
                       {/* Actual */}
                       <td className="p-3 text-[#1A1A18] dark:text-foreground text-right font-medium tabular-nums" style={{ fontSize: 12 }}>
-                        {formatVndShort(row.actual)}
+                        {shortValue(row.actual)}
                       </td>
                       {/* Target */}
                       <td className="p-3 text-[#6B6B67] dark:text-muted-foreground text-right tabular-nums" style={{ fontSize: 12 }}>
                         <div className="flex items-center justify-end gap-1.5">
-                          <span>{formatVndShort(row.target)}</span>
+                          <span>{shortValue(row.target)}</span>
                           {isAdminOrManager && (
                             <button
                               onClick={() => handleOpenEdit(row.userId, row.name, row.target)}

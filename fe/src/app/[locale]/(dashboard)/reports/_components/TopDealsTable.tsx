@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { getInitials, getAvatarColors, formatVndShort, formatDate } from "@/lib/helper";
+import { getInitials, getAvatarColors, formatDate } from "@/lib/helper";
+import { useShortValue } from "@/lib/format";
 
 type Filter = "all" | "won" | "lost";
 
@@ -27,6 +28,8 @@ interface TopDealsTableProps {
 
 export function TopDealsTable({ deals = [] }: TopDealsTableProps) {
   const t = useTranslations("reports.topDeals");
+  const locale = useLocale();
+  const shortValue = useShortValue();
   const [filter, setFilter] = useState<Filter>("all");
 
   const FILTER_LABELS: Record<Filter, string> = {
@@ -153,13 +156,13 @@ export function TopDealsTable({ deals = [] }: TopDealsTableProps) {
                   {/* Value */}
                   <td className="px-5 py-3">
                     <span className="text-[#1A1A18] dark:text-foreground tabular-nums" style={{ fontSize: 12, fontWeight: 600 }}>
-                      {formatVndShort(deal.value)}
+                      {shortValue(deal.value)}
                     </span>
                   </td>
 
                   {/* Close date */}
                   <td className="px-5 py-3">
-                    <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 12 }}>{formatDate(deal.closedAt)}</span>
+                    <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 12 }}>{formatDate(deal.closedAt, locale)}</span>
                   </td>
 
                   {/* Stage */}

@@ -1,37 +1,6 @@
-export function relativeTime(dateStr: string | Date): string {
-  const now = new Date();
-  const then = new Date(dateStr);
-  const diff = Math.floor(
-    (now.getTime() - then.getTime()) / (1000 * 60 * 60 * 24),
-  );
-
-  // Handle future dates (when then > now)
-  if (diff < 0) {
-    const futureDiff = Math.abs(diff);
-    if (futureDiff === 1) return "Ngày mai";
-    if (futureDiff < 7) return `Sau ${futureDiff} ngày`;
-    if (futureDiff < 14) return "Sau 1 tuần";
-    if (futureDiff < 21) return "Sau 2 tuần";
-    if (futureDiff < 28) return "Sau 3 tuần";
-    if (futureDiff < 60) return "Sau 1 tháng";
-    if (futureDiff < 90) return "Sau 2 tháng";
-    return `Sau ${Math.floor(futureDiff / 30)} tháng`;
-  }
-
-  if (diff === 0) return "Hôm nay";
-  if (diff === 1) return "1 ngày trước";
-  if (diff < 7) return `${diff} ngày trước`;
-  if (diff < 14) return "1 tuần trước";
-  if (diff < 21) return "2 tuần trước";
-  if (diff < 28) return "3 tuần trước";
-  if (diff < 60) return "1 tháng trước";
-  if (diff < 90) return "2 tháng trước";
-  return `${Math.floor(diff / 30)} tháng trước`;
-}
-
-export function formatDate(dateStr: string | Date): string {
+export function formatDate(dateStr: string | Date, locale: string = "ru-RU"): string {
   const date = new Date(dateStr);
-  return date.toLocaleString("vi-VN", {
+  return date.toLocaleString(locale, {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -52,7 +21,7 @@ export function getInitials(name: string): string {
   return (second[0] + last[0]).toUpperCase();
 }
 
-export function formatCurrency(value: number, locale = "vi-VN", currency = "VND"): string {
+export function formatCurrency(value: number, locale = "ru-RU", currency = "VND"): string {
   return new Intl.NumberFormat(locale, { style: "currency", currency }).format(value);
 }
 
@@ -88,36 +57,25 @@ export const ACTIVITY_CONFIG = {
   NOTE: { bg: '#F1EFE8', color: '#6B6B67', label: 'Note' },
 } as const;
 
-export function formatVndShort(value: number): string {
-  if (value >= 1e9) {
-    const b = value / 1e9;
-    return `${Number(b.toFixed(1))} tỷ`;
-  }
-  if (value >= 1e6) {
-    const m = value / 1e6;
-    return `${Number(m.toFixed(1))}tr`;
-  }
-  if (value >= 1e3) {
-    const k = value / 1e3;
-    return `${Number(k.toFixed(1))}k`;
-  }
-  return `${value}`;
+export interface ShortValueUnits {
+  billion: string;
+  million: string;
+  thousand: string;
 }
 
-export function formatDateVi(dateStr: string | Date): string {
-  const date = new Date(dateStr);
-  const timeStr = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
-  const now = new Date();
-  const isToday = date.toDateString() === now.toDateString();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(now.getDate() + 1);
-  const isTomorrow = date.toDateString() === tomorrow.toDateString();
-
-  if (isToday) {
-    return `Hôm nay ${timeStr}`;
-  } else if (isTomorrow) {
-    return `Ngày mai ${timeStr}`;
-  } else {
-    return `${date.getDate()}/${date.getMonth() + 1} ${timeStr}`;
-  }
+/**
+ * Compact number formatting with localizable unit words.
+ * Prefer the `useShortValue` hook (src/lib/format.ts) in components — it wires
+ * `units` from the `common.units` messages automatically.
+ */
+export function formatShortValue(
+  value: number | null | undefined,
+  units: ShortValueUnits,
+): string {
+  if (value == null) return "";
+  const abs = Math.abs(value);
+  if (abs >= 1e9) return `${Number((value / 1e9).toFixed(1))} ${units.billion}`;
+  if (abs >= 1e6) return `${Number((value / 1e6).toFixed(1))} ${units.million}`;
+  if (abs >= 1e3) return `${Number((value / 1e3).toFixed(1))} ${units.thousand}`;
+  return `${value}`;
 }

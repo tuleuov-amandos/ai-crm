@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Phone, Mail, Users, FileText, Clock } from "lucide-react";
 import {
   ActivityType,
@@ -8,7 +8,8 @@ import {
   CreateActivityForContactBodyType
 } from "@/lib/validations/activities.scheme";
 import LogActivityForm from "./LogActivityForm";
-import { relativeTime, formatDate } from "@/lib/helper";
+import { formatDate } from "@/lib/helper";
+import { useRelativeTime } from "@/lib/format";
 
 export type ActivityTab = ActivityType;
 
@@ -53,6 +54,8 @@ export default function ActivityTimeline({
 }: ActivityTimelineProps) {
   const t = useTranslations("activities.timeline");
   const tType = useTranslations("activities.types");
+  const locale = useLocale();
+  const relativeTime = useRelativeTime();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const toggleExpand = (id: string) =>
@@ -119,7 +122,7 @@ export default function ActivityTimeline({
                       style={{ fontSize: 11 }}
                     >
                       <Clock size={10} />
-                      {isFuture ? formatDate(item.date) : relativeTime(item.date)}
+                      {isFuture ? formatDate(item.date, locale) : relativeTime(item.date)}
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5">

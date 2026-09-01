@@ -17,11 +17,12 @@ import { useMe } from "@/hooks/useAuth";
 import { useAbility } from "@/hooks/useAbility";
 import { dashboardService } from "@/services/dashboard.service";
 import { DashboardPeriod } from "@/lib/validations/dashboard.schema";
-import { formatVndShort } from "@/lib/helper";
+import { useShortValue } from "@/lib/format";
 
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
   const locale = useLocale();
+  const shortValue = useShortValue();
   const [period, setPeriod] = useState<DashboardPeriod>("quarter");
   const { data: me } = useMe();
   const { can } = useAbility();
@@ -156,7 +157,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-4 gap-4">
               <MetricCard
                 label={dashboardData.metrics.totalDealValue.label}
-                value={formatVndShort(dashboardData.metrics.totalDealValue.value)}
+                value={shortValue(dashboardData.metrics.totalDealValue.value)}
                 trend={
                   dashboardData.metrics.totalDealValue.trend
                     ? {
@@ -200,7 +201,7 @@ export default function DashboardPage() {
               />
               <MetricCard
                 label={dashboardData.metrics.monthlyRevenue.label}
-                value={formatVndShort(dashboardData.metrics.monthlyRevenue.value)}
+                value={shortValue(dashboardData.metrics.monthlyRevenue.value)}
                 icon={TrendingUp}
                 progress={dashboardData.metrics.monthlyRevenue.progress}
               />
@@ -211,21 +212,21 @@ export default function DashboardPage() {
         {/* ── Charts row ───────────────────────────────────────────────────── */}
         <div className="grid gap-4" style={{ gridTemplateColumns: canViewLeaderboard ? "3fr 2fr" : "1fr", minHeight: 340 }}>
           <PipelineChart
-            stages={dashboardData?.pipelineFunnel.stages}
-            totalCount={dashboardData?.pipelineFunnel.totalCount}
-            totalValue={dashboardData?.pipelineFunnel.totalValue}
+            stages={dashboardData?.pipelineFunnel.stages ?? []}
+            totalCount={dashboardData?.pipelineFunnel.totalCount ?? 0}
+            totalValue={dashboardData?.pipelineFunnel.totalValue ?? 0}
             isLoading={isLoading}
           />
           {canViewLeaderboard && (
-            <Leaderboard reps={dashboardData?.leaderboard} isLoading={isLoading} />
+            <Leaderboard reps={dashboardData?.leaderboard ?? []} isLoading={isLoading} />
           )}
         </div>
 
         {/* ── Bottom row ───────────────────────────────────────────────────── */}
         <div className="grid gap-4" style={{ gridTemplateColumns: canReadActivity ? "3fr 2fr" : "1fr" }}>
-          <RecentDeals deals={dashboardData?.recentDeals} isLoading={isLoading} />
+          <RecentDeals deals={dashboardData?.recentDeals ?? []} isLoading={isLoading} />
           {canReadActivity && (
-            <UpcomingActivities activities={dashboardData?.upcomingActivities} isLoading={isLoading} />
+            <UpcomingActivities activities={dashboardData?.upcomingActivities ?? []} isLoading={isLoading} />
           )}
         </div>
 

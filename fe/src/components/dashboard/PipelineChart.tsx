@@ -1,4 +1,7 @@
+"use client";
+
 import { ArrowRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   Card,
   CardHeader,
@@ -10,14 +13,8 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { STAGE_COLORS, formatVndShort } from "@/lib/helper";
-
-const MOCK_STAGES = [
-  { name: "Prospect",   count: 38, value: 820000000 },
-  { name: "Qualified",  count: 26, value: 610000000 },
-  { name: "Proposal",   count: 17, value: 480000000 },
-  { name: "Closed Won", count: 11, value: 340000000 },
-];
+import { STAGE_COLORS } from "@/lib/helper";
+import { useShortValue } from "@/lib/format";
 
 function getStageColor(name: string): string {
   if (name.includes("Prospect")) return STAGE_COLORS.PROSPECT.funnel;
@@ -39,21 +36,22 @@ interface PipelineChartProps {
 }
 
 export function PipelineChart({
-  stages = MOCK_STAGES,
-  totalCount = 92,
-  totalValue = 2250000000,
+  stages = [],
+  totalCount = 0,
+  totalValue = 0,
   isLoading = false,
 }: PipelineChartProps) {
+  const t = useTranslations("dashboard.pipelineChart");
+  const shortValue = useShortValue();
   const maxCount = stages.reduce((max, s) => Math.max(max, s.count), 0) || 1;
-
 
   return (
     <Card className="shadow-none border-border/70 gap-0 py-0 h-full flex flex-col">
       <CardHeader className="border-b px-5 py-4">
         <div>
-          <CardTitle className="text-sm tracking-tight">Pipeline Funnel</CardTitle>
+          <CardTitle className="text-sm tracking-tight">{t("title")}</CardTitle>
           <CardDescription className="text-xs mt-0.5">
-            Phân bổ deals theo giai đoạn
+            {t("subtitle")}
           </CardDescription>
         </div>
         <CardAction>
@@ -62,7 +60,7 @@ export function PipelineChart({
             size="sm"
             className="h-7 gap-1 text-primary hover:text-primary hover:bg-secondary/60 text-xs px-2"
           >
-            Xem Pipeline
+            {t("viewPipeline")}
             <ArrowRight className="size-3" />
           </Button>
         </CardAction>
@@ -109,13 +107,13 @@ export function PipelineChart({
                     </span>
                     {convRate !== null && !isNaN(convRate) && isFinite(convRate) && (
                       <span className="text-muted-foreground bg-muted border border-border/50 px-1.5 py-px rounded-full" style={{ fontSize: 10 }}>
-                        {convRate}% chuyển đổi
+                        {t("conversion", { rate: convRate })}
                       </span>
                     )}
                   </div>
                   <div className="flex items-center gap-2.5">
                     <span className="text-xs text-muted-foreground">
-                      {formatVndShort(stage.value)}
+                      {shortValue(stage.value)}
                     </span>
                     <span
                       className="text-foreground tabular-nums w-6 text-right"
@@ -167,7 +165,7 @@ export function PipelineChart({
             ))}
           </div>
           <span className="text-muted-foreground" style={{ fontSize: 11 }}>
-            Tổng: {totalCount} deals · {formatVndShort(totalValue)}
+            {t("footer", { count: totalCount, value: shortValue(totalValue) })}
           </span>
         </CardFooter>
       )}

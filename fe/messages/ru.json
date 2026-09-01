@@ -14,7 +14,15 @@
     "saving": "Сохранение…",
     "saveChanges": "Сохранить изменения",
     "refresh": "Обновить",
-    "deleting": "Удаление…"
+    "deleting": "Удаление…",
+    "units": {
+      "billion": "млрд",
+      "million": "млн",
+      "thousand": "тыс"
+    },
+    "today": "Сегодня",
+    "yesterday": "Вчера",
+    "tomorrow": "Завтра"
   },
   "auth": {
     "validation": {
@@ -143,7 +151,44 @@
       "quarter": "за квартал"
     },
     "exportReport": "Экспорт отчёта",
-    "addDeal": "Добавить сделку"
+    "addDeal": "Добавить сделку",
+    "pipelineChart": {
+      "title": "Воронка продаж",
+      "subtitle": "Распределение сделок по этапам",
+      "viewPipeline": "Открыть воронку",
+      "conversion": "{rate}% конверсия",
+      "footer": "Всего: {count, plural, one {# сделка} few {# сделки} many {# сделок} other {# сделки}} · {value}"
+    },
+    "leaderboard": {
+      "title": "Рейтинг",
+      "subtitle": "Показатели за этот месяц",
+      "emptyTitle": "Пока нет данных рейтинга",
+      "emptyDescription": "За этот период не выиграно ни одной сделки",
+      "dealsCount": "{count, plural, one {# сделка} few {# сделки} many {# сделок} other {# сделки}}",
+      "viewFullReport": "Смотреть полный отчёт"
+    },
+    "recentDeals": {
+      "title": "Недавние сделки",
+      "subtitle": "Активность за последние 7 дней",
+      "viewAll": "Показать все",
+      "colDeal": "Сделка",
+      "colStage": "Этап",
+      "colValue": "Сумма",
+      "colOwner": "Владелец",
+      "colDate": "Дата",
+      "empty": "За этот период сделки не создавались"
+    },
+    "upcomingActivities": {
+      "title": "Предстоящие активности",
+      "subtitle": "Ваше расписание",
+      "all": "Все",
+      "emptyTitle": "Нет предстоящих активностей",
+      "emptyDescription": "Ваше расписание свободно",
+      "addActivity": "Добавить активность"
+    },
+    "metricCard": {
+      "targetPrefix": "Цель: {value}"
+    }
   },
   "pipeline": {
     "title": "Воронка",
@@ -923,5 +968,32 @@
     "toastUpdateFail": "Не удалось обновить роль.",
     "toastDeleteSuccess": "Роль удалена!",
     "toastDeleteFail": "Не удалось удалить эту роль."
+  },
+  "sidebar": {
+    "companyName": "Компания ABC",
+    "planFree": "Free",
+    "defaultUserName": "Нгуен Минь",
+    "defaultRole": "Manager",
+    "logout": "Выйти",
+    "nav": {
+      "dashboard": "Дашборд",
+      "sales": "Продажи",
+      "pipeline": "Воронка",
+      "contacts": "Контакты",
+      "activities": "Активности",
+      "reports": "Отчёты",
+      "administration": "Администрирование",
+      "roles": "Roles",
+      "auditLogs": "Журнал аудита",
+      "settings": "Настройки"
+    }
+  },
+  "metadata": {
+    "titleDefault": "SalesFlow — мультитенантная SaaS CRM для малого и среднего бизнеса",
+    "titleTemplate": "%s | SalesFlow CRM",
+    "description": "SalesFlow — умная CRM нового поколения для малого и среднего бизнеса. Объединяет AI-анализ воронки продаж, автоматизацию процессов работы с клиентами и строгую изоляцию данных арендаторов.",
+    "ogTitle": "SalesFlow — мультитенантная SaaS CRM для малого и среднего бизнеса",
+    "ogDescription": "Умная CRM, которая помогает увеличить выручку на 30%, со встроенной AI-аналитикой и автоматизацией процессов продаж.",
+    "keywords": "CRM, SaaS CRM, мультитенантная CRM, управление клиентами, программа для продаж, автоматизация воронки, Sales CRM, умная CRM, AI CRM, SalesFlow"
   }
 }

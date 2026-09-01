@@ -14,7 +14,15 @@
     "saving": "Saving…",
     "saveChanges": "Save changes",
     "refresh": "Refresh",
-    "deleting": "Deleting…"
+    "deleting": "Deleting…",
+    "units": {
+      "billion": "B",
+      "million": "M",
+      "thousand": "K"
+    },
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "tomorrow": "Tomorrow"
   },
   "auth": {
     "validation": {
@@ -143,7 +151,44 @@
       "quarter": "this quarter"
     },
     "exportReport": "Export report",
-    "addDeal": "Add deal"
+    "addDeal": "Add deal",
+    "pipelineChart": {
+      "title": "Pipeline Funnel",
+      "subtitle": "Deal distribution by stage",
+      "viewPipeline": "View pipeline",
+      "conversion": "{rate}% conversion",
+      "footer": "Total: {count, plural, one {# deal} other {# deals}} · {value}"
+    },
+    "leaderboard": {
+      "title": "Leaderboard",
+      "subtitle": "This month's performance",
+      "emptyTitle": "No ranking data yet",
+      "emptyDescription": "No deals were won during this period",
+      "dealsCount": "{count, plural, one {# deal} other {# deals}}",
+      "viewFullReport": "View full report"
+    },
+    "recentDeals": {
+      "title": "Recent deals",
+      "subtitle": "Activity in the last 7 days",
+      "viewAll": "View all",
+      "colDeal": "Deal",
+      "colStage": "Stage",
+      "colValue": "Value",
+      "colOwner": "Owner",
+      "colDate": "Date",
+      "empty": "No deals created during this period"
+    },
+    "upcomingActivities": {
+      "title": "Upcoming activities",
+      "subtitle": "Your schedule",
+      "all": "All",
+      "emptyTitle": "No upcoming activities",
+      "emptyDescription": "Your schedule is clear",
+      "addActivity": "Add activity"
+    },
+    "metricCard": {
+      "targetPrefix": "Target: {value}"
+    }
   },
   "pipeline": {
     "title": "Pipeline",
@@ -923,5 +968,32 @@
     "toastUpdateFail": "Couldn't update the role.",
     "toastDeleteSuccess": "Role deleted!",
     "toastDeleteFail": "Couldn't delete this role."
+  },
+  "sidebar": {
+    "companyName": "ABC Company",
+    "planFree": "Free",
+    "defaultUserName": "Nguyen Minh",
+    "defaultRole": "Manager",
+    "logout": "Log out",
+    "nav": {
+      "dashboard": "Dashboard",
+      "sales": "Sales",
+      "pipeline": "Pipeline",
+      "contacts": "Contacts",
+      "activities": "Activities",
+      "reports": "Reports",
+      "administration": "Administration",
+      "roles": "Roles",
+      "auditLogs": "Audit Logs",
+      "settings": "Settings"
+    }
+  },
+  "metadata": {
+    "titleDefault": "SalesFlow — Multi-tenant SaaS CRM for SMBs",
+    "titleTemplate": "%s | SalesFlow CRM",
+    "description": "SalesFlow is a next-generation smart CRM for small and medium-sized businesses. It combines AI-driven sales-funnel analysis, workflow automation for customer follow-up, and strict tenant data isolation.",
+    "ogTitle": "SalesFlow — Multi-tenant SaaS CRM for SMBs",
+    "ogDescription": "A smart CRM that helps grow revenue by 30%, with built-in AI analytics and sales workflow automation.",
+    "keywords": "CRM, SaaS CRM, multi-tenant CRM, customer management, sales software, pipeline automation, Sales CRM, smart CRM, AI CRM, SalesFlow"
   }
 }

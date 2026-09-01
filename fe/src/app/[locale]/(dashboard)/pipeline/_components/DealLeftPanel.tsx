@@ -215,7 +215,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
               {t("expectedCloseDate")}
             </p>
             <p className="text-foreground" style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.35 }}>
-              {formatDate(deal.closeDate)}
+              {formatDate(deal.closeDate, locale)}
             </p>
           </div>
 
