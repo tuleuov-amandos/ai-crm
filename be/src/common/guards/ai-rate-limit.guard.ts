@@ -31,7 +31,10 @@ export class AiRateLimitGuard implements CanActivate {
 
     try {
       const count = await redis.eval(LUA_INCR_WITH_TTL, 1, key, WINDOW_SECONDS)
-      const numeric = typeof count === 'number' ? count : parseInt(String(count), 10)
+      // The Lua script always returns an integer (Redis INCR result). ioredis
+      // types the reply as `unknown`, so coerce with `Number()` rather than
+      // `String()` — the latter trips no-base-to-string on the unknown type.
+      const numeric = typeof count === 'number' ? count : Number(count)
 
       if (numeric > MAX_REQUESTS) {
         // get remaining TTL for Retry-After
