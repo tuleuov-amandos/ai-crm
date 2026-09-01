@@ -14,8 +14,13 @@ import { COOKIE_OPTIONS } from './auth.constants'
 import { AccessTokenPayload } from 'src/common/types/jwt.type'
 import { AuthGuard } from '@nestjs/passport'
 import { Throttle } from '@nestjs/throttler'
+import { rootLogger } from 'src/common/logger/root-logger'
 
 const BRUTE_FORCE_GUARD_THROTTLE = { default: { limit: 5, ttl: 60000 } }
+
+// Module-level logger; `requestId` is attached from CLS per request. Cookie
+// values, tokens and `req.user.accessToken` (Google) are never logged.
+const log = rootLogger.child({ context: 'AuthController' })
 
 interface GoogleAuthRequest extends Request {
   user: {
@@ -60,6 +65,7 @@ export class AuthController {
       ...COOKIE_OPTIONS,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     })
+    log.info({ event: 'login.cookies_set', email: body.email })
     return { message: 'Đăng nhập thành công' }
   }
 
@@ -71,6 +77,7 @@ export class AuthController {
 
     res.clearCookie('accessToken', COOKIE_OPTIONS)
     res.clearCookie('refreshToken', COOKIE_OPTIONS)
+    log.info({ event: 'logout.cookies_cleared' })
 
     return this.authService.logout(refreshToken)
   }
@@ -107,6 +114,7 @@ export class AuthController {
   async googleAuthRedirect(@Req() req: GoogleAuthRequest, @Res({ passthrough: true }) res: Response) {
     // req.user contains info returned by GoogleStrategy in validate()
     const user = await this.authService.validateGoogleUser(req.user)
+    log.info({ event: 'google.callback_ok', userId: user.id, tenantId: user.tenantId })
     // Generate accessToken and refreshToken similar to traditional login
     const { accessToken, refreshToken } = await this.authService.generateTokens({
       userId: user.id,

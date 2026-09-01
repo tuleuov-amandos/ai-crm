@@ -24,6 +24,13 @@ const ConfigSchema = z
     NODE_ENV: z.string(),
     PORT: z.string(),
 
+    // Observability. Both optional: when SENTRY_DSN is unset Sentry never
+    // initializes (see src/instrument.ts) and the app runs unchanged.
+    // LOG_LEVEL lets prod be bumped to "debug" via a Railway variable without
+    // a rebuild; when unset the level is derived from NODE_ENV.
+    SENTRY_DSN: z.string().optional(),
+    LOG_LEVEL: z.string().optional(),
+
     OPENAI_API_KEY: z.string().optional(),
     OPENAI_MODEL: z.string().default('gpt-4o-mini'),
     GROQ_API_KEY: z.string().optional(),

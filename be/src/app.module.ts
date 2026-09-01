@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common'
+import { LoggerModule } from 'nestjs-pino'
+import { pinoHttpOptions } from './common/logger/pino-options'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { CommonModule } from './common/common.module'
@@ -22,6 +24,7 @@ import { HealthModule } from './routes/health/health.module'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 @Module({
   imports: [
+    LoggerModule.forRoot({ pinoHttp: pinoHttpOptions }),
     CommonModule,
     AuthModule,
     ContactsModule,

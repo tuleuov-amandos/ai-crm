@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs/config";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -28,5 +29,13 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
-
+export default withSentryConfig(nextConfig, {
+  // Source-map upload — only happens when these are set (CI / release step);
+  // local and CI builds without them succeed with a skip warning.
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  telemetry: false,
+});

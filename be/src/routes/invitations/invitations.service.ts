@@ -17,6 +17,12 @@ import envConfig from 'src/common/config'
 import { PrismaService } from 'src/common/services/prisma.service'
 import { getRoleWeight, getRequesterRoleWeight } from 'src/common/constants/role-hierarchy.constant'
 import { AccessTokenPayload } from 'src/common/types/jwt.type'
+import { rootLogger } from 'src/common/logger/root-logger'
+
+// Module-level logger; `requestId` is attached from CLS per request. The invite
+// `token` (a uuid that grants account creation) and the `inviteLink` are
+// secrets — only `invitationId` is ever logged.
+const log = rootLogger.child({ context: 'InvitationsService' })
 
 @Injectable()
 export class InvitationsService {
@@ -33,12 +39,21 @@ export class InvitationsService {
   // ─── CREATE INVITATION ────────────────────────────────────────────────────
 
   async createInvitation(body: CreateInvitationType, tenantId: string, currentUser: AccessTokenPayload) {
+    log.info({
+      event: 'invitation.create',
+      email: body.email,
+      role: body.role,
+      tenantId,
+      invitedBy: currentUser.userId,
+    })
     const existingUser = await this.sharedUserRepo.findUniqueEmail(body.email)
     if (existingUser) {
+      log.warn({ event: 'invitation.create.rejected', email: body.email, tenantId, reason: 'user_exists' })
       throw new ConflictException('Email này đã đăng ký tài khoản ở một workspace khác')
     }
     const tenant = await this.sharedUserRepo.findTenantUnique(tenantId)
     if (!tenant) {
+      log.warn({ event: 'invitation.create.rejected', tenantId, reason: 'tenant_not_found' })
       throw new NotFoundException('Không tìm thấy workspace')
     }
     // Find Role in tenant based on submitted name
@@ -46,9 +61,11 @@ export class InvitationsService {
       where: { tenantId, name: body.role },
     })
     if (!dbRole) {
+      log.warn({ event: 'invitation.create.rejected', email: body.email, tenantId, reason: 'invalid_role' })
       throw new BadRequestException('Vai trò không hợp lệ')
     }
     if (getRoleWeight(dbRole.name) > getRequesterRoleWeight(currentUser.role)) {
+      log.warn({ event: 'invitation.create.rejected', email: body.email, tenantId, reason: 'role_escalation' })
       throw new ForbiddenException('Bạn không thể mời người dùng với vai trò cao hơn vai trò của chính mình')
     }
     await this.invitationRepo.deleteManyByEmail(body.email)
@@ -69,6 +86,13 @@ export class InvitationsService {
       role: body.role,
       inviteLink,
     })
+    log.info({
+      event: 'invitation.created',
+      invitationId: invitation.id,
+      email: body.email,
+      role: body.role,
+      tenantId,
+    })
     return {
       ...invitation,
       role: body.role,
@@ -86,26 +110,39 @@ export class InvitationsService {
   async revokeInvitation(id: string, tenantId: string) {
     const invitation = await this.invitationRepo.findByIdAndTenant(id, tenantId)
     if (!invitation) {
+      log.warn({ event: 'invitation.revoke.rejected', invitationId: id, tenantId, reason: 'not_found' })
       throw new NotFoundException('Không tìm thấy lời mời hoặc lời mời không thuộc workspace này')
     }
 
+    log.info({ event: 'invitation.revoked', invitationId: id, tenantId })
     return this.invitationRepo.deleteById(id)
   }
 
   // ─── VERIFY TOKEN ─────────────────────────────────────────────────────────
 
   async verifyInvitationToken(token: string) {
+    // Raw token is a secret — log only a short prefix at debug for support.
+    log.debug({ event: 'invitation.verify', tokenPrefix: token.slice(0, 8) })
     const invitation = await this.invitationRepo.findByToken(token)
     if (!invitation) {
+      log.warn({ event: 'invitation.verify.rejected', reason: 'invalid' })
       throw new BadRequestException('Lời mời không hợp lệ hoặc link đã hỏng')
     }
     if (invitation.status !== 'PENDING') {
+      log.warn({ event: 'invitation.verify.rejected', invitationId: invitation.id, reason: 'not_pending' })
       throw new BadRequestException('Lời mời này đã được chấp nhận hoặc đã bị hủy')
     }
     if (invitation.expiresAt < new Date()) {
       await this.invitationRepo.updateStatus(invitation.id, 'EXPIRED')
+      log.warn({ event: 'invitation.verify.rejected', invitationId: invitation.id, reason: 'expired' })
       throw new BadRequestException('Lời mời này đã hết hạn (quá 7 ngày)')
     }
+    log.info({
+      event: 'invitation.verified',
+      invitationId: invitation.id,
+      email: invitation.email,
+      tenantId: invitation.tenantId,
+    })
     return {
       email: invitation.email,
       role: invitation.role.name, // Return role name string
@@ -119,10 +156,17 @@ export class InvitationsService {
   async acceptInvitation(body: AcceptInvitationType) {
     const invitation = await this.invitationRepo.findByTokenOnly(body.token)
     if (!invitation || invitation.status !== 'PENDING' || invitation.expiresAt < new Date()) {
+      log.warn({ event: 'invitation.accept.rejected', reason: 'invalid_or_expired' })
       throw new BadRequestException('Lời mời không hợp lệ hoặc đã hết hạn')
     }
     const existingUser = await this.sharedUserRepo.findUniqueEmail(invitation.email)
     if (existingUser) {
+      log.warn({
+        event: 'invitation.accept.rejected',
+        invitationId: invitation.id,
+        email: invitation.email,
+        reason: 'user_exists',
+      })
       throw new ConflictException('Email này đã đăng ký tài khoản ở một workspace khác')
     }
     const hashedPassword = await this.hashingService.hash(body.password)
@@ -150,6 +194,13 @@ export class InvitationsService {
       { userId: newUser.id, role: newUser.role, tenantId: newUser.tenantId },
       ttlSeconds,
     )
+    log.info({
+      event: 'invitation.accepted',
+      invitationId: invitation.id,
+      email: invitation.email,
+      tenantId: newUser.tenantId,
+      userId: newUser.id,
+    })
     return {
       message: 'Đăng ký tài khoản thành công',
       accessToken,
@@ -162,9 +213,11 @@ export class InvitationsService {
   async updateInvitation(id: string, body: UpdateInvitationType, tenantId: string, currentUser: AccessTokenPayload) {
     const invitation = await this.invitationRepo.findByIdAndTenant(id, tenantId)
     if (!invitation) {
+      log.warn({ event: 'invitation.update.rejected', invitationId: id, tenantId, reason: 'not_found' })
       throw new NotFoundException('Không tìm thấy lời mời')
     }
     if (invitation.status !== 'PENDING') {
+      log.warn({ event: 'invitation.update.rejected', invitationId: id, tenantId, reason: 'not_pending' })
       throw new BadRequestException('Chỉ có thể chỉnh sửa lời mời đang ở trạng thái chờ kích hoạt')
     }
     const updateData: {
@@ -199,6 +252,12 @@ export class InvitationsService {
       companyName: tenant?.name || 'Workspace CRM',
       role: updatedInvitation.role.name,
       inviteLink,
+    })
+    log.info({
+      event: 'invitation.updated',
+      invitationId: id,
+      tenantId,
+      changed: [...(updateData.email ? ['email'] : []), ...(updateData.roleId ? ['role'] : [])],
     })
     return {
       ...updatedInvitation,

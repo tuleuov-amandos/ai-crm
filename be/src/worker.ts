@@ -1,11 +1,15 @@
 import 'reflect-metadata'
-import { Logger } from '@nestjs/common'
+// Must be first (after reflect-metadata): initializes Sentry + its global
+// error handlers before the worker code loads, so startup crashes are caught.
+import './instrument'
 // Importing the config module here validates env vars (and loads .env) exactly
 // like main.ts does, so the worker fails fast on misconfiguration.
 import './common/config'
+import { rootLogger } from './common/logger/root-logger'
 import { startAiWorker } from './routes/ai/ai.processor'
+import { Sentry } from './instrument'
 
-const logger = new Logger('WorkerBootstrap')
+const logger = rootLogger.child({ context: 'WorkerBootstrap' })
 
 /**
  * Standalone entrypoint for the background worker.
@@ -17,19 +21,21 @@ const logger = new Logger('WorkerBootstrap')
  */
 function bootstrap() {
   const worker = startAiWorker()
-  logger.log('AI worker process started')
+  logger.info('AI worker process started')
 
   let shuttingDown = false
   const shutdown = async (signal: string) => {
     if (shuttingDown) return
     shuttingDown = true
-    logger.log(`Received ${signal}, closing AI worker...`)
+    logger.info({ signal }, 'Received signal, closing AI worker')
     try {
       await worker.close()
-      logger.log('AI worker closed cleanly')
+      logger.info('AI worker closed cleanly')
       process.exit(0)
     } catch (err) {
-      logger.error('Error while closing AI worker', err instanceof Error ? err.stack : String(err))
+      logger.error({ err }, 'Error while closing AI worker')
+      Sentry.captureException(err)
+      await Sentry.flush(2000)
       process.exit(1)
     }
   }
@@ -38,4 +44,10 @@ function bootstrap() {
   process.on('SIGINT', () => void shutdown('SIGINT'))
 }
 
-bootstrap()
+try {
+  bootstrap()
+} catch (err) {
+  logger.error({ err }, 'Fatal error during worker bootstrap')
+  Sentry.captureException(err)
+  void Sentry.flush(2000).finally(() => process.exit(1))
+}

@@ -11,6 +11,14 @@ import { AuthRepository } from './auth.repo'
 import { Response as ExpressResponse } from 'express'
 import { COOKIE_OPTIONS } from './auth.constants'
 import { RedisService } from 'src/common/services/redis.service'
+import { rootLogger } from 'src/common/logger/root-logger'
+
+// Module-level logger. During an HTTP request the pino `mixin` pulls the
+// per-request `requestId` from CLS automatically, so every line here is
+// correlated without touching the constructor. Only explicit primitive fields
+// are logged (ids, email, role, outcome) — never passwords, tokens, hashes or
+// whole request/profile objects.
+const log = rootLogger.child({ context: 'AuthService' })
 
 @Injectable()
 export class AuthService {
@@ -25,16 +33,19 @@ export class AuthService {
 
   async register(body: RegisterBodyType) {
     const slug = slugify(body.companyName)
+    log.info({ event: 'register.attempt', email: body.email, companyName: body.companyName, slug })
 
     const existSlug = await this.sharedUserRepository.findSlug(slug)
 
     if (existSlug) {
+      log.warn({ event: 'register.conflict', email: body.email, slug, reason: 'slug_taken' })
       throw new ConflictException('Tên công ty đã tồn tại, vui lòng chọn tên khác')
     }
 
     const existUser = await this.authRepository.findUserByEmail(body.email)
 
     if (existUser) {
+      log.warn({ event: 'register.conflict', email: body.email, reason: 'email_taken' })
       throw new ConflictException('Email đã được sử dụng, vui lòng chọn email khác')
     }
 
@@ -48,18 +59,22 @@ export class AuthService {
       hashedPassword,
       role: ROLE.ADMIN,
     })
+    log.info({ event: 'register.success', email: body.email, userId: user.id, tenantId: user.tenantId })
     return user
   }
 
   async login(body: LoginBodyType) {
+    log.info({ event: 'login.attempt', email: body.email })
     const user = await this.authRepository.findUserByEmail(body.email)
 
     if (!user) {
+      log.warn({ event: 'login.failed', email: body.email, reason: 'user_not_found' })
       throw new UnauthorizedException('Email hoặc mật khẩu không đúng')
     }
 
     const isPasswordValid = await this.hashingService.compare(body.password, user.password)
     if (!isPasswordValid) {
+      log.warn({ event: 'login.failed', email: body.email, userId: user.id, reason: 'bad_password' })
       throw new UnprocessableEntityException({
         message: 'Sai mật khẩu. Vui lòng thử lại.',
         path: 'password',
@@ -71,11 +86,14 @@ export class AuthService {
       role: user.role,
       tenantId: user.tenantId,
     })
+    log.info({ event: 'login.success', email: body.email, userId: user.id, tenantId: user.tenantId, role: user.role })
     return tokens
   }
 
   async logout(refreshToken: string) {
+    // The refresh token value itself is a credential — never logged.
     await this.redisService.delete(`auth:refresh:${refreshToken}`)
+    log.info({ event: 'logout' })
     return { message: 'Đăng xuất thành công' }
   }
 
@@ -94,11 +112,14 @@ export class AuthService {
 
     await this.redisService.set(`auth:refresh:${refreshToken}`, { userId, role, tenantId }, ttlSeconds)
 
+    // Token strings and the token secret are never logged — ids only.
+    log.debug({ event: 'tokens.issued', userId, tenantId, role })
     return { accessToken, refreshToken }
   }
 
   async refreshToken(refreshToken: string, res: ExpressResponse) {
     if (!refreshToken) {
+      log.warn({ event: 'refresh.failed', reason: 'no_token' })
       throw new UnauthorizedException('Không tìm thấy refresh token')
     }
 
@@ -107,11 +128,13 @@ export class AuthService {
       const decoded = await this.tokenService.verifyRefreshToken(refreshToken)
       userId = decoded.userId
     } catch {
+      log.warn({ event: 'refresh.failed', reason: 'invalid' })
       throw new UnauthorizedException('Refresh token không hợp lệ hoặc đã hết hạn')
     }
 
     const storedToken = await this.redisService.get(`auth:refresh:${refreshToken}`)
     if (!storedToken) {
+      log.warn({ event: 'refresh.failed', userId, reason: 'not_in_store' })
       throw new UnauthorizedException('Refresh token không tồn tại trong phiên làm việc')
     }
 
@@ -133,6 +156,7 @@ export class AuthService {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     })
 
+    log.info({ event: 'refresh.success', userId, tenantId: storedToken.tenantId })
     return { message: 'Refresh token thành công' }
   }
 
@@ -141,11 +165,15 @@ export class AuthService {
       where: { id: userId },
       include: { role: true },
     })
-    if (!user) return null
+    if (!user) {
+      log.warn({ event: 'profile.fetch', userId, reason: 'not_found' })
+      return null
+    }
 
     // Fetch permissions list via user's role (Using Redis Cache)
     const cacheKey = `tenant:${user.tenantId}:role:${user.role.name}:permissions`
     let permissions = await this.redisService.get(cacheKey)
+    const permissionsCacheHit = Boolean(permissions)
 
     if (!permissions) {
       const dbRolePermissions = await this.prismaService.rolePermission.findMany({
@@ -167,6 +195,7 @@ export class AuthService {
       await this.redisService.set(cacheKey, permissions, 3600)
     }
 
+    log.debug({ event: 'profile.fetch', userId, tenantId: user.tenantId, permissionsCacheHit })
     return {
       id: user.id,
       email: user.email,
@@ -184,13 +213,17 @@ export class AuthService {
     emailVerified: boolean
     name: string
   }) {
+    // `profile` also carries a Google `accessToken` upstream — never pass the
+    // whole object to the logger; destructure the safe fields only.
     const { provider, providerAccountId, email, emailVerified, name } = profile
+    log.info({ event: 'google.login', email, provider, emailVerified })
     // Defense-in-depth: the Google strategy already rejects unverified emails
     // before this is called, but account-linking below is security-critical
     // (an unverified email would let an attacker silently take over an
     // existing password-based account), so re-check here rather than trust
     // the caller.
     if (!emailVerified) {
+      log.warn({ event: 'google.login', email, outcome: 'rejected_unverified' })
       throw new UnauthorizedException('Email Google chưa được xác minh')
     }
     // 1. Check Google linked account
@@ -199,6 +232,13 @@ export class AuthService {
       include: { user: { include: { role: true } } },
     })
     if (account) {
+      log.info({
+        event: 'google.login',
+        email,
+        outcome: 'linked_account',
+        userId: account.user.id,
+        tenantId: account.user.tenantId,
+      })
       return {
         ...account.user,
         role: account.user.role.name as any,
@@ -210,6 +250,7 @@ export class AuthService {
       include: { role: true },
     })
     if (user) {
+      log.warn({ event: 'google.login', email, userId: user.id, outcome: 'rejected_password_account' })
       // Do NOT auto-link: this project's password registration never verifies
       // email ownership (no email-verification flow), so an attacker could
       // pre-register a password account on someone else's email, then have
@@ -236,6 +277,13 @@ export class AuthService {
       await this.prismaService.invitation.update({
         where: { id: invitation.id },
         data: { status: 'ACCEPTED' },
+      })
+      log.info({
+        event: 'google.login',
+        email,
+        outcome: 'joined_via_invitation',
+        invitationId: invitation.id,
+        tenantId,
       })
     } else {
       // Register new company
@@ -285,6 +333,13 @@ export class AuthService {
         await tx.account.create({
           data: { userId: newUser.id, provider, providerAccountId },
         })
+        log.info({
+          event: 'google.login',
+          email,
+          outcome: 'new_tenant',
+          userId: newUser.id,
+          tenantId: tenant.id,
+        })
         return { ...newUser, role: 'ADMIN' as any }
       })
     }
@@ -296,6 +351,7 @@ export class AuthService {
     await this.prismaService.account.create({
       data: { userId: newUser.id, provider, providerAccountId },
     })
+    log.info({ event: 'google.login', email, outcome: 'invitation_user_created', userId: newUser.id, tenantId })
     return {
       ...newUser,
       role: newUser.role.name as any,

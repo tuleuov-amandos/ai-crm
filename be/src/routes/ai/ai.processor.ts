@@ -1,5 +1,6 @@
 import { Worker } from 'bullmq'
-import { Logger } from '@nestjs/common'
+import { Sentry, isConnectionError, captureThrottled } from '../../instrument'
+import { rootLogger } from '../../common/logger/root-logger'
 import { createRedis } from '../../common/providers/redis.provider'
 import { AI_QUEUE_NAME } from './ai.queue'
 import { PrismaService } from '../../common/services/prisma.service'
@@ -10,8 +11,12 @@ import { publishAiEventRemote as publishAiEvent } from './ai.sse'
 import { z } from 'zod'
 import { openai, AI_MODEL } from './ai.client'
 
-const log = new Logger('AiProcessor')
+const log = rootLogger.child({ context: 'AiProcessor' })
 const OPENAI_TIMEOUT_MS = 30_000
+// A Redis outage makes the worker emit `error` continuously while it retries.
+// Log every one (useful locally) but only forward one to Sentry per 5 min per
+// error code, so a blip doesn't burn the monthly quota on identical events.
+const WORKER_CONN_ERROR_SENTRY_WINDOW_MS = 300_000
 
 const AiResponseSchema = z.object({
   tasks: z
@@ -142,6 +147,11 @@ export function startAiWorker(): Worker {
         meetingNote: string
       }
 
+      // Per-job child logger — `jobId` is the correlation id for the queue
+      // path (the equivalent of `requestId` on the HTTP path). The meeting
+      // note itself is user content and is deliberately never logged.
+      const jobLog = log.child({ jobId, dealId, tenantId })
+
       let aiResult: AiResponseType | null = null
       try {
         aiResult = await callOpenAiAndParse(meetingNote)
@@ -152,7 +162,7 @@ export function startAiWorker(): Worker {
         let reason = error.code || status || 'OPENAI_ERROR'
 
         if (error.code === 'OPENAI_TIMEOUT') {
-          console.error('OpenAI timeout', { jobId, dealId, err: error.raw })
+          jobLog.error({ reason: 'OPENAI_TIMEOUT', err: error.raw }, 'OpenAI timeout')
           reason = 'OPENAI_TIMEOUT'
           try {
             publishAiEvent(tenantId, dealId, 'ai-error', {
@@ -161,13 +171,14 @@ export function startAiWorker(): Worker {
               reason,
             })
           } catch (e) {
-            console.error('Failed to publish SSE ai-error for timeout', { jobId, dealId, err: e })
+            jobLog.error({ err: e }, 'Failed to publish SSE ai-error for timeout')
           }
           throw new Error(reason)
         }
 
         if (status === 401 || status === 403) {
-          console.error('OpenAI auth error', { jobId, dealId, status, message: err.message })
+          jobLog.error({ status, reason: 'OPENAI_AUTH_ERROR', message: error.message }, 'OpenAI auth error')
+          Sentry.captureException(err, { tags: { area: 'ai-processor', jobId, dealId, reason: 'OPENAI_AUTH_ERROR' } })
           reason = 'OPENAI_AUTH_ERROR'
           try {
             publishAiEvent(tenantId, dealId, 'ai-error', {
@@ -176,13 +187,13 @@ export function startAiWorker(): Worker {
               reason,
             })
           } catch (e) {
-            console.error('Failed to publish SSE ai-error for auth', { jobId, dealId, err: e })
+            jobLog.error({ err: e }, 'Failed to publish SSE ai-error for auth')
           }
           throw new Error(reason)
         }
 
         if (status === 429) {
-          console.error('OpenAI rate limit', { jobId, dealId, status })
+          jobLog.warn({ status, reason: 'OPENAI_RATE_LIMIT' }, 'OpenAI rate limit')
           reason = 'OPENAI_RATE_LIMIT'
           try {
             publishAiEvent(tenantId, dealId, 'ai-error', {
@@ -191,12 +202,13 @@ export function startAiWorker(): Worker {
               reason,
             })
           } catch (e) {
-            console.error('Failed to publish SSE ai-error for rate limit', { jobId, dealId, err: e })
+            jobLog.error({ err: e }, 'Failed to publish SSE ai-error for rate limit')
           }
           throw new Error(reason)
         }
 
-        console.error('OpenAI parse/response error', { jobId, dealId, message: err.message, details: err.details })
+        jobLog.error({ message: error.message, details: error.details }, 'OpenAI parse/response error')
+        Sentry.captureException(err, { tags: { area: 'ai-processor', jobId, dealId, reason: String(reason) } })
         try {
           publishAiEvent(tenantId, dealId, 'ai-error', {
             message: 'Dịch vụ AI tạm thời không khả dụng. Vui lòng thử lại.',
@@ -204,7 +216,7 @@ export function startAiWorker(): Worker {
             reason,
           })
         } catch (e) {
-          console.error('Failed to publish SSE ai-error for generic OpenAI error', { jobId, dealId, err: e })
+          jobLog.error({ err: e }, 'Failed to publish SSE ai-error for generic OpenAI error')
         }
         throw err
       }
@@ -221,16 +233,18 @@ export function startAiWorker(): Worker {
             jobId,
           })
         } catch (e) {
-          console.error('Failed to publish SSE ai-complete', { jobId, dealId, err: e })
+          jobLog.error({ err: e }, 'Failed to publish SSE ai-complete')
         }
 
+        jobLog.info({ taskCount: aiResult.tasks?.length ?? 0 }, 'AI job completed')
         return { ok: true }
       } catch (err) {
-        console.error('DB transaction failed', { jobId, dealId, err })
+        jobLog.error({ err }, 'DB transaction failed')
+        Sentry.captureException(err, { tags: { area: 'ai-processor', jobId, dealId, reason: 'DB_TRANSACTION_FAILED' } })
         try {
           publishAiEvent(tenantId, dealId, 'ai-error', { message: 'Lưu kết quả AI thất bại. Vui lòng thử lại.', jobId })
         } catch (e) {
-          console.error('Failed to publish SSE ai-error', { jobId, dealId, err: e })
+          jobLog.error({ err: e }, 'Failed to publish SSE ai-error')
         }
         throw new Error(`DB transaction failed: ${String((err as Error).message || err)}`)
       }
@@ -239,13 +253,21 @@ export function startAiWorker(): Worker {
   )
 
   worker.on('error', (err) => {
-    log.error('AI worker error', err instanceof Error ? err.stack : String(err))
+    log.error({ err }, 'AI worker error')
+    if (isConnectionError(err)) {
+      const code = (err as NodeJS.ErrnoException).code ?? err.name ?? 'unknown'
+      captureThrottled(err, `ai-worker-conn:${code}`, WORKER_CONN_ERROR_SENTRY_WINDOW_MS, {
+        tags: { area: 'ai-processor', kind: 'worker-connection-error', code },
+      })
+    } else {
+      Sentry.captureException(err, { tags: { area: 'ai-processor', kind: 'worker-error' } })
+    }
   })
   worker.on('failed', (job, err) => {
-    log.error(`AI job ${job?.id ?? 'unknown'} failed: ${err?.message ?? err}`)
+    log.error({ jobId: job?.id ?? 'unknown', err }, 'AI job failed')
   })
   worker.on('ready', () => {
-    log.log(`AI worker ready, listening on queue "${AI_QUEUE_NAME}"`)
+    log.info(`AI worker ready, listening on queue "${AI_QUEUE_NAME}"`)
   })
 
   return worker
