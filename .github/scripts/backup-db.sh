@@ -20,7 +20,7 @@ set -euo pipefail
 
 OUT_FILE="${1:?usage: backup-db.sh <out-file>}"
 : "${DATABASE_URL:?DATABASE_URL is required}"
-PG_IMAGE="${PG_IMAGE:-postgres:17-alpine}"
+PG_IMAGE="${PG_IMAGE:-postgres:18-alpine}"
 
 mkdir -p "$(dirname "$OUT_FILE")"
 

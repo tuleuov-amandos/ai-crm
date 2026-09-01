@@ -16,8 +16,12 @@ Backend → **Railway**, Frontend → **Vercel**. Часть шагов дела
 ### Бэкап БД и миграции
 
 - **Бэкап** (`backup` job): `pg_dump --format=custom` прод-Postgres через публичный
-  proxy-endpoint Railway, из образа `postgres:17-alpine`
-  ([`.github/scripts/backup-db.sh`](.github/scripts/backup-db.sh)). Дамп кладётся как
+  proxy-endpoint Railway, из образа `postgres:18-alpine`
+  ([`.github/scripts/backup-db.sh`](.github/scripts/backup-db.sh)) — мажорная версия
+  `pg_dump` должна быть ≥ версии сервера Railway (сейчас 18.x). Локальный Postgres в
+  `docker-compose.yml` (`16-alpine`) может отставать: это только dev-среда, бэкап
+  снимается исключительно с Railway и этим pinned-образом, не из локального клиента.
+  Дамп кладётся как
   artifact `db-backup-<sha>` (retention 14 дней). Restore:
   `pg_restore --clean --if-exists --no-owner -d "$DATABASE_URL" railway-*.dump`.
 - **Миграции** (`migrate` job): `npx prisma migrate deploy` — **отдельный шаг пайплайна**,
