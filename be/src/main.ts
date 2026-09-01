@@ -24,27 +24,32 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Swagger setup
-  const config = new DocumentBuilder()
-    .setTitle('CRM SaaS API')
-    .setDescription('API documentation cho hệ thống CRM SaaS')
-    .setVersion('1.0')
-    .addCookieAuth('accessToken')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  // Clean up the OpenAPI doc for proper Zod schema representation
-  const cleanedDocument = cleanupOpenApiDoc(document);
-  SwaggerModule.setup('api-docs', app, cleanedDocument, {
-    swaggerOptions: {
-      persistAuthorization: true,
-    },
-  });
+  // Swagger setup — never mount the API schema in production, where it would
+  // be publicly reachable with no auth in front of it.
+  if (envConfig.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('CRM SaaS API')
+      .setDescription('API documentation cho hệ thống CRM SaaS')
+      .setVersion('1.0')
+      .addCookieAuth('accessToken')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    // Clean up the OpenAPI doc for proper Zod schema representation
+    const cleanedDocument = cleanupOpenApiDoc(document);
+    SwaggerModule.setup('api-docs', app, cleanedDocument, {
+      swaggerOptions: {
+        persistAuthorization: true,
+      },
+    });
+  }
 
   const port = envConfig.PORT  || 3001;
   await app.listen(port);
   console.log("Server running on port:", port);
-  console.log(`Swagger: http://localhost:${port}/api-docs`);
+  if (envConfig.NODE_ENV !== 'production') {
+    console.log(`Swagger: http://localhost:${port}/api-docs`);
+  }
 }
 bootstrap();
 
