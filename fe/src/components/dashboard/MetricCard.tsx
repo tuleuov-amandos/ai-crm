@@ -1,4 +1,7 @@
+"use client";
+
 import { TrendingUp, TrendingDown, type LucideIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   Card,
   CardContent,
@@ -7,7 +10,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { formatVndShort } from "@/lib/helper";
+import { useShortValue } from "@/lib/format";
 
 interface MetricCardProps {
   label: string;
@@ -30,6 +33,8 @@ export function MetricCard({
   iconBg = "#EEEDFE",
   iconColor = "#534AB7",
 }: MetricCardProps) {
+  const t = useTranslations("dashboard.metricCard");
+  const shortValue = useShortValue();
   const pct = progress
     ? Math.min((progress.current / progress.target) * 100, 100)
     : 0;
@@ -95,7 +100,7 @@ export function MetricCard({
             </div>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground" style={{ fontSize: 11 }}>
-                {progress.label || `Target: ${formatVndShort(progress.target)}`}
+                {progress.label || t("targetPrefix", { value: shortValue(progress.target) })}
               </span>
               <span
                 style={{

@@ -1,5 +1,8 @@
+"use client";
+
 import { Phone, Mail, Users, FileText, Plus, ArrowRight, CalendarCheck } from "lucide-react";
 import Link from "next/link";
+import { useTranslations, useFormatter } from "next-intl";
 import {
   Card,
   CardHeader,
@@ -12,7 +15,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatDateVi } from "@/lib/helper";
 
 type ActivityType = "call" | "email" | "meeting" | "note";
 
@@ -24,49 +26,6 @@ interface Activity {
   company: string;
   time: string;
 }
-
-const MOCK_ACTIVITIES: Activity[] = [
-  {
-    id: "a1",
-    type: "CALL",
-    title: "Gọi điện theo dõi deal",
-    contact: "Nguyễn Thị Bích",
-    company: "Tập đoàn DEF",
-    time: new Date(new Date().setHours(14, 0, 0, 0)).toISOString(),
-  },
-  {
-    id: "a2",
-    type: "MEETING",
-    title: "Họp demo sản phẩm",
-    contact: "Trần Văn Nam",
-    company: "Ngân hàng JKL",
-    time: new Date(new Date().setHours(15, 30, 0, 0)).toISOString(),
-  },
-  {
-    id: "a3",
-    type: "EMAIL",
-    title: "Gửi báo giá cập nhật",
-    contact: "Phạm Thị Lan",
-    company: "Cty CP PQR",
-    time: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString(),
-  },
-  {
-    id: "a4",
-    type: "MEETING",
-    title: "Thương lượng hợp đồng",
-    contact: "Lê Đức Hùng",
-    company: "Tập đoàn MNO",
-    time: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString(),
-  },
-  {
-    id: "a5",
-    type: "CALL",
-    title: "Chăm sóc sau ký hợp đồng",
-    contact: "Vũ Thị Hoa",
-    company: "Cty TNHH VWX",
-    time: new Date(new Date().setDate(new Date().getDate() + 3)).toISOString(),
-  },
-];
 
 const typeConfig: Record<
   ActivityType,
@@ -83,14 +42,36 @@ interface UpcomingActivitiesProps {
   isLoading?: boolean;
 }
 
-export function UpcomingActivities({ activities = MOCK_ACTIVITIES, isLoading = false }: UpcomingActivitiesProps) {
+export function UpcomingActivities({ activities = [], isLoading = false }: UpcomingActivitiesProps) {
+  const t = useTranslations("dashboard.upcomingActivities");
+  const tCommon = useTranslations("common");
+  const format = useFormatter();
+
+  const describeTime = (iso: string) => {
+    const date = new Date(iso);
+    const now = new Date();
+    const time = format.dateTime(date, { hour: "2-digit", minute: "2-digit", hour12: false });
+    const tomorrow = new Date(now);
+    tomorrow.setDate(now.getDate() + 1);
+    if (date.toDateString() === now.toDateString()) {
+      return { label: `${tCommon("today")} ${time}`, isToday: true };
+    }
+    if (date.toDateString() === tomorrow.toDateString()) {
+      return { label: `${tCommon("tomorrow")} ${time}`, isToday: false };
+    }
+    return {
+      label: `${format.dateTime(date, { day: "numeric", month: "numeric" })} ${time}`,
+      isToday: false,
+    };
+  };
+
   return (
     <Card className="shadow-none border-border/70 gap-0 py-0 flex flex-col">
       <CardHeader className="border-b px-5 py-4">
         <div>
-          <CardTitle className="text-sm tracking-tight">Hoạt động sắp tới</CardTitle>
+          <CardTitle className="text-sm tracking-tight">{t("title")}</CardTitle>
           <CardDescription className="text-xs mt-0.5">
-            Lịch làm việc của bạn
+            {t("subtitle")}
           </CardDescription>
         </div>
         <CardAction>
@@ -101,7 +82,7 @@ export function UpcomingActivities({ activities = MOCK_ACTIVITIES, isLoading = f
             asChild
           >
             <Link href="/activities">
-              Tất cả
+              {t("all")}
               <ArrowRight className="size-3" />
             </Link>
           </Button>
@@ -124,16 +105,15 @@ export function UpcomingActivities({ activities = MOCK_ACTIVITIES, isLoading = f
       ) : activities.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center py-10 text-muted-foreground text-center px-4">
           <CalendarCheck className="size-8 text-muted-foreground/40 mb-2" strokeWidth={1.5} />
-          <p style={{ fontSize: 13, fontWeight: 500 }} className="text-foreground">Không có hoạt động sắp tới</p>
-          <p style={{ fontSize: 11, marginTop: 2, maxWidth: 200 }} className="text-muted-foreground">Lịch làm việc của bạn đang trống</p>
+          <p style={{ fontSize: 13, fontWeight: 500 }} className="text-foreground">{t("emptyTitle")}</p>
+          <p style={{ fontSize: 11, marginTop: 2, maxWidth: 200 }} className="text-muted-foreground">{t("emptyDescription")}</p>
         </div>
       ) : (
         <CardContent className="p-0 flex-1">
           {activities.map((act, i) => {
             const config = typeConfig[act.type.toLowerCase() as ActivityType] || typeConfig.note;
             const Icon = config.icon;
-            const formattedTime = formatDateVi(act.time);
-            const isToday = formattedTime.startsWith("Hôm nay");
+            const { label: formattedTime, isToday } = describeTime(act.time);
 
             return (
               <div
@@ -192,7 +172,7 @@ export function UpcomingActivities({ activities = MOCK_ACTIVITIES, isLoading = f
           className="h-8 gap-1.5 text-xs text-primary hover:text-primary"
         >
           <Plus className="size-3.5" />
-          Thêm hoạt động mới
+          {t("addActivity")}
         </Button>
       </CardFooter>
     </Card>

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { zIsoDatetime } from 'src/common/utils/zod.util'
+import { ValidationErrorCode } from 'src/common/errors'
 
 // ─── ACTIVITY TYPE CONSTANT ───────────────────────────────────────────────────
 export const ActivityTypeConst = {
@@ -57,7 +58,7 @@ export const CreateActivityForContactBodySchema = z
   .object({
     type: ActivityTypeEnum,
     title: z.string().optional().nullable(),
-    note: z.string().min(1, 'Nội dung không được để trống'),
+    note: z.string().min(1),
     date: zIsoDatetime.optional(),
   })
   .strict()
@@ -70,7 +71,7 @@ export const CreateActivityForDealBodySchema = z
   .object({
     type: ActivityTypeEnum,
     title: z.string().optional().nullable(),
-    note: z.string().min(1, 'Nội dung không được để trống'),
+    note: z.string().min(1),
     date: zIsoDatetime.optional(),
     contactId: z.string().optional(), // optional — can attach contact
   })
@@ -89,7 +90,7 @@ export const UpdateActivityBodySchema = z
   })
   .strict()
   .refine((data) => Object.keys(data).length > 0, {
-    message: 'Ít nhất phải có một trường được cập nhật',
+    message: ValidationErrorCode.AT_LEAST_ONE_FIELD,
   })
 
 export type UpdateActivityBodyType = z.infer<typeof UpdateActivityBodySchema>

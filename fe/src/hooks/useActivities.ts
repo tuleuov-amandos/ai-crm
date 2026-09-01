@@ -9,12 +9,14 @@ import {
   UpdateActivityBodyType,
 } from "@/lib/validations/activities.scheme";
 import { ApiError } from "@/types/error.type";
+import { useApiError } from "@/hooks/useApiError";
 import {
   useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 // ─────────────────────────────────────────
@@ -93,6 +95,8 @@ export const useDealActivities = (dealId: string) => {
 // ─────────────────────────────────────────
 export const useCreateContactActivity = (contactId: string) => {
   const queryClient = useQueryClient();
+  const t = useTranslations("activities.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: (body: CreateActivityForContactBodyType) =>
@@ -103,11 +107,10 @@ export const useCreateContactActivity = (contactId: string) => {
         queryKey: activityKeys.byContact(contactId),
       });
       queryClient.invalidateQueries({ queryKey: activityKeys.all });
-      toast.success("Tạo hoạt động thành công");
+      toast.success(t("createSuccess"));
     },
     onError: (error: ApiError) => {
-      const message = error.response?.data.message ?? "Tạo hoạt động thất bại";
-      toast.error(message);
+      toast.error(getApiError(error, t("createError")));
     },
   });
 };
@@ -117,6 +120,8 @@ export const useCreateContactActivity = (contactId: string) => {
 // ─────────────────────────────────────────
 export const useCreateDealActivity = (dealId: string) => {
   const queryClient = useQueryClient();
+  const t = useTranslations("activities.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: (body: CreateActivityForDealBodyType) =>
@@ -126,11 +131,10 @@ export const useCreateDealActivity = (dealId: string) => {
         queryKey: activityKeys.byDeal(dealId),
       });
       queryClient.invalidateQueries({ queryKey: activityKeys.all });
-      toast.success("Tạo hoạt động thành công");
+      toast.success(t("createSuccess"));
     },
     onError: (error: ApiError) => {
-      const message = error.response?.data.message ?? "Tạo hoạt động thất bại";
-      toast.error(message);
+      toast.error(getApiError(error, t("createError")));
     },
   });
 };
@@ -140,6 +144,8 @@ export const useCreateDealActivity = (dealId: string) => {
 // ─────────────────────────────────────────
 export const useUpdateActivity = () => {
   const queryClient = useQueryClient();
+  const t = useTranslations("activities.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: UpdateActivityBodyType }) =>
@@ -147,12 +153,10 @@ export const useUpdateActivity = () => {
     onSuccess: () => {
       // Invalidate all activity cache (list, infinite, byContact, byDeal)
       queryClient.invalidateQueries({ queryKey: activityKeys.all });
-      toast.success("Cập nhật hoạt động thành công");
+      toast.success(t("updateSuccess"));
     },
     onError: (error: ApiError) => {
-      const message =
-        error.response?.data.message ?? "Cập nhật hoạt động thất bại";
-      toast.error(message);
+      toast.error(getApiError(error, t("updateError")));
     },
   });
 };
@@ -162,16 +166,17 @@ export const useUpdateActivity = () => {
 // ─────────────────────────────────────────
 export const useDeleteActivity = () => {
   const queryClient = useQueryClient();
+  const t = useTranslations("activities.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: (activityId: string) => activitiesService.delete(activityId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: activityKeys.all });
-      toast.success("Xóa hoạt động thành công");
+      toast.success(t("deleteSuccess"));
     },
     onError: (error: ApiError) => {
-      const message = error.response?.data.message ?? "Xóa hoạt động thất bại";
-      toast.error(message);
+      toast.error(getApiError(error, t("deleteError")));
     },
   });
 };

@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, UnprocessableEntityException, ForbiddenException } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
+import { AppException, ContactErrorCode, DealErrorCode } from 'src/common/errors'
 import {
   CreateDealBodyType,
   DealStageConst,
@@ -62,17 +63,17 @@ export class DealService {
 
     // Check Deal creation permission
     if (ability.cannot('create', 'Deal')) {
-      throw new ForbiddenException('Bạn không có quyền tạo deal')
+      throw AppException.forbidden(DealErrorCode.FORBIDDEN_CREATE, 'You do not have permission to create a deal')
     }
 
     // If only allowed to create deals owned by oneself
     if (ability.cannot('manage', 'all')) {
       if (data.ownerId !== user.userId) {
-        throw new ForbiddenException('Bạn chỉ có thể tạo deal do chính mình sở hữu')
+        throw AppException.forbidden(DealErrorCode.FORBIDDEN_OWNER_SELF_ONLY, 'You can only create deals that you own')
       }
       const contact = await this.contactsRepo.findOne(data.contactId)
       if (!contact || ability.cannot('read', subject('Contact', contact))) {
-        throw new NotFoundException('Liên hệ không tồn tại')
+        throw AppException.notFound(ContactErrorCode.NOT_FOUND, 'Contact not found')
       }
     }
 
@@ -101,7 +102,7 @@ export class DealService {
     const ability = await this.caslAbilityFactory.createForUser(user)
     const filters: { ownerId?: string } = {}
     if (ability.cannot('read', 'Deal')) {
-      throw new ForbiddenException('Bạn không có quyền xem cơ hội bán hàng')
+      throw AppException.forbidden(DealErrorCode.FORBIDDEN_LIST, 'You do not have permission to view deals')
     }
 
     if (ability.cannot('read', subject('Deal', { ownerId: 'other' } as any))) {
@@ -127,12 +128,12 @@ export class DealService {
   async getDealById(dealId: string, tenantId: string, user: { userId: string; role: string; tenantId: string }) {
     const deal = await this.dealRepo.findOne(dealId)
     if (!deal) {
-      throw new NotFoundException('Không tìm thấy deal')
+      throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
     }
 
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('read', subject('Deal', deal))) {
-      throw new NotFoundException('Không tìm thấy deal') // 404 to prevent scanning
+      throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found') // 404 to prevent scanning
     }
     return deal
   }
@@ -145,12 +146,12 @@ export class DealService {
   ) {
     const oldDeal = await this.dealRepo.findOne(dealId)
     if (!oldDeal) {
-      throw new NotFoundException('Không tìm thấy deal')
+      throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
     }
 
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('update', subject('Deal', oldDeal))) {
-      throw new NotFoundException('Không tìm thấy deal')
+      throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
     }
 
     const updated = await this.dealRepo.update(dealId, body)
@@ -179,16 +180,16 @@ export class DealService {
   ) {
     const oldDeal = await this.dealRepo.findOne(dealId)
     if (!oldDeal) {
-      throw new NotFoundException('Không tìm thấy deal')
+      throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
     }
 
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('update', subject('Deal', oldDeal))) {
-      throw new NotFoundException('Không tìm thấy deal')
+      throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
     }
 
     if (!Object.values(DealStageConst).includes(stage)) {
-      throw new UnprocessableEntityException('Giai đoạn không hợp lệ')
+      throw AppException.unprocessable(DealErrorCode.INVALID_STAGE, 'Invalid stage')
     }
 
     const updated = await this.dealRepo.updateStage(dealId, stage)
@@ -213,12 +214,12 @@ export class DealService {
   async delete(dealId: string, tenantId: string, user: { userId: string; role: string; tenantId: string }) {
     const deal = await this.dealRepo.findOne(dealId)
     if (!deal) {
-      throw new NotFoundException('Không tìm thấy deal')
+      throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
     }
 
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('delete', subject('Deal', deal))) {
-      throw new NotFoundException('Không tìm thấy deal')
+      throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
     }
 
     await this.dealRepo.softDelete(dealId)
@@ -239,7 +240,7 @@ export class DealService {
       changes,
     })
 
-    return { message: 'Xóa deal thành công' }
+    return { message: 'Deal deleted successfully' }
   }
 
   async analyze(
@@ -251,16 +252,16 @@ export class DealService {
   ): Promise<AnalyzeDealResType> {
     const deal = await this.dealRepo.findOne(dealId)
     if (!deal) {
-      throw new NotFoundException('Không tìm thấy deal')
+      throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
     }
 
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('read', subject('Deal', deal as any))) {
-      throw new NotFoundException('Không tìm thấy deal')
+      throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
     }
 
     if (!body || typeof body.meetingNote !== 'string') {
-      throw new UnprocessableEntityException('Thiếu trường meetingNote')
+      throw AppException.unprocessable(DealErrorCode.MEETING_NOTE_REQUIRED, 'Missing meetingNote field')
     }
 
     const jobId = await this.aiService.enqueueAnalysis({
@@ -282,11 +283,11 @@ export class DealService {
     user: { userId: string; role: string; tenantId: string },
   ) {
     const deal = await this.dealRepo.findOne(dealId)
-    if (!deal) throw new NotFoundException('Không tìm thấy deal')
+    if (!deal) throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
 
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('update', subject('Deal', deal as any))) {
-      throw new NotFoundException('Không tìm thấy deal')
+      throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
     }
 
     const task = await this.taskRepo.create(dealId, tenantId, data)
@@ -301,11 +302,11 @@ export class DealService {
     user: { userId: string; role: string; tenantId: string },
   ) {
     const deal = await this.dealRepo.findOne(dealId)
-    if (!deal) throw new NotFoundException('Không tìm thấy deal')
+    if (!deal) throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
 
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('update', subject('Deal', deal as any))) {
-      throw new NotFoundException('Không tìm thấy deal')
+      throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
     }
 
     const result = await this.taskRepo.createMany(dealId, tenantId, tasks)
@@ -321,11 +322,11 @@ export class DealService {
     user: { userId: string; role: string; tenantId: string },
   ) {
     const deal = await this.dealRepo.findOne(dealId)
-    if (!deal) throw new NotFoundException('Không tìm thấy deal')
+    if (!deal) throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
 
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('update', subject('Deal', deal as any))) {
-      throw new NotFoundException('Không tìm thấy deal')
+      throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
     }
 
     const task = await this.taskRepo.update(dealId, taskId, data)
@@ -340,11 +341,11 @@ export class DealService {
     user: { userId: string; role: string; tenantId: string },
   ) {
     const deal = await this.dealRepo.findOne(dealId)
-    if (!deal) throw new NotFoundException('Không tìm thấy deal')
+    if (!deal) throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
 
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('update', subject('Deal', deal as any))) {
-      throw new NotFoundException('Không tìm thấy deal')
+      throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
     }
 
     const result = await this.taskRepo.delete(dealId, taskId)

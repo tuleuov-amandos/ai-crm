@@ -1,31 +1,39 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
+import createMiddleware from "next-intl/middleware";
+import { routing } from "./i18n/routing";
+import { stripLocale } from "./i18n/pathname";
+
+const intlMiddleware = createMiddleware(routing);
 
 const protectedRoutes = ['/dashboard', '/pipeline', '/contacts', '/deals', '/activities', '/users', '/roles', '/audit-logs', '/settings'];
 const authRoutes = ['/login', '/register'];
 
 export function proxy(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
-  const accessToken = request.cookies.get('accessToken')?.value;
-  const refreshToken = request.cookies.get('refreshToken')?.value
+  // 1. next-intl: определение локали (cookie -> Accept-Language -> defaultLocale),
+  //    редирект / -> /ru, простановка NEXT_LOCALE cookie.
+  const response = intlMiddleware(request);
 
-  // If user already logged in and try access auth page
+  // 2. Auth-gating поверх уже локализованного пути.
+  const { locale, pathname } = stripLocale(request.nextUrl.pathname);
+  const accessToken = request.cookies.get('accessToken')?.value;
+  const refreshToken = request.cookies.get('refreshToken')?.value;
+
   if (authRoutes.includes(pathname) && accessToken) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url));
   }
 
-  // Check protected route
-  const isProtectedRoute = protectedRoutes.some(route => {
+  const isProtectedRoute = protectedRoutes.some((route) => {
     return pathname === route || pathname.startsWith(route + '/');
   });
 
-  // if user haven't logged in and try access protected page
-  if (isProtectedRoute && !accessToken && !refreshToken){
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
+  if (isProtectedRoute && !accessToken && !refreshToken) {
+    return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
+  }
 
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  // Пропускаем API-проксирование, служебные пути Next/Vercel и файлы с расширением.
+  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)'],
 };

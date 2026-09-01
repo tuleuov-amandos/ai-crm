@@ -104,14 +104,14 @@ export const DealDetailSchema = DealCardSchema.extend({
 export type DealDetail = z.infer<typeof DealDetailSchema>;
 
 // ─── CREATE — POST /deals ─────────────────────────────────────────────────────
+// NOTE: form-facing validation messages live in the component-local
+// buildCreateDealSchema(tv) factory (CreateDealSheet). This schema is used
+// only for its inferred type, so it carries no user-facing messages.
 export const CreateDealBodySchema = z.object({
-  title: z
-    .string()
-    .min(1, "Tiêu đề không được để trống")
-    .max(200, "Tiêu đề không được vượt quá 200 ký tự"),
-  contactId: z.string().min(1, "Vui lòng chọn liên hệ"),
-  ownerId: z.string().min(1, "Vui lòng chọn người phụ trách"),
-  value: z.coerce.number().nonnegative("Giá trị không được âm").default(0),
+  title: z.string().min(1).max(200),
+  contactId: z.string().min(1),
+  ownerId: z.string().min(1),
+  value: z.coerce.number().nonnegative().default(0),
   closeDate: z.coerce.date(),
   note: z.string().optional(),
 });
@@ -127,9 +127,7 @@ export const UpdateDealBodySchema = z
     closeDate: z.coerce.date().nullable().optional(),
     note: z.string().nullable().optional(),
   })
-  .refine((data) => Object.keys(data).length > 0, {
-    message: "Ít nhất phải có một trường được cập nhật",
-  });
+  .refine((data) => Object.keys(data).length > 0);
 
 export type UpdateDealBodyType = z.infer<typeof UpdateDealBodySchema>;
 

@@ -1,9 +1,11 @@
 "use client";
 import {
   ActivityType,
-  CreateActivityForContactBodySchema,
+  ActivityTypeEnum,
   CreateActivityForContactBodyType,
 } from "@/lib/validations/activities.scheme";
+import { useTranslations } from "next-intl";
+import { z } from "zod";
 import {
   Phone,
   Mail,
@@ -16,7 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
@@ -25,12 +27,22 @@ import { Calendar } from "@/components/ui/calendar";
 
 export type ActivityTab = ActivityType;
 
-const TABS: { key: ActivityTab; label: string; icon: typeof Phone }[] = [
-  { key: ActivityType.CALL, label: "Cuộc gọi", icon: Phone },
-  { key: ActivityType.EMAIL, label: "Email", icon: Mail },
-  { key: ActivityType.MEETING, label: "Gặp mặt", icon: Users },
-  { key: ActivityType.NOTE, label: "Ghi chú", icon: FileText },
+const TABS: { key: ActivityTab; icon: typeof Phone }[] = [
+  { key: ActivityType.CALL, icon: Phone },
+  { key: ActivityType.EMAIL, icon: Mail },
+  { key: ActivityType.MEETING, icon: Users },
+  { key: ActivityType.NOTE, icon: FileText },
 ];
+
+const buildLogActivitySchema = (tv: (key: string) => string) =>
+  z
+    .object({
+      type: ActivityTypeEnum,
+      title: z.string().nullable().optional(),
+      note: z.string().min(1, tv("noteRequired")),
+      date: z.coerce.date().optional(),
+    })
+    .strict();
 
 interface LogActivityFormProps {
   onSubmit: (data: CreateActivityForContactBodyType, reset: () => void) => void;
@@ -39,12 +51,18 @@ interface LogActivityFormProps {
 }
 
 function LogActivityForm({ onSubmit, isPending, entityType = "contact" }: LogActivityFormProps) {
+  const t = useTranslations("activities.log");
+  const tType = useTranslations("activities.types");
+  const logActivitySchema = useMemo(
+    () => buildLogActivitySchema((key) => t(`validation.${key}`)),
+    [t],
+  );
   const [activeTab, setActiveTab] = useState<ActivityTab>(
     ActivityType.CALL,
   );
 
   const form = useForm({
-    resolver: zodResolver(CreateActivityForContactBodySchema),
+    resolver: zodResolver(logActivitySchema),
     defaultValues: {
       title: "",
       note: "",
@@ -79,16 +97,13 @@ function LogActivityForm({ onSubmit, isPending, entityType = "contact" }: LogAct
   };
 
   const PLACEHOLDER: Record<ActivityTab, string> = {
-    [ActivityType.CALL]:
-      "Ghi chú cuộc gọi... nội dung trao đổi, kết quả, bước tiếp theo...",
-    [ActivityType.EMAIL]:
-      "Tóm tắt email... chủ đề, nội dung chính, phản hồi của khách...",
-    [ActivityType.MEETING]:
-      "Ghi chú cuộc họp... agenda, thảo luận, quyết định, action items...",
+    [ActivityType.CALL]: t("placeholder.call"),
+    [ActivityType.EMAIL]: t("placeholder.email"),
+    [ActivityType.MEETING]: t("placeholder.meeting"),
     [ActivityType.NOTE]:
       entityType === "deal"
-        ? "Ghi chú nội bộ... thông tin quan trọng về deal này..."
-        : "Ghi chú nội bộ... thông tin quan trọng về liên hệ này...",
+        ? t("placeholder.noteDeal")
+        : t("placeholder.noteContact"),
   };
 
   return (
@@ -114,7 +129,7 @@ function LogActivityForm({ onSubmit, isPending, entityType = "contact" }: LogAct
                 style={{ fontSize: 12, fontWeight: isActive ? 500 : 400 }}
               >
                 <Icon size={12} strokeWidth={isActive ? 2.2 : 1.7} />
-                {tab.label}
+                {tType(tab.key.toLowerCase() as Lowercase<ActivityType>)}
               </button>
             );
           })}
@@ -125,7 +140,7 @@ function LogActivityForm({ onSubmit, isPending, entityType = "contact" }: LogAct
           <Input
             {...form.register("title")}
             value={form.watch("title") || ""}
-            placeholder="Tiêu đề hoạt động (tùy chọn)"
+            placeholder={t("titlePlaceholder")}
             className="bg-[#F8F8F7] dark:bg-card border-[#E8E7E2] dark:border-border text-foreground text-sm"
             style={{ fontSize: 13 }}
           />
@@ -172,7 +187,7 @@ function LogActivityForm({ onSubmit, isPending, entityType = "contact" }: LogAct
                 }}
               />
               <div className="flex items-center justify-between border-t border-border pt-2 gap-2">
-                <span className="text-[11px] text-muted-foreground font-medium">Giờ hoạt động</span>
+                <span className="text-[11px] text-muted-foreground font-medium">{t("activityTime")}</span>
                 <div className="flex items-center gap-1">
                   {/* Hours Select */}
                   <select
@@ -217,7 +232,7 @@ function LogActivityForm({ onSubmit, isPending, entityType = "contact" }: LogAct
             disabled={!note?.trim() || isPending}
           >
             <Send size={11} />
-            {isPending ? "Đang lưu..." : "Lưu hoạt động"}
+            {isPending ? t("saving") : t("submit")}
           </Button>
         </div>
       </form>

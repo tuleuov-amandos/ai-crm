@@ -169,7 +169,7 @@ export function startAiWorker(): Worker {
           // error we are about to rethrow — just log it. The job still fails and
           // BullMQ will surface it.
           publishAiEvent(tenantId, dealId, 'ai-error', {
-            message: 'Phân tích AI mất quá nhiều thời gian. Vui lòng thử lại.',
+            message: 'AI analysis took too long. Please try again.',
             jobId,
             reason,
           }).catch((e) => {
@@ -183,7 +183,7 @@ export function startAiWorker(): Worker {
           Sentry.captureException(err, { tags: { area: 'ai-processor', jobId, dealId, reason: 'OPENAI_AUTH_ERROR' } })
           reason = 'OPENAI_AUTH_ERROR'
           publishAiEvent(tenantId, dealId, 'ai-error', {
-            message: 'Dịch vụ AI tạm thời không khả dụng. Vui lòng liên hệ admin.',
+            message: 'The AI service is temporarily unavailable. Please contact an admin.',
             jobId,
             reason,
           }).catch((e) => {
@@ -196,7 +196,7 @@ export function startAiWorker(): Worker {
           jobLog.warn({ status, reason: 'OPENAI_RATE_LIMIT' }, 'OpenAI rate limit')
           reason = 'OPENAI_RATE_LIMIT'
           publishAiEvent(tenantId, dealId, 'ai-error', {
-            message: 'Dịch vụ AI tạm thời không khả dụng. Vui lòng thử lại sau vài phút.',
+            message: 'The AI service is temporarily unavailable. Please try again in a few minutes.',
             jobId,
             reason,
           }).catch((e) => {
@@ -208,7 +208,7 @@ export function startAiWorker(): Worker {
         jobLog.error({ message: error.message, details: error.details }, 'OpenAI parse/response error')
         Sentry.captureException(err, { tags: { area: 'ai-processor', jobId, dealId, reason: String(reason) } })
         publishAiEvent(tenantId, dealId, 'ai-error', {
-          message: 'Dịch vụ AI tạm thời không khả dụng. Vui lòng thử lại.',
+          message: 'The AI service is temporarily unavailable. Please try again.',
           jobId,
           reason,
         }).catch((e) => {
@@ -238,8 +238,9 @@ export function startAiWorker(): Worker {
         jobLog.error({ err }, 'DB transaction failed')
         Sentry.captureException(err, { tags: { area: 'ai-processor', jobId, dealId, reason: 'DB_TRANSACTION_FAILED' } })
         publishAiEvent(tenantId, dealId, 'ai-error', {
-          message: 'Lưu kết quả AI thất bại. Vui lòng thử lại.',
+          message: 'Failed to save the AI result. Please try again.',
           jobId,
+          reason: 'AI_PERSIST_FAILED',
         }).catch((e) => {
           jobLog.error({ err: e }, 'Failed to publish SSE ai-error')
         })

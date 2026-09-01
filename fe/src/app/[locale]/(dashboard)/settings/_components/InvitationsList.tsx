@@ -1,0 +1,420 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useGetInvitations, useRevokeInvitation, useUpdateInvitation } from "@/hooks/useInvitations";
+import {
+  Copy, Check, Clock, Trash2, Mail, RefreshCw, Pencil
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { useTranslations, useLocale } from "next-intl";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
+} from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from "@/components/ui/select";
+import { Invitation } from "@/services/invitations.service";
+import { useQuery } from "@tanstack/react-query";
+import { usersService, RoleDto } from "@/services/users.service";
+
+const formatRoleDisplayName = (name: string) => {
+  if (name === "ADMIN") return "Admin";
+  if (name === "MANAGER") return "Manager";
+  if (name === "SALES_REP") return "Sales Rep";
+  return name;
+};
+
+// ── Copy link button component ───────────────────────────────────────────────
+function CopyLinkButton({ token }: { token: string }) {
+  const t = useTranslations("settings.invitations");
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    const link = `${window.location.origin}/invite?token=${token}`;
+    navigator.clipboard.writeText(link).catch(() => {});
+    setCopied(true);
+    toast.success(t("copyToast"));
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleCopy}
+      className="h-7 px-2 rounded-lg gap-1 border-[#E8E7E2] dark:border-border text-[#6B6B67] dark:text-muted-foreground hover:bg-[#F1EFE8] dark:hover:bg-muted hover:text-[#1A1A18] dark:hover:text-foreground"
+      style={{ fontSize: 11 }}
+    >
+      {copied ? (
+        <>
+          <Check size={11} className="text-[#1D9E75]" />
+          <span>{t("copied")}</span>
+        </>
+      ) : (
+        <>
+          <Copy size={11} />
+          <span>{t("copyLink")}</span>
+        </>
+      )}
+    </Button>
+  );
+}
+
+// ── Status Badge ─────────────────────────────────────────────────────────────
+function InvitationStatusBadge({ status }: { status: string }) {
+  const t = useTranslations("settings.invitations");
+  switch (status) {
+    case "PENDING":
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FAEEDA] dark:bg-amber-950/20 text-[#854F0B] dark:text-amber-400" style={{ fontSize: 11, fontWeight: 600 }}>
+          <Clock size={10} />
+          {t("statusPending")}
+        </span>
+      );
+    case "ACCEPTED":
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#EBFDF5] dark:bg-green-950/20 text-[#107C41] dark:text-green-400" style={{ fontSize: 11, fontWeight: 600 }}>
+          {t("statusAccepted")}
+        </span>
+      );
+    case "EXPIRED":
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#FEE2E2] dark:bg-red-950/20 text-[#A32D2D] dark:text-red-400" style={{ fontSize: 11, fontWeight: 600 }}>
+          {t("statusExpired")}
+        </span>
+      );
+    case "REVOKED":
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#F1EFE8] dark:bg-muted text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 11, fontWeight: 600 }}>
+          {t("statusRevoked")}
+        </span>
+      );
+    default:
+      return null;
+  }
+}
+
+export function InvitationsList() {
+  const t = useTranslations("settings.invitations");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
+  const { data: invitations, isLoading, refetch } = useGetInvitations();
+  const revokeMutation = useRevokeInvitation();
+
+  const [confirmRevokeId, setConfirmRevokeId] = useState<string | null>(null);
+  const [editingInv, setEditingInv] = useState<Invitation | null>(null);
+
+  const handleRevoke = async () => {
+    if (!confirmRevokeId) return;
+    await revokeMutation.mutateAsync(confirmRevokeId);
+    setConfirmRevokeId(null);
+  };
+
+  const formatDate = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString(locale, {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 bg-white dark:bg-card rounded-[10px] border border-[#E8E7E2] dark:border-border" style={{ minHeight: 300 }}>
+        <RefreshCw size={24} className="animate-spin text-[#534AB7] dark:text-primary mb-2" />
+        <p className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 13 }}>{t("loading")}</p>
+      </div>
+    );
+  }
+
+  const activeInvitations = invitations || [];
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Tab Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 16, fontWeight: 600, lineHeight: 1 }}>{t("heading")}</h2>
+          <p className="text-[#6B6B67] dark:text-muted-foreground mt-1" style={{ fontSize: 13 }}>{t("subtitle")}</p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => refetch()}
+          className="h-8 px-3 rounded-lg border-[#E8E7E2] dark:border-border hover:bg-[#F8F8F7] dark:hover:bg-muted text-[#6B6B67] dark:text-muted-foreground hover:text-[#1A1A18] dark:hover:text-foreground"
+          style={{ fontSize: 12 }}
+        >
+          <RefreshCw size={12} className="mr-1.5" />
+          {tCommon("refresh")}
+        </Button>
+      </div>
+
+      {activeInvitations.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-10 bg-white dark:bg-card rounded-[10px] border border-[#E8E7E2] dark:border-border" style={{ minHeight: 300 }}>
+          <div className="size-12 rounded-full flex items-center justify-center mb-3 bg-[#EEEDFE] dark:bg-secondary">
+            <Mail size={20} className="text-[#534AB7] dark:text-primary" />
+          </div>
+          <p className="text-[#1A1A18] dark:text-foreground mb-1" style={{ fontSize: 14, fontWeight: 600 }}>{t("emptyTitle")}</p>
+          <p className="text-[#6B6B67] dark:text-muted-foreground text-center max-w-[320px] mb-4" style={{ fontSize: 12 }}>
+            {t("emptyDescription")}
+          </p>
+        </div>
+      ) : (
+        <div className="bg-white dark:bg-card rounded-[10px] border border-[#E8E7E2] dark:border-border overflow-hidden">
+          <table className="w-full" style={{ borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                {[t("colEmail"), t("colRole"), t("colStatus"), t("colSentAt"), t("colExpiresAt"), t("colLink"), t("colActions")].map((col) => (
+                  <th
+                    key={col}
+                    className="text-left text-[#6B6B67] dark:text-muted-foreground px-5 py-3"
+                    style={{ fontSize: 11, fontWeight: 500 }}
+                  >
+                    {col}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {activeInvitations.map((inv, idx) => (
+                <tr
+                  key={inv.id}
+                  className="group hover:bg-[#F8F8F7] dark:hover:bg-muted/50 transition-colors"
+                  style={{ borderBottom: idx < activeInvitations.length - 1 ? "1px solid var(--border)" : "none" }}
+                >
+                  {/* Email */}
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-2">
+                      <Mail size={14} className="text-[#9A9A95]" />
+                      <span className="text-[#1A1A18] dark:text-foreground font-medium" style={{ fontSize: 13 }}>{inv.email}</span>
+                    </div>
+                  </td>
+
+                  {/* Role */}
+                  <td className="px-5 py-3">
+                    <span className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 13 }}>
+                      {formatRoleDisplayName(inv.role)}
+                    </span>
+                  </td>
+
+                  {/* Status */}
+                  <td className="px-5 py-3">
+                    <InvitationStatusBadge status={inv.status} />
+                  </td>
+
+                  {/* Created At */}
+                  <td className="px-5 py-3">
+                    <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 12 }}>{formatDate(inv.createdAt)}</span>
+                  </td>
+
+                  {/* Expires At */}
+                  <td className="px-5 py-3">
+                    <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 12 }}>{formatDate(inv.expiresAt)}</span>
+                  </td>
+
+                  {/* Invitation Link copy */}
+                  <td className="px-5 py-3">
+                    {inv.status === "PENDING" ? (
+                      <CopyLinkButton token={inv.token} />
+                    ) : (
+                      <span className="text-[#9A9A95]" style={{ fontSize: 11 }}>—</span>
+                    )}
+                  </td>
+
+                  {/* Actions */}
+                  <td className="px-5 py-3">
+                    {inv.status === "PENDING" && (
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setEditingInv(inv)}
+                          className="size-7 rounded-lg text-[#6B6B67] dark:text-muted-foreground hover:bg-[#EEEDFE] dark:hover:bg-muted hover:text-[#534AB7] dark:hover:text-primary"
+                          title={t("editTitle")}
+                        >
+                          <Pencil size={13} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setConfirmRevokeId(inv.id)}
+                          className="size-7 rounded-lg text-[#6B6B67] dark:text-muted-foreground hover:bg-[#FEE2E2] dark:hover:bg-destructive/20 hover:text-[#A32D2D] dark:hover:text-destructive"
+                          title={t("revokeTitle")}
+                        >
+                          <Trash2 size={13} />
+                        </Button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Confirm Revoke Dialog */}
+      <Dialog open={!!confirmRevokeId} onOpenChange={(v) => !v && setConfirmRevokeId(null)}>
+        <DialogContent className="sm:max-w-[400px] rounded-[10px] bg-background" aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 15, fontWeight: 600 }}>{t("revokeTitle")}</DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <p className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 13 }}>
+              {t("revokeDialogBody")}
+            </p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmRevokeId(null)}
+              className="h-9 rounded-[10px] border-[#E8E7E2] dark:border-border text-[#6B6B67] dark:text-muted-foreground hover:bg-[#F8F8F7] dark:hover:bg-muted"
+              style={{ fontSize: 13 }}
+            >
+              {tCommon("cancel")}
+            </Button>
+            <Button
+              onClick={handleRevoke}
+              disabled={revokeMutation.isPending}
+              className="h-9 rounded-[10px] bg-[#DC2626] hover:bg-[#B91C1C] text-white"
+              style={{ fontSize: 13 }}
+            >
+              {revokeMutation.isPending ? t("revoking") : t("confirmRevoke")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Invitation Dialog */}
+      <EditInvitationDialog
+        invitation={editingInv}
+        onClose={() => setEditingInv(null)}
+      />
+    </div>
+  );
+}
+
+// ── Edit Invitation Dialog Component ──────────────────────────────────────────
+function EditInvitationDialog({
+  invitation,
+  onClose
+}: {
+  invitation: Invitation | null;
+  onClose: () => void;
+}) {
+  const t = useTranslations("settings.invitations");
+  const tCommon = useTranslations("common");
+  const updateMutation = useUpdateInvitation();
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<string>("SALES_REP");
+
+  const { data: roles = [] } = useQuery({
+    queryKey: ["roles"],
+    queryFn: usersService.getRoles,
+  });
+
+  useEffect(() => {
+    if (invitation) {
+      setEmail(invitation.email);
+      setRole(invitation.role);
+    }
+  }, [invitation]);
+
+  const handleSave = async () => {
+    if (!invitation) return;
+    if (!email.trim()) {
+      toast.error(t("emailRequired"));
+      return;
+    }
+    try {
+      await updateMutation.mutateAsync({
+        id: invitation.id,
+        email: email.trim(),
+        role,
+      });
+      onClose();
+    } catch {
+      // Handled by hook
+    }
+  };
+
+  return (
+    <Dialog open={!!invitation} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="sm:max-w-[460px] p-0 gap-0 rounded-[10px] overflow-hidden" aria-describedby={undefined}>
+        
+        {/* Header */}
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-[#E8E7E2] dark:border-border">
+          <DialogTitle className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 16, fontWeight: 600 }}>
+            {t("editTitle")}
+          </DialogTitle>
+        </DialogHeader>
+
+        {/* Body */}
+        <div className="px-6 py-5 flex flex-col gap-4">
+
+          {/* Email */}
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 13 }}>{t("editEmailLabel")}</Label>
+            <Input
+              type="email"
+              placeholder={t("emailPlaceholder")}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-10 rounded-[10px] border-[#E8E7E2] dark:border-border text-[#1A1A18] dark:text-foreground focus-visible:ring-[#534AB7]/30 focus-visible:border-[#534AB7]"
+              style={{ fontSize: 13 }}
+            />
+          </div>
+
+          {/* Role */}
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 13 }}>{t("editRoleLabel")}</Label>
+            <Select value={role} onValueChange={(v) => setRole(v)}>
+              <SelectTrigger className="h-10 rounded-[10px] border-[#E8E7E2] dark:border-border text-[#1A1A18] dark:text-foreground focus:ring-[#534AB7]/30 focus:border-[#534AB7]" style={{ fontSize: 13 }}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="rounded-[10px] border-[#E8E7E2] dark:border-border bg-background">
+                {roles.map((r: RoleDto) => (
+                  <SelectItem key={r.id} value={r.name} style={{ fontSize: 13 }}>
+                    {formatRoleDisplayName(r.name)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <p className="text-[#6B6B67] dark:text-muted-foreground leading-relaxed" style={{ fontSize: 11 }}>
+            {t("editNote")}
+          </p>
+        </div>
+
+        {/* Footer */}
+        <DialogFooter className="px-6 pb-6 gap-2 sm:gap-0">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="h-9 rounded-[10px] border-[#E8E7E2] dark:border-border text-[#6B6B67] dark:text-muted-foreground hover:bg-[#F8F8F7] dark:hover:bg-muted"
+            style={{ fontSize: 13 }}
+          >
+            {tCommon("cancel")}
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={updateMutation.isPending}
+            className="h-9 rounded-[10px] bg-[#534AB7] hover:bg-[#4840A0] text-white"
+            style={{ fontSize: 13 }}
+          >
+            {updateMutation.isPending ? tCommon("saving") : tCommon("saveChanges")}
+          </Button>
+        </DialogFooter>
+
+      </DialogContent>
+    </Dialog>
+  );
+}

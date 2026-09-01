@@ -2,7 +2,9 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { invitationsService } from "@/services/invitations.service";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { useApiError } from "@/hooks/useApiError";
 
 export const invitationKeys = {
   all: ["invitations"] as const,
@@ -19,53 +21,53 @@ export const useGetInvitations = () => {
 
 export const useCreateInvitation = () => {
   const queryClient = useQueryClient();
+  const t = useTranslations("settings.invitations.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: ({ email, role }: { email: string; role: string }) =>
       invitationsService.create(email, role),
     onSuccess: () => {
-      toast.success("Đã gửi lời mời thành công!");
+      toast.success(t("sendSuccess"));
       queryClient.invalidateQueries({ queryKey: invitationKeys.lists() });
     },
     onError: (error: unknown) => {
-      const err = error as { response?: { data?: { message?: string } } };
-      const msg = err.response?.data?.message || "Không thể gửi lời mời. Vui lòng thử lại.";
-      toast.error(msg);
+      toast.error(getApiError(error, t("sendError")));
     },
   });
 };
 
 export const useRevokeInvitation = () => {
   const queryClient = useQueryClient();
+  const t = useTranslations("settings.invitations.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: (id: string) => invitationsService.revoke(id),
     onSuccess: () => {
-      toast.success("Đã hủy lời mời thành công!");
+      toast.success(t("revokeSuccess"));
       queryClient.invalidateQueries({ queryKey: invitationKeys.lists() });
     },
     onError: (error: unknown) => {
-      const err = error as { response?: { data?: { message?: string } } };
-      const msg = err.response?.data?.message || "Không thể hủy lời mời.";
-      toast.error(msg);
+      toast.error(getApiError(error, t("revokeError")));
     },
   });
 };
 
 export const useUpdateInvitation = () => {
   const queryClient = useQueryClient();
+  const t = useTranslations("settings.invitations.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: ({ id, email, role }: { id: string; email?: string; role?: string }) =>
       invitationsService.update(id, email, role),
     onSuccess: () => {
-      toast.success("Đã cập nhật lời mời và gửi lại email thành công!");
+      toast.success(t("updateSuccess"));
       queryClient.invalidateQueries({ queryKey: invitationKeys.lists() });
     },
     onError: (error: unknown) => {
-      const err = error as { response?: { data?: { message?: string } } };
-      const msg = err.response?.data?.message || "Không thể cập nhật lời mời.";
-      toast.error(msg);
+      toast.error(getApiError(error, t("updateError")));
     },
   });
 };

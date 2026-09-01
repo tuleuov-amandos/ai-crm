@@ -3,7 +3,7 @@ import z from 'zod'
 
 export const UpdateUserSchema = z
   .object({
-    name: z.string().min(1, 'Họ và tên không được để trống').optional(),
+    name: z.string().min(1).optional(),
     role: z.string().optional(),
   })
   .strict()

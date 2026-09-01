@@ -1,5 +1,6 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { PassportStrategy } from '@nestjs/passport'
+import { AppException, AuthErrorCode } from 'src/common/errors'
 import { Strategy, Profile, VerifyCallback } from 'passport-google-oauth20'
 import envConfig from 'src/common/config'
 
@@ -25,7 +26,10 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     // silently attach their Google identity to that email's existing
     // password-based account — a full account takeover.
     if (!primaryEmail?.value || !primaryEmail.verified) {
-      return done(new UnauthorizedException('Email Google chưa được xác minh'), false)
+      return done(
+        AppException.unauthorized(AuthErrorCode.GOOGLE_EMAIL_NOT_VERIFIED, 'Google email is not verified'),
+        false,
+      )
     }
 
     const user = {

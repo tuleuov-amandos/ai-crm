@@ -5,6 +5,7 @@ import { dealsService } from "@/services/deals.service";
 import { useDealPipelineStore } from "@/stores/dealCards-store";
 import { useShallow } from 'zustand/react/shallow'
 import { ApiError } from "@/lib/types/error";
+import { useApiError } from "@/hooks/useApiError";
 import {
   CreateDealBodyType,
   DealStage,
@@ -12,6 +13,7 @@ import {
   UpdateDealStageBodyType,
 } from "@/lib/validations/deals.schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 // ─────────────────────────────────────────
@@ -28,6 +30,7 @@ export const dealKeys = {
 // GET PIPELINE — fetch and sync to Zustand
 // ─────────────────────────────────────────
 export const useGetPipeline = () => {
+  const t = useTranslations("pipeline");
 
   const { setPipeline, setLoading, setError } = useDealPipelineStore(
     useShallow((state) => ({
@@ -56,7 +59,7 @@ export const useGetPipeline = () => {
 
   useEffect(() => {
     if (query.error) {
-      setError((query.error as Error).message ?? "Lỗi tải pipeline");
+      setError((query.error as Error).message ?? t("loadError"));
     }
   }, [query.error]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -80,17 +83,18 @@ export const useGetDealDetail = (id: string) => {
 // ─────────────────────────────────────────
 export const useCreateDeal = () => {
   const queryClient = useQueryClient();
+  const t = useTranslations("pipeline.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: (data: CreateDealBodyType) => dealsService.create(data),
     onSuccess: () => {
       // invalidate pipeline to refetch and sync back to store
       queryClient.invalidateQueries({ queryKey: dealKeys.pipeline() });
-      toast.success("Tạo deal thành công");
+      toast.success(t("createSuccess"));
     },
     onError: (error: ApiError) => {
-      const message = error.response?.data.message ?? "Tạo deal thất bại";
-      toast.error(message);
+      toast.error(getApiError(error, t("createError")));
     },
   });
 };
@@ -100,6 +104,8 @@ export const useCreateDeal = () => {
 // ─────────────────────────────────────────
 export const useUpdateDealStage = () => {
   const queryClient = useQueryClient();
+  const t = useTranslations("pipeline.toasts");
+  const getApiError = useApiError();
   const { rollbackMoveDeal } = useDealPipelineStore();
 
   return useMutation({
@@ -117,8 +123,7 @@ export const useUpdateDealStage = () => {
     // if API fails -> rollback
     onError: (error: ApiError, { id, from, to }) => {
       rollbackMoveDeal(id, from, to);
-      const message = error.response?.data.message ?? "Cập nhật stage thất bại";
-      toast.error(message);
+      toast.error(getApiError(error, t("stageError")));
     },
 
     onSuccess: () => {
@@ -133,6 +138,8 @@ export const useUpdateDealStage = () => {
 // ─────────────────────────────────────────
 export const useUpdateDeal = (dealId: string) => {
   const queryClient = useQueryClient();
+  const t = useTranslations("pipeline.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: (data: UpdateDealBodyType) => dealsService.update(dealId, data),
@@ -140,11 +147,10 @@ export const useUpdateDeal = (dealId: string) => {
       // invalidate both pipeline and detail
       queryClient.invalidateQueries({ queryKey: dealKeys.pipeline() });
       queryClient.invalidateQueries({ queryKey: dealKeys.detail(dealId) });
-      toast.success("Cập nhật deal thành công");
+      toast.success(t("updateSuccess"));
     },
     onError: (error: ApiError) => {
-      const message = error.response?.data.message ?? "Cập nhật deal thất bại";
-      toast.error(message);
+      toast.error(getApiError(error, t("updateError")));
     },
   });
 };
@@ -154,6 +160,8 @@ export const useUpdateDeal = (dealId: string) => {
 // ─────────────────────────────────────────
 export const useDeleteDeal = () => {
   const queryClient = useQueryClient();
+  const t = useTranslations("pipeline.toasts");
+  const getApiError = useApiError();
   const { removeDeal } = useDealPipelineStore();
 
   return useMutation({
@@ -167,14 +175,13 @@ export const useDeleteDeal = () => {
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: dealKeys.pipeline() });
-      toast.success("Xóa deal thành công");
+      toast.success(t("deleteSuccess"));
     },
 
     onError: (error: ApiError) => {
       // rollback: refetch pipeline to restore accidentally deleted deal
       queryClient.invalidateQueries({ queryKey: dealKeys.pipeline() });
-      const message = error.response?.data.message ?? "Xóa deal thất bại";
-      toast.error(message);
+      toast.error(getApiError(error, t("deleteError")));
     },
   });
 };

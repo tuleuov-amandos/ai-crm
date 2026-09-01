@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
+import { ActivityErrorCode, AppException, ContactErrorCode, DealErrorCode } from 'src/common/errors'
 import { PrismaClientKnownRequestError } from '../../../generated/prisma-client/internal/prismaNamespace'
 import { ActivitiesRepository } from './activities.repo'
 import {
@@ -33,11 +34,11 @@ export class ActivitiesService {
     user: { userId: string; role: string; tenantId: string },
   ): Promise<ActivityWithRelations> {
     const contact = await this.contactsRepo.findOne(contactId)
-    if (!contact) throw new NotFoundException('Liên hệ không tồn tại')
+    if (!contact) throw AppException.notFound(ContactErrorCode.NOT_FOUND, 'Contact not found')
 
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('read', subject('Contact', contact as any))) {
-      throw new NotFoundException('Liên hệ không tồn tại')
+      throw AppException.notFound(ContactErrorCode.NOT_FOUND, 'Contact not found')
     }
 
     const activity = await this.activitiesRepo.create(userId, body, { contactId })
@@ -53,17 +54,17 @@ export class ActivitiesService {
     user: { userId: string; role: string; tenantId: string },
   ): Promise<ActivityWithRelations> {
     const deal = await this.dealRepo.findOne(dealId)
-    if (!deal) throw new NotFoundException('Deal không tồn tại')
+    if (!deal) throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
 
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('read', subject('Deal', deal as any))) {
-      throw new NotFoundException('Deal không tồn tại')
+      throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
     }
 
     if (body.contactId) {
       const contact = await this.contactsRepo.findOne(body.contactId)
       if (!contact || ability.cannot('read', subject('Contact', contact as any))) {
-        throw new NotFoundException('Liên hệ không tồn tại')
+        throw AppException.notFound(ContactErrorCode.NOT_FOUND, 'Contact not found')
       }
     }
 
@@ -83,11 +84,11 @@ export class ActivitiesService {
     user: { userId: string; role: string; tenantId: string },
   ): Promise<{ data: ActivityWithRelations[] }> {
     const contact = await this.contactsRepo.findOne(contactId)
-    if (!contact) throw new NotFoundException('Liên hệ không tồn tại')
+    if (!contact) throw AppException.notFound(ContactErrorCode.NOT_FOUND, 'Contact not found')
 
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('read', subject('Contact', contact as any))) {
-      throw new NotFoundException('Liên hệ không tồn tại')
+      throw AppException.notFound(ContactErrorCode.NOT_FOUND, 'Contact not found')
     }
 
     const data = await this.activitiesRepo.findAllByContact(contactId)
@@ -100,11 +101,11 @@ export class ActivitiesService {
     user: { userId: string; role: string; tenantId: string },
   ): Promise<{ data: ActivityWithRelations[] }> {
     const deal = await this.dealRepo.findOne(dealId)
-    if (!deal) throw new NotFoundException('Deal không tồn tại')
+    if (!deal) throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
 
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('read', subject('Deal', deal))) {
-      throw new NotFoundException('Deal không tồn tại')
+      throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
     }
 
     const data = await this.activitiesRepo.findAllByDeal(dealId)
@@ -120,7 +121,7 @@ export class ActivitiesService {
     const filters: { userId?: string } = {}
 
     if (ability.cannot('read', 'Activity')) {
-      throw new ForbiddenException('Bạn không có quyền xem hoạt động')
+      throw AppException.forbidden(ActivityErrorCode.FORBIDDEN_LIST, 'You do not have permission to view activities')
     }
 
     if (ability.cannot('read', subject('Activity', { userId: 'other' } as any))) {
@@ -143,11 +144,14 @@ export class ActivitiesService {
     user: { userId: string; role: string; tenantId: string },
   ): Promise<ActivityWithRelations> {
     const existing = await this.activitiesRepo.findOne(activityId)
-    if (!existing) throw new NotFoundException('Hoạt động không tồn tại')
+    if (!existing) throw AppException.notFound(ActivityErrorCode.NOT_FOUND, 'Activity not found')
 
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('update', subject('Activity', existing as any))) {
-      throw new ForbiddenException('Bạn không có quyền sửa hoạt động này')
+      throw AppException.forbidden(
+        ActivityErrorCode.FORBIDDEN_UPDATE,
+        'You do not have permission to edit this activity',
+      )
     }
 
     const activity = await this.activitiesRepo.update(activityId, body)
@@ -161,20 +165,23 @@ export class ActivitiesService {
     user: { userId: string; role: string; tenantId: string },
   ): Promise<{ message: string }> {
     const existing = await this.activitiesRepo.findOne(activityId)
-    if (!existing) throw new NotFoundException('Hoạt động không tồn tại')
+    if (!existing) throw AppException.notFound(ActivityErrorCode.NOT_FOUND, 'Activity not found')
 
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('delete', subject('Activity', existing as any))) {
-      throw new ForbiddenException('Bạn không có quyền xóa hoạt động này')
+      throw AppException.forbidden(
+        ActivityErrorCode.FORBIDDEN_DELETE,
+        'You do not have permission to delete this activity',
+      )
     }
 
     try {
       await this.activitiesRepo.hardDelete(activityId)
       await this.redisService.invalidateTenantCache(tenantId)
-      return { message: 'Xóa hoạt động thành công' }
+      return { message: 'Activity deleted successfully' }
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
-        throw new NotFoundException('Hoạt động không tồn tại')
+        throw AppException.notFound(ActivityErrorCode.NOT_FOUND, 'Activity not found')
       }
       throw error
     }

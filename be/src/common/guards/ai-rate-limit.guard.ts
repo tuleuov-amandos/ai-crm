@@ -1,5 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext, HttpException, HttpStatus } from '@nestjs/common'
 import { createRedis } from 'src/common/providers/redis.provider'
+import { AiErrorCode, AppException } from 'src/common/errors'
 
 const redis = createRedis()
 
@@ -41,15 +42,18 @@ export class AiRateLimitGuard implements CanActivate {
         const ttl = await redis.ttl(key)
         const retryAfter = ttl > 0 ? ttl : WINDOW_SECONDS
         res.setHeader('Retry-After', String(retryAfter))
-        throw new HttpException(
-          { message: `Giới hạn ${MAX_REQUESTS} yêu cầu/ ${WINDOW_SECONDS}s`, retryAfter },
-          HttpStatus.TOO_MANY_REQUESTS,
+        throw AppException.tooManyRequests(
+          AiErrorCode.RATE_LIMIT_EXCEEDED,
+          `Rate limit: ${MAX_REQUESTS} requests / ${WINDOW_SECONDS}s`,
+          { retryAfter, max: MAX_REQUESTS, windowSeconds: WINDOW_SECONDS },
         )
       }
 
       // allow
       return true
-    } catch {
+    } catch (err) {
+      // Let a deliberate HttpException (e.g. the 429 above) propagate untouched.
+      if (err instanceof HttpException) throw err
       // On Redis error, be conservative: fail closed (or you can choose fail-open)
       // Here we return 503 to indicate service degraded.
       throw new HttpException('Rate limiter unavailable', HttpStatus.SERVICE_UNAVAILABLE)

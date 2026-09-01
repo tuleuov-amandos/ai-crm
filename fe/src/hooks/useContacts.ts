@@ -6,12 +6,14 @@ import {
 } from "@/lib/validations/contacts.scheme";
 import { contactsService, BulkImportContactItem } from "@/services/contacts.service";
 import { ApiError } from "@/types/error.type";
+import { useApiError } from "@/hooks/useApiError";
 import {
   useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 // ─────────────────────────────────────────
@@ -82,16 +84,17 @@ export const useGetContact = (id: string) => {
 // ─────────────────────────────────────────
 export const useCreateContact = () => {
   const queryClient = useQueryClient();
+  const t = useTranslations("contacts.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: (data: CreateContactBodyType) => contactsService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: contactKeys.lists() })
-      toast.success("Tạo liên hệ thành công")
+      toast.success(t("createSuccess"))
     },
     onError: (error: ApiError) => {
-      const message = error.response?.data.message || "Tạo liên hệ thất bại"
-      toast.error(message)
+      toast.error(getApiError(error, t("createError")))
     },
   })
 }
@@ -101,6 +104,8 @@ export const useCreateContact = () => {
 // ─────────────────────────────────────────
 export const useUpdateContact = () => {
   const queryClient = useQueryClient();
+  const t = useTranslations("contacts.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateContactBodyType }) => contactsService.update(id, data),
@@ -108,11 +113,10 @@ export const useUpdateContact = () => {
       // invalidate both list and detail
       queryClient.invalidateQueries({ queryKey: contactKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: contactKeys.lists() })
-      toast.success("Cập nhật thành công")
+      toast.success(t("updateSuccess"))
     },
     onError: (error: ApiError) => {
-      const message = error.response?.data.message || "Cập nhật thất bại"
-      toast.error(message)
+      toast.error(getApiError(error, t("updateError")))
     },
   })
 }
@@ -122,16 +126,17 @@ export const useUpdateContact = () => {
 // ─────────────────────────────────────────
 export const useDeleteContact = () => {
   const queryClient = useQueryClient();
+  const t = useTranslations("contacts.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: (id: string) => contactsService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: contactKeys.lists() })
-      toast.success("Xóa liên hệ thành công")
+      toast.success(t("deleteSuccess"))
     },
     onError: (error: ApiError) => {
-      const message = error.response?.data.message || "Xóa thất bại"
-      toast.error(message)
+      toast.error(getApiError(error, t("deleteError")))
     },
   })
 }

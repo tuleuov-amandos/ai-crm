@@ -20,11 +20,13 @@ import {
   Shield,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import logoImg from "@/app/favicon.ico";
 import { cn } from "@/lib/utils";
 import { Badge } from "./ui/badge";
 import { useLogout, useMe } from "@/hooks/useAuth";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 function getInitials(name?: string): string {
   if (!name) return "";
@@ -39,38 +41,37 @@ function getInitials(name?: string): string {
 
 const navGroups = [
   {
-    label: "Dashboard",
+    key: "dashboard",
     path: "/dashboard",
     icon: LayoutDashboard,
   },
   {
-    label: "Sales",
+    key: "sales",
     items: [
-      { icon: GitBranch, label: "Pipeline", path: "/pipeline" },
-      { icon: Users, label: "Contacts", path: "/contacts" },
+      { icon: GitBranch, key: "pipeline", path: "/pipeline" },
+      { icon: Users, key: "contacts", path: "/contacts" },
     ],
   },
   {
-    label: "Activities",
+    key: "activities",
     path: "/activities",
     icon: CalendarCheck,
   },
   {
-    label: "Reports",
+    key: "reports",
     path: "/reports",
     icon: BarChart2,
   },
   {
-    label: "Administration",
+    key: "administration",
     roles: ["ADMIN", "MANAGER"],
     items: [
-      // { icon: Users, label: "Users", path: "/users" },
-      { icon: Shield, label: "Roles", path: "/roles" },
-      { icon: FileText, label: "Audit Logs", path: "/audit-logs" },
+      { icon: Shield, key: "roles", path: "/roles" },
+      { icon: FileText, key: "auditLogs", path: "/audit-logs" },
     ],
   },
   {
-    label: "Settings",
+    key: "settings",
     path: "/settings",
     icon: Settings,
   },
@@ -79,6 +80,7 @@ export function AppSidebar() {
   const { mutate: logout } = useLogout();
   const { data: me } = useMe();
   const pathName = usePathname();
+  const t = useTranslations("sidebar");
 
   const handleLogout = () => {
     logout();
@@ -119,14 +121,14 @@ export function AppSidebar() {
             </Link>
             <div className="flex items-center gap-1.5">
               <span className="text-muted-foreground" style={{ fontSize: 12 }}>
-                Công ty ABC
+                {t("companyName")}
               </span>
               <Badge
                 variant="secondary"
                 className="h-[18px] px-1.5 text-primary bg-secondary rounded-full border-0"
                 style={{ fontSize: 10 }}
               >
-                Free
+                {t("planFree")}
               </Badge>
             </div>
           </div>
@@ -153,7 +155,7 @@ export function AppSidebar() {
                     )}
                   >
                     <Icon size={16} />
-                    <span>{group.label}</span>
+                    <span>{t(`nav.${group.key}`)}</span>
                   </Link>
                 </div>
               );
@@ -162,7 +164,7 @@ export function AppSidebar() {
             return (
               <div key={gIdx} className="space-y-1">
                 <span className="text-xs font-semibold text-[#868E96] uppercase tracking-wider px-4 block">
-                  {group.label}
+                  {t(`nav.${group.key}`)}
                 </span>
                 <div className="space-y-0.5 pl-3">
                   {group.items?.map((item) => {
@@ -180,7 +182,7 @@ export function AppSidebar() {
                         )}
                       >
                         <Icon size={14} />
-                        <span>{item.label}</span>
+                        <span>{t(`nav.${item.key}`)}</span>
                       </Link>
                     );
                   })}
@@ -190,6 +192,10 @@ export function AppSidebar() {
           })}
         </SidebarContent>
         <SidebarFooter>
+          {/* Language switcher (временно здесь — задача i18n-инфраструктуры) */}
+          <div className="px-3 pt-3 shrink-0">
+            <LanguageSwitcher />
+          </div>
           {/* User section */}
           <div className="flex items-center gap-2 p-3 border-t border-border shrink-0">
             <Avatar className="size-[30px] shrink-0">
@@ -211,16 +217,16 @@ export function AppSidebar() {
                 className="text-foreground truncate"
                 style={{ fontSize: 12, fontWeight: 500 }}
               >
-                {me?.name || "Nguyễn Minh"}
+                {me?.name || t("defaultUserName")}
               </p>
               <p className="text-muted-foreground" style={{ fontSize: 11 }}>
-                {me?.role ? (me.role.charAt(0) + me.role.slice(1).toLowerCase().replace('_', ' ')) : "Manager"}
+                {me?.role ? (me.role.charAt(0) + me.role.slice(1).toLowerCase().replace('_', ' ')) : t("defaultRole")}
               </p>
             </div>
   
             <Button
               className="text-muted-foreground hover:text-foreground transition-colors p-0.5 flex items-center bg-transparent border-0 cursor-pointer"
-              title="Đăng xuất"
+              title={t("logout")}
               onClick={handleLogout}
             >
               <LogOut size={13} />

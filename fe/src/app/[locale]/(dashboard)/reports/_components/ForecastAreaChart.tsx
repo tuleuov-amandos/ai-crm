@@ -1,0 +1,125 @@
+"use client";
+
+import {
+  ResponsiveContainer, AreaChart, Area,
+  XAxis, YAxis, CartesianGrid, Tooltip,
+} from "recharts";
+import { useTranslations } from "next-intl";
+import { ChartCard } from "./ChartCard";
+import { useShortValue } from "@/lib/format";
+
+import { CustomTooltipProps } from "@/lib/types/chart";
+
+const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+  const shortValue = useShortValue();
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-white dark:bg-card border border-[#E8E7E2] dark:border-border rounded-lg shadow-md px-3 py-2.5 text-xs">
+      <p className="text-[#1A1A18] dark:text-foreground mb-1.5" style={{ fontWeight: 600 }}>{label}</p>
+      {payload.map((p) => (
+        <div key={p.dataKey} className="flex items-center gap-2 mb-0.5">
+          <span className="size-2 rounded-full shrink-0" style={{ background: p.color ?? p.stroke }} />
+          <span className="text-[#6B6B67] dark:text-muted-foreground">{p.name}:</span>
+          <span className="text-[#1A1A18] dark:text-foreground" style={{ fontWeight: 500 }}>{shortValue(Number(p.value))}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+interface ForecastAreaChartProps {
+  data?: {
+    month: string;
+    cumActual: number;
+    cumForecast: number;
+  }[];
+}
+
+import { LineChart } from "lucide-react";
+import { EmptyState } from "./EmptyState";
+
+export function ForecastAreaChart({ data = [] }: ForecastAreaChartProps) {
+  const t = useTranslations("reports.forecast");
+  const shortValue = useShortValue();
+  const isDataEmpty = !data || data.length === 0 || data.every(d => d.cumActual === 0 && d.cumForecast === 0);
+
+  const lastItem = data[data.length - 1];
+  const percentDiff = lastItem && lastItem.cumForecast > 0
+    ? ((lastItem.cumActual - lastItem.cumForecast) / lastItem.cumForecast) * 100
+    : 0;
+
+  const actionText = percentDiff >= 0
+    ? t("overBadge", { percent: percentDiff.toFixed(1) })
+    : t("underBadge", { percent: percentDiff.toFixed(1) });
+
+  const maxVal = Math.max(...data.map(d => Math.max(d.cumActual, d.cumForecast)), 100);
+  const yDomainMax = Math.ceil(maxVal * 1.2);
+
+  return (
+    <ChartCard
+      title={t("title")}
+      subtitle={t("subtitle")}
+      action={
+        !isDataEmpty && data.length > 0 ? (
+          <span
+            className="px-2 py-0.5 rounded-full text-white mr-1"
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              background: percentDiff >= 0 ? "#1D9E75" : "#D85A30",
+            }}
+          >
+            {actionText}
+          </span>
+        ) : null
+      }
+    >
+      {isDataEmpty ? (
+        <EmptyState
+          icon={LineChart}
+          title={t("emptyTitle")}
+          description={t("emptyDescription")}
+          height={220}
+        />
+      ) : (
+        <ResponsiveContainer width="100%" height={220}>
+          <AreaChart data={data} margin={{ top: 5, right: 16, left: 0, bottom: 5 }}>
+          <defs>
+            <linearGradient id="rpt-fva-actual" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%"  stopColor="#534AB7" stopOpacity={0.22} />
+              <stop offset="95%" stopColor="#534AB7" stopOpacity={0.02} />
+            </linearGradient>
+            <linearGradient id="rpt-fva-forecast" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%"  stopColor="#60A5FA" stopOpacity={0.15} />
+              <stop offset="95%" stopColor="#60A5FA" stopOpacity={0.01} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid key="fva-grid"  strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+          <XAxis         key="fva-xaxis" dataKey="month" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+          <YAxis         key="fva-yaxis" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={shortValue} width={48} domain={[0, yDomainMax]} />
+          <Tooltip       key="fva-tt"    content={<CustomTooltip />} />
+          <Area
+            key="fva-forecast"
+            type="monotone"
+            dataKey="cumForecast"
+            name={t("forecastSeries")}
+            stroke="#60A5FA"
+            strokeWidth={2}
+            strokeDasharray="5 3"
+            fill="url(#rpt-fva-forecast)"
+          />
+          <Area
+            key="fva-actual"
+            type="monotone"
+            dataKey="cumActual"
+            name={t("actualSeries")}
+            stroke="#534AB7"
+            strokeWidth={2.5}
+            fill="url(#rpt-fva-actual)"
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+      )}
+    </ChartCard>
+  );
+}

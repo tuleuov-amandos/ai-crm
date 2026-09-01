@@ -2,7 +2,9 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { usersService } from "@/services/users.service";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { useApiError } from "@/hooks/useApiError";
 
 export const userKeys = {
   all: ["users"] as const,
@@ -19,35 +21,35 @@ export const useGetUsers = () => {
 
 export const useUpdateUser = () => {
   const queryClient = useQueryClient();
+  const t = useTranslations("settings.members.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: ({ id, name, role }: { id: string; name?: string; role?: string }) =>
       usersService.update(id, { name, role }),
     onSuccess: () => {
-      toast.success("Cập nhật thông tin thành viên thành công!");
+      toast.success(t("updateSuccess"));
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
     },
     onError: (error: unknown) => {
-      const err = error as { response?: { data?: { message?: string } } };
-      const msg = err.response?.data?.message || "Không thể cập nhật thành viên.";
-      toast.error(msg);
+      toast.error(getApiError(error, t("updateError")));
     },
   });
 };
 
 export const useDeleteUser = () => {
   const queryClient = useQueryClient();
+  const t = useTranslations("settings.members.toasts");
+  const getApiError = useApiError();
 
   return useMutation({
     mutationFn: (id: string) => usersService.delete(id),
     onSuccess: () => {
-      toast.success("Đã xóa thành viên khỏi workspace thành công!");
+      toast.success(t("deleteSuccess"));
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
     },
     onError: (error: unknown) => {
-      const err = error as { response?: { data?: { message?: string } } };
-      const msg = err.response?.data?.message || "Không thể xóa thành viên.";
-      toast.error(msg);
+      toast.error(getApiError(error, t("deleteError")));
     },
   });
 };

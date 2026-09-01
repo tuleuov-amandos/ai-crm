@@ -1,4 +1,5 @@
-import { Injectable, ForbiddenException } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
+import { AppException, ReportErrorCode } from 'src/common/errors'
 import { AccessTokenPayload } from 'src/common/types/jwt.type'
 import { DealStage } from '../../../../generated/prisma-client/enums'
 import { ReportsRepository } from '../reports.repo'
@@ -16,7 +17,10 @@ export class PipelineReportService {
   async getPipelineAnalysis(user: AccessTokenPayload) {
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('read', subject('Report', { view: 'pipeline' } as any))) {
-      throw new ForbiddenException('Bạn không có quyền xem báo cáo phễu bán hàng')
+      throw AppException.forbidden(
+        ReportErrorCode.FORBIDDEN_PIPELINE,
+        'You do not have permission to view the sales pipeline report',
+      )
     }
 
     const userFilter = ability.cannot('read', subject('Deal', { ownerId: 'other' } as any))
