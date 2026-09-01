@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 import { useDroppable } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -17,14 +18,16 @@ interface Props {
   onDelete: (deal: Deal) => void;
 }
 
-function formatTotal(total: number): string {
+function formatTotal(total: number, units: { billion: string; million: string }): string {
   if (total === 0) return "—";
   const millions = total / 1_000_000;
-  if (millions >= 1000) return `${(millions / 1000).toFixed(1).replace(".0", "")} tỷ`;
-  return `${millions % 1 === 0 ? millions : millions.toFixed(1)}tr`;
+  if (millions >= 1000) return `${(millions / 1000).toFixed(1).replace(".0", "")} ${units.billion}`;
+  return `${millions % 1 === 0 ? millions : millions.toFixed(1)}${units.million}`;
 }
 
 export function KanbanColumn({ stage, deals, onEdit, onDelete }: Props) {
+  const t = useTranslations("pipeline");
+  const units = { billion: t("units.billion"), million: t("units.million") };
   const config = STAGE_CONFIG[stage];
 
   // Column is droppable target — id = stage string
@@ -68,8 +71,8 @@ export function KanbanColumn({ stage, deals, onEdit, onDelete }: Props) {
           style={{ fontSize: 12 }}
         >
           {isEmpty
-            ? "Chưa có deal"
-            : `${deals.length} deal${deals.length > 1 ? "s" : ""} · ${formatTotal(totalValue)}`}
+            ? t("column.noDeals")
+            : t("column.summary", { count: deals.length, total: formatTotal(totalValue, units) })}
         </p>
       </div>
 
@@ -98,7 +101,7 @@ export function KanbanColumn({ stage, deals, onEdit, onDelete }: Props) {
                 className="text-muted-foreground/60 select-none"
                 style={{ fontSize: 12 }}
               >
-                Kéo deal vào đây
+                {t("column.dropHint")}
               </p>
               <Button
                 variant="ghost"
@@ -107,7 +110,7 @@ export function KanbanColumn({ stage, deals, onEdit, onDelete }: Props) {
                 style={{ fontSize: 12 }}
               >
                 <Plus size={12} />
-                Thêm deal
+                {t("column.addDeal")}
               </Button>
             </div>
           ) : (

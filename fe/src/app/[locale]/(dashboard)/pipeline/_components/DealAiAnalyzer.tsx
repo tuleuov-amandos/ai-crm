@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import {
   Sparkles,
   Loader2,
@@ -20,22 +21,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { dealKeys } from "@/hooks/useDeals";
 import { toast } from "sonner";
 
-// ── AI content constants ────────────────────────────────────────────────────────
-const MEETING_NOTE =
-  `Cuộc họp ngày 19/03/2026 tại văn phòng Ngân hàng JKL, Hà Nội.\n` +
-  `\n` +
-  `Tham dự: Phạm Đức Quang (Giám đốc IT), Nguyễn Thị Lan (Trưởng phòng bảo mật), Đặng Tuấn (Sales Manager – SalesFlow).\n` +
-  `\n` +
-  `Nội dung thảo luận:\n` +
-  `• Khách hàng yêu cầu kiểm tra bảo mật toàn diện cho hệ thống core banking.\n` +
-  `• Phạm vi: penetration testing, security audit code, đánh giá tuân thủ PCI-DSS.\n` +
-  `• Timeline mong muốn: bắt đầu tháng 4/2026, hoàn thành trong 8 tuần.\n` +
-  `• Ngân sách đã được CFO phê duyệt ở mức 480 triệu VND.\n` +
-  `\n` +
-  `Bước tiếp theo:\n` +
-  `• Gửi hợp đồng và SOW chi tiết trước ngày 22/03.\n` +
-  `• Lên lịch kickoff meeting với đội kỹ thuật.`;
-
 interface AITask {
   id: string;
   title: string;
@@ -50,7 +35,10 @@ interface DealAiAnalyzerProps {
 }
 
 export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
-  const [note, setNote] = useState(MEETING_NOTE);
+  const tAi = useTranslations("pipeline.ai");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
+  const [note, setNote] = useState(() => tAi("meetingNote"));
   const [phase, setPhase] = useState<Phase>("idle");
   const [revealedTasks, setRevealedTasks] = useState(0);
   const [aiTasks, setAiTasks] = useState<AITask[]>([]);
@@ -140,19 +128,19 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
           const mapped = (data.tasks || []).map((t: { title: string; dueDate?: string | null }, idx: number) => ({
             id: `ai-${idx}-${Date.now()}`,
             title: t.title,
-            due: t.dueDate ? new Date(t.dueDate).toLocaleDateString("vi-VN") : "Không có hạn",
+            due: t.dueDate ? new Date(t.dueDate).toLocaleDateString(locale) : tAi("noDueDate"),
             done: false,
           }));
 
           realTasksRef.current = mapped;
           rawTasksRef.current = data.tasks || [];
-          realEmailRef.current = data.emailDraft || "Không có nội dung email được tạo.";
+          realEmailRef.current = data.emailDraft || tAi("errors.noEmail");
 
           // Switch to streaming phase
           setPhase("streaming_tasks");
         } catch (err) {
           console.error("Error parsing ai-complete payload:", err);
-          setErrorMsg("Dữ liệu trả về từ AI không hợp lệ.");
+          setErrorMsg(tAi("errors.invalidData"));
           setPhase("idle");
         }
         eventSource.close();
@@ -161,9 +149,9 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
       eventSource.addEventListener("ai-error", (e) => {
         try {
           const data = JSON.parse(e.data);
-          setErrorMsg(data.message || "Lỗi xử lý từ hệ thống AI.");
+          setErrorMsg(data.message || tAi("errors.aiProcessing"));
         } catch {
-          setErrorMsg("Hệ thống AI gặp sự cố.");
+          setErrorMsg(tAi("errors.aiFailure"));
         }
         setPhase("idle");
         eventSource.close();
@@ -171,7 +159,7 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
 
       eventSource.onerror = (e) => {
         console.error("EventSource connection error:", e);
-        setErrorMsg("Mất kết nối với máy chủ AI.");
+        setErrorMsg(tAi("errors.connectionLost"));
         setPhase("idle");
         eventSource.close();
       };
@@ -180,7 +168,7 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
       const error = err as { response?: { data?: { message?: string } } };
       console.error("Error triggering analyze:", err);
       setErrorMsg(
-        error.response?.data?.message || "Không thể khởi động phân tích AI. Vui lòng thử lại sau."
+        error.response?.data?.message || tAi("errors.startFailed")
       );
       setPhase("idle");
     }
@@ -214,10 +202,10 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
       await dealsService.createTasksBulk(dealId, rawTasksRef.current);
       await queryClient.invalidateQueries({ queryKey: dealKeys.detail(dealId) });
       setTasksAccepted(true);
-      toast.success("Đã thêm các task gợi ý vào Deal thành công!");
+      toast.success(tAi("toasts.tasksAccepted"));
     } catch (err) {
       console.error("Failed to accept tasks:", err);
-      toast.error("Không thể lưu tasks vào Deal.");
+      toast.error(tAi("toasts.tasksAcceptError"));
     } finally {
       setIsAccepting(false);
     }
@@ -241,10 +229,10 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
           </div>
           <div className="flex-1">
             <p className="text-foreground" style={{ fontSize: 14, fontWeight: 600 }}>
-              Phân tích cuộc họp bằng AI
+              {tAi("cardTitle")}
             </p>
             <p className="text-muted-foreground" style={{ fontSize: 11, marginTop: 1 }}>
-              Dán ghi chú → AI tạo tasks + email follow-up
+              {tAi("cardSubtitle")}
             </p>
           </div>
           {phase === "done" && (
@@ -254,7 +242,7 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
               style={{ fontSize: 12 }}
             >
               <RotateCcw size={12} />
-              Phân tích lại
+              {tAi("reanalyze")}
             </button>
           )}
         </div>
@@ -265,7 +253,7 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
             className="text-muted-foreground uppercase mb-2"
             style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em" }}
           >
-            Ghi chú cuộc họp
+            {tAi("meetingNotesLabel")}
           </p>
           <Textarea
             value={note}
@@ -287,17 +275,17 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
             {phase === "analyzing" ? (
               <>
                 <Loader2 size={14} className="animate-spin" />
-                Đang phân tích...
+                {tAi("analyzing")}
               </>
             ) : isStreaming ? (
               <>
                 <Sparkles size={14} className="animate-pulse" />
-                Đang tạo nội dung...
+                {tAi("generating")}
               </>
             ) : (
               <>
                 <Sparkles size={14} />
-                Phân tích bằng AI
+                {tAi("analyzeCta")}
               </>
             )}
           </Button>
@@ -317,7 +305,7 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
               <Sparkles size={12} className="text-primary animate-pulse" />
             </div>
             <p className="text-primary" style={{ fontSize: 13, fontWeight: 500 }}>
-              AI đang đọc và phân tích ghi chú...
+              {tAi("analyzingNote")}
             </p>
           </div>
           {/* Scanning lines */}
@@ -343,10 +331,10 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
               </div>
               <div className="flex-1">
                 <p className="text-foreground" style={{ fontSize: 13, fontWeight: 600 }}>
-                  Tasks được tạo
+                  {tAi("tasksGeneratedTitle")}
                 </p>
                 <p className="text-muted-foreground" style={{ fontSize: 10, marginTop: 1 }}>
-                  Từ nội dung cuộc họp
+                  {tAi("tasksGeneratedSubtitle")}
                 </p>
               </div>
               <span
@@ -412,7 +400,7 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
                     ))}
                   </div>
                   <span className="text-muted-foreground" style={{ fontSize: 11 }}>
-                    Đang tạo thêm...
+                    {tAi("generatingMore")}
                   </span>
                 </div>
               )}
@@ -432,17 +420,17 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
                     {isAccepting ? (
                       <>
                         <Loader2 size={11} className="animate-spin" />
-                        Đang đồng bộ...
+                        {tAi("syncing")}
                       </>
                     ) : tasksAccepted ? (
                       <>
                         <Check size={11} />
-                        Đã chấp nhận và thêm vào Deal
+                        {tAi("acceptedAdded")}
                       </>
                     ) : (
                       <>
                         <Check size={11} />
-                        Chấp nhận và Thêm Tasks vào Deal
+                        {tAi("acceptAndAdd")}
                       </>
                     )}
                   </Button>
@@ -462,10 +450,10 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
             </div>
             <div className="flex-1">
               <p className="text-foreground" style={{ fontSize: 13, fontWeight: 600 }}>
-                Email follow-up từ AI
+                {tAi("emailTitle")}
               </p>
               <p className="text-muted-foreground" style={{ fontSize: 10, marginTop: 1 }}>
-                Gửi tới: quang.pham@jklbank.vn
+                {tAi("emailTo", { email: "quang.pham@jklbank.vn" })}
               </p>
             </div>
             <span
@@ -517,7 +505,7 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
                 )}
               >
                 <Edit3 size={11} />
-                {emailEditing ? "Xong" : "Chỉnh sửa"}
+                {emailEditing ? tCommon("done") : tCommon("edit")}
               </Button>
               <Button
                 size="sm"
@@ -529,7 +517,7 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
                 )}
               >
                 {copied ? <Check size={11} /> : <Copy size={11} />}
-                {copied ? "Đã sao chép!" : "Sao chép"}
+                {copied ? tAi("copied") : tAi("copy")}
               </Button>
             </div>
           )}
@@ -541,7 +529,7 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
         <div className="flex items-center gap-1.5 px-1">
           <Sparkles size={10} color="#7B74C9" />
           <span className="text-muted-foreground" style={{ fontSize: 11 }}>
-            Được tạo bởi SalesFlow AI · Kết quả mang tính tham khảo, hãy kiểm tra trước khi gửi
+            {tAi("footer")}
           </span>
         </div>
       )}

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { Plus, Loader2 } from "lucide-react";
 import {
   DndContext,
@@ -144,6 +145,8 @@ function EmptyPipelineIllustration() {
 
 // ── Main board ──────────────────────────────────────────────────────────────
 export function KanbanBoard() {
+  const t = useTranslations("pipeline");
+  const tCommon = useTranslations("common");
   const { pipeline, moveDeal, setPipeline } = useDealPipelineStore();
   const { isLoading, isError, error } = useGetPipeline();
   const updateDealStage = useUpdateDealStage();
@@ -182,7 +185,7 @@ export function KanbanBoard() {
       <div className="flex items-center justify-center h-full">
         <div className="flex flex-col items-center gap-3 text-muted-foreground">
           <Loader2 size={24} className="animate-spin" />
-          <p style={{ fontSize: 13 }}>Đang tải pipeline...</p>
+          <p style={{ fontSize: 13 }}>{t("loading")}</p>
         </div>
       </div>
     );
@@ -196,10 +199,10 @@ export function KanbanBoard() {
             className="text-destructive"
             style={{ fontSize: 14, fontWeight: 600 }}
           >
-            Không thể tải pipeline
+            {t("loadError")}
           </p>
           <p className="text-muted-foreground" style={{ fontSize: 12 }}>
-            {(error as Error)?.message ?? "Lỗi không xác định"}
+            {(error as Error)?.message ?? tCommon("unknownError")}
           </p>
         </div>
       </div>
@@ -324,17 +327,17 @@ export function KanbanBoard() {
                 className="text-foreground mb-2"
                 style={{ fontSize: 16, fontWeight: 600 }}
               >
-                Pipeline của bạn đang trống
+                {t("empty.title")}
               </p>
               <p
                 className="text-muted-foreground mb-6 leading-relaxed"
                 style={{ fontSize: 13 }}
               >
-                Tạo deal đầu tiên để bắt đầu theo dõi cơ hội bán hàng
+                {t("empty.description")}
               </p>
               <Button size="sm" className="h-8 gap-1.5 text-xs px-4">
                 <Plus size={13} />
-                Tạo deal đầu tiên
+                {t("empty.cta")}
               </Button>
             </div>
           </div>
@@ -379,19 +382,22 @@ export function KanbanBoard() {
       }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle style={{ fontSize: 15 }}>Xóa deal này?</AlertDialogTitle>
+            <AlertDialogTitle style={{ fontSize: 15 }}>{t("deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription style={{ fontSize: 13 }}>
-              Deal <strong>{deletingDeal?.title ?? "này"}</strong> sẽ bị xóa vĩnh viễn và không thể khôi phục.
+              {t.rich("deleteDialog.description", {
+                title: deletingDeal?.title ?? "",
+                b: (chunks) => <strong>{chunks}</strong>,
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel style={{ fontSize: 13 }}>Hủy</AlertDialogCancel>
+            <AlertDialogCancel style={{ fontSize: 13 }}>{tCommon("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               style={{ fontSize: 13 }}
               className="bg-destructive text-white hover:bg-destructive/90"
             >
-              Xóa deal
+              {t("deleteDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

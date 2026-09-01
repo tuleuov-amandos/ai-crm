@@ -1,7 +1,14 @@
 {
   "common": {
     "appName": "SalesFlow",
-    "languageName": "Русский"
+    "languageName": "Русский",
+    "cancel": "Отмена",
+    "save": "Сохранить",
+    "add": "Добавить",
+    "edit": "Редактировать",
+    "loading": "Загрузка…",
+    "done": "Готово",
+    "unknownError": "Неизвестная ошибка"
   },
   "auth": {
     "validation": {
@@ -109,6 +116,164 @@
       "errorPasswordMismatch": "Пароли не совпадают.",
       "successActivated": "Аккаунт активирован! Перенаправляем…",
       "errorRegisterFailed": "Не удалось завершить регистрацию. Попробуйте ещё раз."
+    }
+  },
+  "dashboard": {
+    "title": "Дашборд",
+    "greeting": "Доброе утро",
+    "defaultName": "Нгуен Минь",
+    "forbidden": {
+      "title": "У вас нет доступа",
+      "description": "Вашему аккаунту не предоставлен доступ к данным дашборда. Обратитесь к администратору за подробностями."
+    },
+    "period": {
+      "week": "Эта неделя",
+      "month": "Этот месяц",
+      "quarter": "Этот квартал"
+    },
+    "trendPeriod": {
+      "week": "за неделю",
+      "month": "за месяц",
+      "quarter": "за квартал"
+    },
+    "exportReport": "Экспорт отчёта",
+    "addDeal": "Добавить сделку"
+  },
+  "pipeline": {
+    "title": "Воронка",
+    "toolbar": {
+      "listView": "Список",
+      "filter": "Фильтры",
+      "allReps": "Все сотрудники",
+      "addDeal": "Добавить сделку"
+    },
+    "units": {
+      "billion": "млрд",
+      "million": "млн"
+    },
+    "loading": "Загружаем воронку…",
+    "loadError": "Не удалось загрузить воронку",
+    "empty": {
+      "title": "Ваша воронка пуста",
+      "description": "Создайте первую сделку, чтобы отслеживать возможности продаж",
+      "cta": "Создать первую сделку"
+    },
+    "column": {
+      "noDeals": "Нет сделок",
+      "summary": "{count, plural, one {# сделка} few {# сделки} many {# сделок} other {# сделки}} · {total}",
+      "dropHint": "Перетащите сделку сюда",
+      "addDeal": "Добавить сделку"
+    },
+    "card": {
+      "editDeal": "Редактировать сделку",
+      "deleteDeal": "Удалить сделку",
+      "openDeal": "Открыть сделку"
+    },
+    "deleteDialog": {
+      "title": "Удалить эту сделку?",
+      "description": "Сделка <b>{title}</b> будет удалена навсегда без возможности восстановления.",
+      "confirm": "Удалить сделку"
+    },
+    "notFound": "Сделка не найдена",
+    "detail": {
+      "follow": "Отслеживать",
+      "share": "Поделиться",
+      "addActivity": "Добавить активность",
+      "editDeal": "Редактировать сделку",
+      "deleteDeal": "Удалить сделку"
+    },
+    "leftPanel": {
+      "edit": "Редактировать",
+      "dealValue": "Стоимость сделки",
+      "expectedCloseDate": "Ожидаемая дата закрытия",
+      "owner": "Ответственный",
+      "primaryContact": "Основной контакт",
+      "viewProfile": "Открыть профиль",
+      "tasks": "Задачи",
+      "addTask": "Добавить задачу",
+      "taskNamePlaceholder": "Название задачи…",
+      "newTaskNamePlaceholder": "Название новой задачи…",
+      "pickDueDate": "Выбрать срок",
+      "noDueDate": "Без срока",
+      "tasksCompleted": "{done}/{total} задач выполнено",
+      "toasts": {
+        "taskStatusError": "Не удалось обновить статус задачи.",
+        "taskAdded": "Новая задача добавлена!",
+        "taskCreateError": "Не удалось создать задачу.",
+        "taskTitleRequired": "Название задачи не может быть пустым.",
+        "taskUpdated": "Задача обновлена!",
+        "taskUpdateError": "Не удалось обновить задачу.",
+        "taskDeleted": "Задача удалена!",
+        "taskDeleteError": "Не удалось удалить задачу."
+      }
+    },
+    "ai": {
+      "cardTitle": "AI-анализ встречи",
+      "cardSubtitle": "Вставьте заметки → AI создаст задачи и follow-up письмо",
+      "reanalyze": "Проанализировать снова",
+      "meetingNotesLabel": "Заметки о встрече",
+      "analyzing": "Анализируем…",
+      "generating": "Генерируем содержимое…",
+      "analyzeCta": "Анализировать с AI",
+      "analyzingNote": "AI читает и анализирует заметки…",
+      "tasksGeneratedTitle": "Созданные задачи",
+      "tasksGeneratedSubtitle": "На основе заметок о встрече",
+      "generatingMore": "Создаём ещё…",
+      "syncing": "Синхронизируем…",
+      "acceptedAdded": "Принято и добавлено в сделку",
+      "acceptAndAdd": "Принять и добавить задачи в сделку",
+      "emailTitle": "Follow-up письмо от AI",
+      "emailTo": "Кому: {email}",
+      "copied": "Скопировано!",
+      "copy": "Копировать",
+      "footer": "Сгенерировано SalesFlow AI · Результаты носят справочный характер, проверьте перед отправкой",
+      "noDueDate": "Без срока",
+      "meetingNote": "Встреча 19.03.2026 в офисе банка JKL, Ханой.\n\nУчастники: Фам Дык Куанг (ИТ-директор), Нгуен Тхи Лан (руководитель отдела безопасности), Данг Туан (Sales Manager — SalesFlow).\n\nОбсуждение:\n• Клиент запросил комплексный аудит безопасности системы core banking.\n• Объём работ: penetration testing, аудит безопасности кода, оценка соответствия PCI-DSS.\n• Желаемые сроки: старт в апреле 2026, завершение за 8 недель.\n• Бюджет утверждён финансовым директором на уровне 480 млн VND.\n\nСледующие шаги:\n• Отправить договор и подробный SOW до 22.03.\n• Назначить kickoff-встречу с технической командой.",
+      "toasts": {
+        "tasksAccepted": "Предложенные задачи добавлены в сделку!",
+        "tasksAcceptError": "Не удалось сохранить задачи в сделку."
+      },
+      "errors": {
+        "invalidData": "AI вернул некорректные данные.",
+        "aiProcessing": "Ошибка обработки в системе AI.",
+        "aiFailure": "Сбой в системе AI.",
+        "connectionLost": "Потеряно соединение с сервером AI.",
+        "startFailed": "Не удалось запустить AI-анализ. Повторите попытку позже.",
+        "noEmail": "Email не сгенерирован."
+      }
+    },
+    "form": {
+      "createTitle": "Добавить сделку",
+      "editTitle": "Редактировать сделку",
+      "nameLabel": "Название сделки",
+      "namePlaceholder": "Название сделки",
+      "contactLabel": "Контакт",
+      "selectContact": "Выберите контакт",
+      "createContact": "+ Создать контакт",
+      "ownerLabel": "Ответственный",
+      "selectOwner": "Выберите ответственного",
+      "selectRep": "Выберите сотрудника",
+      "valueLabel": "Стоимость",
+      "valuePlaceholder": "Напр.: 320000000",
+      "stageLabel": "Этап",
+      "closeDateLabel": "Ожидаемая дата закрытия",
+      "pickDate": "Выберите дату",
+      "noteLabel": "Заметка",
+      "notePlaceholder": "Заметка об этой сделке…",
+      "creating": "Создаём…",
+      "createCta": "Создать сделку",
+      "saveChanges": "Сохранить изменения",
+      "validation": {
+        "nameRequired": "Название сделки не может быть пустым",
+        "nameMax": "Название сделки не может быть длиннее 200 символов",
+        "contactRequired": "Выберите контакт",
+        "ownerRequired": "Выберите ответственного",
+        "valueNonNegative": "Стоимость не может быть отрицательной",
+        "stageRequired": "Выберите этап"
+      },
+      "toasts": {
+        "dealUpdated": "Сделка обновлена"
+      }
     }
   }
 }

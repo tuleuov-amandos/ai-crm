@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -35,17 +36,18 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 
-const formSchema = z.object({
-  title:     z.string().min(1, "Tên deal không được để trống"),
-  stage:     z.enum(STAGES, "Vui lòng chọn giai đoạn"),
-  contactId: z.string(),
-  ownerId:   z.string().min(1, "Vui lòng chọn người phụ trách"),
-  value:     z.number().nonnegative("Giá trị không được âm"),
-  closeDate: z.string(),
-  note:      z.string(),
-});
+const buildFormSchema = (tv: (key: string) => string) =>
+  z.object({
+    title:     z.string().min(1, tv("nameRequired")),
+    stage:     z.enum(STAGES, tv("stageRequired")),
+    contactId: z.string(),
+    ownerId:   z.string().min(1, tv("ownerRequired")),
+    value:     z.number().nonnegative(tv("valueNonNegative")),
+    closeDate: z.string(),
+    note:      z.string(),
+  });
 
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = z.infer<ReturnType<typeof buildFormSchema>>;
 
 interface Props {
   deal: Deal | DealDetail;
@@ -54,6 +56,10 @@ interface Props {
 }
 
 export function EditDealSheet({ deal, open, onOpenChange }: Props) {
+  const t = useTranslations("pipeline.form");
+  const tv = useTranslations("pipeline.form.validation");
+  const tCommon = useTranslations("common");
+  const formSchema = useMemo(() => buildFormSchema(tv), [tv]);
   const updateDeal = useUpdateDeal(deal.id);
   const usersQuery = useGetUsers();
   const users = usersQuery.data ?? [];
@@ -98,7 +104,7 @@ export function EditDealSheet({ deal, open, onOpenChange }: Props) {
       note:    values.note,
     });
 
-    toast.success("Deal đã được cập nhật");
+    toast.success(t("toasts.dealUpdated"));
     onOpenChange(false);
   };
 
@@ -107,7 +113,7 @@ export function EditDealSheet({ deal, open, onOpenChange }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[480px] overflow-y-auto p-5">
         <DialogHeader className="pb-4 border-b mb-4">
-          <DialogTitle style={{ fontSize: 15, fontWeight: 600 }}>Chỉnh sửa deal</DialogTitle>
+          <DialogTitle style={{ fontSize: 15, fontWeight: 600 }}>{t("editTitle")}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -120,10 +126,10 @@ export function EditDealSheet({ deal, open, onOpenChange }: Props) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel style={{ fontSize: 12 }}>
-                    Tên deal <span className="text-destructive">*</span>
+                    {t("nameLabel")} <span className="text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder="Tên deal" {...field} style={{ fontSize: 13 }} className="bg-[#F8F8F7] dark:bg-card border-[#E8E7E2] dark:border-border text-foreground" />
+                    <Input placeholder={t("namePlaceholder")} {...field} style={{ fontSize: 13 }} className="bg-[#F8F8F7] dark:bg-card border-[#E8E7E2] dark:border-border text-foreground" />
                   </FormControl>
                   <FormMessage style={{ fontSize: 11 }} />
                 </FormItem>
@@ -137,7 +143,7 @@ export function EditDealSheet({ deal, open, onOpenChange }: Props) {
                 name="stage"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel style={{ fontSize: 12 }}>Giai đoạn</FormLabel>
+                    <FormLabel style={{ fontSize: 12 }}>{t("stageLabel")}</FormLabel>
                     <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger size="sm" style={{ fontSize: 13 }} className="bg-[#F8F8F7] dark:bg-card border-[#E8E7E2] dark:border-border text-foreground">
@@ -162,11 +168,11 @@ export function EditDealSheet({ deal, open, onOpenChange }: Props) {
                 name="value"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel style={{ fontSize: 12 }}>Giá trị</FormLabel>
+                    <FormLabel style={{ fontSize: 12 }}>{t("valueLabel")}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="VD: 320000000"
+                        placeholder={t("valuePlaceholder")}
                         {...field}
                         onChange={(e) => field.onChange(e.target.valueAsNumber)}
                         style={{ fontSize: 13 }}
@@ -186,11 +192,11 @@ export function EditDealSheet({ deal, open, onOpenChange }: Props) {
                 name="ownerId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel style={{ fontSize: 12 }}>Người phụ trách <span className="text-destructive">*</span></FormLabel>
+                    <FormLabel style={{ fontSize: 12 }}>{t("ownerLabel")} <span className="text-destructive">*</span></FormLabel>
                     <Select value={field.value} onValueChange={field.onChange} disabled={usersLoading}>
                       <FormControl>
                         <SelectTrigger size="sm" style={{ fontSize: 13 }} className="bg-[#F8F8F7] dark:bg-card border-[#E8E7E2] dark:border-border text-foreground">
-                          <SelectValue placeholder={usersLoading ? "Đang tải..." : "Chọn nhân viên"} />
+                          <SelectValue placeholder={usersLoading ? tCommon("loading") : t("selectRep")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -211,7 +217,7 @@ export function EditDealSheet({ deal, open, onOpenChange }: Props) {
                 name="closeDate"
                 render={({ field }) => (
                   <FormItem className="flex flex-col gap-1.5">
-                    <FormLabel style={{ fontSize: 12, lineHeight: 1 }}>Ngày đóng dự kiến</FormLabel>
+                    <FormLabel style={{ fontSize: 12, lineHeight: 1 }}>{t("closeDateLabel")}</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -222,7 +228,7 @@ export function EditDealSheet({ deal, open, onOpenChange }: Props) {
                             {field.value ? (
                               format(new Date(field.value), "dd/MM/yyyy")
                             ) : (
-                              <span className="text-muted-foreground">Chọn ngày</span>
+                              <span className="text-muted-foreground">{t("pickDate")}</span>
                             )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
@@ -253,10 +259,10 @@ export function EditDealSheet({ deal, open, onOpenChange }: Props) {
               name="note"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel style={{ fontSize: 12 }}>Ghi chú</FormLabel>
+                  <FormLabel style={{ fontSize: 12 }}>{t("noteLabel")}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Ghi chú về deal này..."
+                      placeholder={t("notePlaceholder")}
                       rows={4}
                       {...field}
                       style={{ fontSize: 13, resize: "none" }}
@@ -276,10 +282,10 @@ export function EditDealSheet({ deal, open, onOpenChange }: Props) {
                 className="flex-1 text-xs"
                 onClick={() => onOpenChange(false)}
               >
-                Hủy
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" size="sm" className="flex-1 text-xs">
-                Lưu thay đổi
+                {t("saveChanges")}
               </Button>
             </div>
           </form>

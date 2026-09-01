@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { Download, Plus, Wallet, GitBranch, Target, TrendingUp, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,8 @@ import { DashboardPeriod } from "@/lib/validations/dashboard.schema";
 import { formatVndShort } from "@/lib/helper";
 
 export default function DashboardPage() {
+  const t = useTranslations("dashboard");
+  const locale = useLocale();
   const [period, setPeriod] = useState<DashboardPeriod>("quarter");
   const { data: me } = useMe();
   const { can } = useAbility();
@@ -36,11 +39,13 @@ export default function DashboardPage() {
   const canViewLeaderboard = can("read", "Report", { view: "team" });
   const canReadActivity = can("read", "Activity");
 
-  const formatDateVi = () => {
-    const days = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
-    const date = new Date();
-    return `${days[date.getDay()]}, ${date.getDate()} tháng ${date.getMonth() + 1}, ${date.getFullYear()}`;
-  };
+  const formatToday = () =>
+    new Intl.DateTimeFormat(locale, {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(new Date());
 
   if (isForbidden) {
     return (
@@ -50,7 +55,7 @@ export default function DashboardPage() {
             className="text-foreground tracking-tight"
             style={{ fontSize: 15, fontWeight: 600, lineHeight: 1 }}
           >
-            Dashboard
+            {t("title")}
           </h1>
         </header>
         <main className="flex-1 flex items-center justify-center p-6 bg-[#F8F8F7] dark:bg-background">
@@ -58,9 +63,9 @@ export default function DashboardPage() {
             <div className="mx-auto size-12 bg-destructive/10 text-destructive rounded-full flex items-center justify-center">
               <Lock className="size-6" />
             </div>
-            <h2 className="text-lg font-semibold text-foreground">Bạn không có quyền truy cập</h2>
+            <h2 className="text-lg font-semibold text-foreground">{t("forbidden.title")}</h2>
             <p className="text-sm text-muted-foreground">
-              Tài khoản của bạn chưa được cấp quyền xem dữ liệu trên Dashboard. Vui lòng liên hệ với Quản trị viên để biết thêm chi tiết.
+              {t("forbidden.description")}
             </p>
           </div>
         </main>
@@ -77,16 +82,16 @@ export default function DashboardPage() {
           className="text-foreground tracking-tight"
           style={{ fontSize: 15, fontWeight: 600, lineHeight: 1 }}
         >
-          Dashboard
+          {t("title")}
         </h1>
 
         <div className="flex items-center gap-2">
           {/* Period tabs */}
           <Tabs value={period} onValueChange={(val) => setPeriod(val as DashboardPeriod)}>
             <TabsList className="h-8 gap-0 p-0.5">
-              <TabsTrigger value="week"    className="h-7 px-3 text-xs rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Tuần này</TabsTrigger>
-              <TabsTrigger value="month"   className="h-7 px-3 text-xs rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Tháng này</TabsTrigger>
-              <TabsTrigger value="quarter" className="h-7 px-3 text-xs rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Quý này</TabsTrigger>
+              <TabsTrigger value="week"    className="h-7 px-3 text-xs rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t("period.week")}</TabsTrigger>
+              <TabsTrigger value="month"   className="h-7 px-3 text-xs rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t("period.month")}</TabsTrigger>
+              <TabsTrigger value="quarter" className="h-7 px-3 text-xs rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t("period.quarter")}</TabsTrigger>
             </TabsList>
           </Tabs>
 
@@ -99,14 +104,14 @@ export default function DashboardPage() {
               className="h-8 gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs"
             >
               <Download className="size-3.5" />
-              Xuất báo cáo
+              {t("exportReport")}
             </Button>
           )}
 
           {canCreateDeal && (
             <Button size="sm" className="h-8 gap-1.5 text-xs">
               <Plus className="size-3.5" />
-              Thêm deal
+              {t("addDeal")}
             </Button>
           )}
         </div>
@@ -118,9 +123,9 @@ export default function DashboardPage() {
         {/* Welcome strip */}
         <div className="flex items-center justify-between">
           <p className="text-muted-foreground" style={{ fontSize: 13 }}>
-            Chào buổi sáng,{" "}
+            {t("greeting")},{" "}
             <strong className="text-foreground" style={{ fontWeight: 600 }}>
-              {me?.name || "Nguyễn Minh"}
+              {me?.name || t("defaultName")}
             </strong>{" "}
             👋
           </p>
@@ -128,7 +133,7 @@ export default function DashboardPage() {
             className="text-muted-foreground bg-background border border-border rounded-md px-2.5 py-1"
             style={{ fontSize: 11 }}
           >
-            {formatDateVi()}
+            {formatToday()}
           </span>
         </div>
 
@@ -169,7 +174,7 @@ export default function DashboardPage() {
                 trend={
                   dashboardData.metrics.openDeals.trend
                     ? {
-                        value: `${dashboardData.metrics.openDeals.trend.value >= 0 ? "+" : ""}${dashboardData.metrics.openDeals.trend.value} ${period === "week" ? "tuần này" : period === "quarter" ? "quý này" : "tháng này"}`,
+                        value: `${dashboardData.metrics.openDeals.trend.value >= 0 ? "+" : ""}${dashboardData.metrics.openDeals.trend.value} ${t(`trendPeriod.${period}`)}`,
                         positive: dashboardData.metrics.openDeals.trend.positive,
                       }
                     : undefined

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -39,19 +40,20 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 
-const createDealFormSchema = z.object({
-  title: z
-    .string()
-    .min(1, "Tên deal không được để trống")
-    .max(200, "Tên deal không được vượt quá 200 ký tự"),
-  contactId: z.string().min(1, "Vui lòng chọn liên hệ"),
-  ownerId: z.string().min(1, "Vui lòng chọn người phụ trách"),
-  value: z.number().nonnegative("Giá trị không được âm"),
-  closeDate: z.string().optional(),
-  note: z.string().optional(),
-});
+const buildCreateDealSchema = (tv: (key: string) => string) =>
+  z.object({
+    title: z
+      .string()
+      .min(1, tv("nameRequired"))
+      .max(200, tv("nameMax")),
+    contactId: z.string().min(1, tv("contactRequired")),
+    ownerId: z.string().min(1, tv("ownerRequired")),
+    value: z.number().nonnegative(tv("valueNonNegative")),
+    closeDate: z.string().optional(),
+    note: z.string().optional(),
+  });
 
-type CreateDealFormValues = z.infer<typeof createDealFormSchema>;
+type CreateDealFormValues = z.infer<ReturnType<typeof buildCreateDealSchema>>;
 
 interface CreateDealSheetProps {
   open: boolean;
@@ -59,6 +61,10 @@ interface CreateDealSheetProps {
 }
 
 export function CreateDealSheet({ open, onOpenChange }: CreateDealSheetProps) {
+  const t = useTranslations("pipeline.form");
+  const tv = useTranslations("pipeline.form.validation");
+  const tCommon = useTranslations("common");
+  const createDealFormSchema = useMemo(() => buildCreateDealSchema(tv), [tv]);
   const createDeal = useCreateDeal();
   const contactsQuery = useGetContacts({ limit: 100 });
   const usersQuery = useGetUsers();
@@ -151,7 +157,7 @@ export function CreateDealSheet({ open, onOpenChange }: CreateDealSheetProps) {
       <DialogContent className="max-w-[480px] overflow-y-auto p-5 bg-white dark:bg-card border dark:border-border">
         <DialogHeader className="pb-4 border-b dark:border-border mb-4">
           <DialogTitle className="text-foreground" style={{ fontSize: 15, fontWeight: 600 }}>
-            Thêm deal
+            {t("createTitle")}
           </DialogTitle>
         </DialogHeader>
 
@@ -163,11 +169,11 @@ export function CreateDealSheet({ open, onOpenChange }: CreateDealSheetProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel style={{ fontSize: 12 }}>
-                    Tên deal <span className="text-destructive">*</span>
+                    {t("nameLabel")} <span className="text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Tên deal"
+                      placeholder={t("namePlaceholder")}
                       {...field}
                       style={{ fontSize: 13 }}
                       className="bg-[#F8F8F7] dark:bg-card border-[#E8E7E2] dark:border-border text-foreground"
@@ -183,7 +189,7 @@ export function CreateDealSheet({ open, onOpenChange }: CreateDealSheetProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel style={{ fontSize: 12 }}>
-                    Liên hệ <span className="text-destructive">*</span>
+                    {t("contactLabel")} <span className="text-destructive">*</span>
                   </FormLabel>
                   <Select
                     value={field.value}
@@ -194,7 +200,7 @@ export function CreateDealSheet({ open, onOpenChange }: CreateDealSheetProps) {
                       <SelectTrigger size="sm" style={{ fontSize: 13 }} className="bg-[#F8F8F7] dark:bg-card border-[#E8E7E2] dark:border-border text-foreground">
                         <SelectValue
                           placeholder={
-                            contactsLoading ? "Đang tải..." : "Chọn liên hệ"
+                            contactsLoading ? tCommon("loading") : t("selectContact")
                           }
                         />
                       </SelectTrigger>
@@ -220,7 +226,7 @@ export function CreateDealSheet({ open, onOpenChange }: CreateDealSheetProps) {
                     disabled={isPending}
                     onClick={() => setContactDialogOpen(true)}
                   >
-                    + Tạo liên hệ mới
+                    {t("createContact")}
                   </Button>
                   <FormMessage style={{ fontSize: 11 }} />
                 </FormItem>
@@ -232,7 +238,7 @@ export function CreateDealSheet({ open, onOpenChange }: CreateDealSheetProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel style={{ fontSize: 12 }}>
-                    Người phụ trách <span className="text-destructive">*</span>
+                    {t("ownerLabel")} <span className="text-destructive">*</span>
                   </FormLabel>
                   <Select
                     value={field.value}
@@ -243,9 +249,7 @@ export function CreateDealSheet({ open, onOpenChange }: CreateDealSheetProps) {
                       <SelectTrigger size="sm" style={{ fontSize: 13 }} className="bg-[#F8F8F7] dark:bg-card border-[#E8E7E2] dark:border-border text-foreground">
                         <SelectValue
                           placeholder={
-                            usersLoading
-                              ? "Đang tải..."
-                              : "Chọn người phụ trách"
+                            usersLoading ? tCommon("loading") : t("selectOwner")
                           }
                         />
                       </SelectTrigger>
@@ -273,11 +277,11 @@ export function CreateDealSheet({ open, onOpenChange }: CreateDealSheetProps) {
                 name="value"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel style={{ fontSize: 12 }}>Giá trị</FormLabel>
+                    <FormLabel style={{ fontSize: 12 }}>{t("valueLabel")}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="VD: 320000000"
+                        placeholder={t("valuePlaceholder")}
                         {...field}
                         onChange={(event) =>
                           field.onChange(event.target.valueAsNumber)
@@ -297,7 +301,7 @@ export function CreateDealSheet({ open, onOpenChange }: CreateDealSheetProps) {
                 render={({ field }) => (
                   <FormItem className="flex flex-col gap-1.5">
                     <FormLabel style={{ fontSize: 12, lineHeight: 1 }}>
-                      Ngày đóng dự kiến
+                      {t("closeDateLabel")}
                     </FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
@@ -309,7 +313,7 @@ export function CreateDealSheet({ open, onOpenChange }: CreateDealSheetProps) {
                             {field.value ? (
                               format(new Date(field.value), "dd/MM/yyyy")
                             ) : (
-                              <span className="text-muted-foreground">Chọn ngày</span>
+                              <span className="text-muted-foreground">{t("pickDate")}</span>
                             )}
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                           </Button>
@@ -340,10 +344,10 @@ export function CreateDealSheet({ open, onOpenChange }: CreateDealSheetProps) {
               name="note"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel style={{ fontSize: 12 }}>Ghi chú</FormLabel>
+                  <FormLabel style={{ fontSize: 12 }}>{t("noteLabel")}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Ghi chú về deal này..."
+                      placeholder={t("notePlaceholder")}
                       rows={4}
                       {...field}
                       style={{ fontSize: 13, resize: "none" }}
@@ -364,7 +368,7 @@ export function CreateDealSheet({ open, onOpenChange }: CreateDealSheetProps) {
                 disabled={isPending}
                 onClick={() => handleOpenChange(false)}
               >
-                Hủy
+                {tCommon("cancel")}
               </Button>
               <Button
                 type="submit"
@@ -372,7 +376,7 @@ export function CreateDealSheet({ open, onOpenChange }: CreateDealSheetProps) {
                 className="flex-1 text-xs"
                 disabled={isPending}
               >
-                {isPending ? "Đang tạo..." : "Tạo deal"}
+                {isPending ? t("creating") : t("createCta")}
               </Button>
             </div>
           </form>

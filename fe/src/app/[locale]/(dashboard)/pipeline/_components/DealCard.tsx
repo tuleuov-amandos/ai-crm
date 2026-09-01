@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
@@ -25,15 +26,17 @@ function getInitials(name: string): string {
     .toUpperCase();
 }
 
-function formatValue(value: number): string {
+function formatValue(value: number, units: { billion: string; million: string }): string {
   if (value === 0) return "—";
   const millions = value / 1_000_000;
   if (millions >= 1000)
-    return `${(millions / 1000).toFixed(1).replace(".0", "")} tỷ`;
-  return `${millions % 1 === 0 ? millions : millions.toFixed(1)}tr`;
+    return `${(millions / 1000).toFixed(1).replace(".0", "")} ${units.billion}`;
+  return `${millions % 1 === 0 ? millions : millions.toFixed(1)}${units.million}`;
 }
 
 export function DealCard({ deal, onEdit, onDelete }: Props) {
+  const t = useTranslations("pipeline");
+  const units = { billion: t("units.billion"), million: t("units.million") };
   const {
     attributes,
     listeners,
@@ -133,7 +136,7 @@ export function DealCard({ deal, onEdit, onDelete }: Props) {
                 }}
               >
                 <Pencil size={12} className="mr-2" />
-                Chỉnh sửa deal
+                {t("card.editDeal")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -145,7 +148,7 @@ export function DealCard({ deal, onEdit, onDelete }: Props) {
                 }}
               >
                 <Trash2 size={12} className="mr-2" />
-                Xóa deal
+                {t("card.deleteDeal")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -164,14 +167,14 @@ export function DealCard({ deal, onEdit, onDelete }: Props) {
           className="text-foreground"
           style={{ fontSize: 12, fontWeight: 600 }}
         >
-          {formatValue(Number(deal.value))}
+          {formatValue(Number(deal.value), units)}
         </span>
 
         <div className="flex items-center gap-1.5">
           <Link
             href={`/pipeline/${deal.id}`}
             onClick={(e) => e.stopPropagation()}
-            title="Mở deal"
+            title={t("card.openDeal")}
             className={cn(
               "flex items-center justify-center size-[18px] rounded-[5px] text-muted-foreground transition-opacity",
               hovered ? "opacity-100" : "opacity-0",

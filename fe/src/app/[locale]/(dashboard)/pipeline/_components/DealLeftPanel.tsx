@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import {
   Calendar,
   Phone,
@@ -45,6 +46,9 @@ type DealLeftPanelProps = {
 
 // ── Component ───────────────────────────────────────────────────────────────
 export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
+  const t = useTranslations("pipeline.leftPanel");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
   const [tasks, setTasks]         = useState<Task[]>(deal?.tasks || []);
   const [addingTask, setAddingTask] = useState(false);
   const [newTitle, setNewTitle]   = useState("");
@@ -76,7 +80,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
       await queryClient.invalidateQueries({ queryKey: dealKeys.detail(deal.id) });
     } catch (err) {
       console.error("Failed to update task state:", err);
-      toast.error("Không thể cập nhật trạng thái task.");
+      toast.error(t("toasts.taskStatusError"));
       // Rollback
       setTasks((prev) =>
         prev.map((t) => (t.id === id ? { ...t, done: oldDone } : t))
@@ -99,17 +103,17 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
     try {
       await dealsService.createTask(deal.id, title, newDueDate);
       await queryClient.invalidateQueries({ queryKey: dealKeys.detail(deal.id) });
-      toast.success("Đã thêm task mới!");
+      toast.success(t("toasts.taskAdded"));
     } catch (err) {
       console.error("Failed to add task:", err);
-      toast.error("Không thể tạo task mới.");
+      toast.error(t("toasts.taskCreateError"));
     }
   };
 
   const commitEdit = async (taskId: string) => {
     const title = editingTitle.trim();
     if (!title) {
-      toast.error("Tiêu đề task không được để trống.");
+      toast.error(t("toasts.taskTitleRequired"));
       return;
     }
 
@@ -133,10 +137,10 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
         dueDate: editingDueDate ? new Date(editingDueDate).toISOString() : null,
       });
       await queryClient.invalidateQueries({ queryKey: dealKeys.detail(deal.id) });
-      toast.success("Đã cập nhật task!");
+      toast.success(t("toasts.taskUpdated"));
     } catch (err) {
       console.error("Failed to update task:", err);
-      toast.error("Không thể cập nhật task.");
+      toast.error(t("toasts.taskUpdateError"));
       await queryClient.invalidateQueries({ queryKey: dealKeys.detail(deal.id) });
     }
   };
@@ -148,10 +152,10 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
     try {
       await dealsService.deleteTask(deal.id, id);
       await queryClient.invalidateQueries({ queryKey: dealKeys.detail(deal.id) });
-      toast.success("Đã xóa task thành công!");
+      toast.success(t("toasts.taskDeleted"));
     } catch (err) {
       console.error("Failed to delete task:", err);
-      toast.error("Không thể xóa task.");
+      toast.error(t("toasts.taskDeleteError"));
       await queryClient.invalidateQueries({ queryKey: dealKeys.detail(deal.id) });
     }
   };
@@ -179,7 +183,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
             onClick={onEdit}
           >
             <Edit2 size={11} />
-            Chỉnh sửa
+            {t("edit")}
           </Button>
         </div>
 
@@ -197,7 +201,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
           <div className="bg-[#F8F8F7] dark:bg-card rounded-[10px] border border-border px-3 py-2.5">
             <p className="flex items-center gap-1 text-muted-foreground mb-1" style={{ fontSize: 11 }}>
               <TrendingUp size={10} strokeWidth={1.8} />
-              Giá trị deal
+              {t("dealValue")}
             </p>
             <p className="text-foreground" style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1 }}>
               {formatCurrency(deal.value)}
@@ -208,7 +212,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
           <div className="bg-[#F8F8F7] dark:bg-card rounded-[10px] border border-border px-3 py-2.5">
             <p className="flex items-center gap-1 text-muted-foreground mb-1" style={{ fontSize: 11 }}>
               <Calendar size={10} strokeWidth={1.8} />
-              Ngày chốt dự kiến
+              {t("expectedCloseDate")}
             </p>
             <p className="text-foreground" style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.35 }}>
               {formatDate(deal.closeDate)}
@@ -241,7 +245,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
           <div className="bg-[#F8F8F7] dark:bg-card rounded-[10px] border border-border px-3 py-2.5">
             <p className="flex items-center gap-1 text-muted-foreground mb-1.5" style={{ fontSize: 11 }}>
               <User size={10} strokeWidth={1.8} />
-              Phụ trách
+              {t("owner")}
             </p>
             <div className="flex items-center gap-1.5">
               <Avatar className="size-5 shrink-0">
@@ -312,14 +316,14 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
             className="text-muted-foreground uppercase"
             style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em" }}
           >
-            Liên hệ chính
+            {t("primaryContact")}
           </p>
           <Link
             href={`/contacts/${deal.contact.id}`}
             className="flex items-center gap-0.5 text-primary hover:underline"
             style={{ fontSize: 11 }}
           >
-            Xem hồ sơ
+            {t("viewProfile")}
             <ChevronRight size={11} />
           </Link>
         </div>
@@ -394,7 +398,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
               className="text-muted-foreground uppercase"
               style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em" }}
             >
-              Tasks
+              {t("tasks")}
             </p>
             {pendingCount > 0 && (
               <span
@@ -416,7 +420,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
             style={{ fontSize: 12 }}
           >
             <Plus size={11} />
-            Thêm task
+            {t("addTask")}
           </Button>
         </div>
 
@@ -435,7 +439,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                   <input
                     value={editingTitle}
                     onChange={(e) => setEditingTitle(e.target.value)}
-                    placeholder="Tên task..."
+                    placeholder={t("taskNamePlaceholder")}
                     className="w-full bg-background border border-border rounded px-2 py-1 outline-none text-foreground text-xs"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") commitEdit(task.id);
@@ -450,7 +454,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                           className="h-7 px-2 text-xs flex items-center gap-1.5 bg-background border-border text-muted-foreground hover:text-foreground"
                         >
                           <Calendar size={12} />
-                          {editingDueDate ? format(new Date(editingDueDate), "dd/MM/yyyy") : "Chọn hạn chót"}
+                          {editingDueDate ? format(new Date(editingDueDate), "dd/MM/yyyy") : t("pickDueDate")}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0 bg-white dark:bg-card" align="start">
@@ -471,14 +475,14 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                         className="h-7 px-2 text-xs text-muted-foreground"
                         onClick={() => setEditingTaskId(null)}
                       >
-                        Hủy
+                        {tCommon("cancel")}
                       </Button>
                       <Button
                         size="sm"
                         className="h-7 px-2 text-xs bg-primary text-white"
                         onClick={() => commitEdit(task.id)}
                       >
-                        Lưu
+                        {tCommon("save")}
                       </Button>
                     </div>
                   </div>
@@ -516,7 +520,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                   <div className="flex items-center gap-1 mt-0.5">
                     <Calendar size={9} strokeWidth={1.7} className="text-muted-foreground shrink-0" />
                     <span style={{ fontSize: 11 }} className="text-muted-foreground">
-                      {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "Không hạn chót"}
+                      {task.dueDate ? new Date(task.dueDate).toLocaleDateString(locale) : t("noDueDate")}
                     </span>
                   </div>
                 </div>
@@ -553,7 +557,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                 ref={inputRef}
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="Tên task mới..."
+                placeholder={t("newTaskNamePlaceholder")}
                 className="w-full bg-background border border-border rounded px-2 py-1 outline-none text-foreground text-xs"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") commitAdd();
@@ -572,7 +576,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                       className="h-7 px-2 text-xs flex items-center gap-1.5 bg-background border-border text-muted-foreground hover:text-foreground"
                     >
                       <Calendar size={12} />
-                      {newDueDate ? format(new Date(newDueDate), "dd/MM/yyyy") : "Chọn hạn chót"}
+                      {newDueDate ? format(new Date(newDueDate), "dd/MM/yyyy") : t("pickDueDate")}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0 bg-white dark:bg-card" align="start">
@@ -597,14 +601,14 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                       setNewDueDate(null);
                     }}
                   >
-                    Hủy
+                    {tCommon("cancel")}
                   </Button>
                   <Button
                     size="sm"
                     className="h-7 px-2 text-xs bg-primary text-white"
                     onClick={commitAdd}
                   >
-                    Thêm
+                    {tCommon("add")}
                   </Button>
                 </div>
               </div>
@@ -617,7 +621,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
           <div className="flex items-center gap-1.5 mt-4 pt-3 border-t border-border/50">
             <CheckCircle2 size={12} className="text-green-600 shrink-0" />
             <p className="text-muted-foreground" style={{ fontSize: 11 }}>
-              {doneCount}/{tasks.length} tasks hoàn thành
+              {t("tasksCompleted", { done: doneCount, total: tasks.length })}
             </p>
             <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden ml-1">
               <div

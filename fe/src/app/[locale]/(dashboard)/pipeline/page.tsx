@@ -2,12 +2,14 @@
 
 import { Plus, Filter, LayoutGrid, List, ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { KanbanBoard } from "@/app/[locale]/(dashboard)/pipeline/_components/KanbanBoard";
 import { CreateDealSheet } from "@/app/[locale]/(dashboard)/pipeline/_components/CreateDealSheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 export default function Pipeline() {
+  const t = useTranslations("pipeline");
   const [createOpen, setCreateOpen] = useState(false);
 
   return (
@@ -20,7 +22,7 @@ export default function Pipeline() {
             className="text-foreground tracking-tight"
             style={{ fontSize: 15, fontWeight: 600, lineHeight: 1 }}
           >
-            Pipeline
+            {t("title")}
           </h1>
           <button
             className="flex items-center gap-1 h-6 px-2.5 rounded-full border border-border bg-background text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
@@ -42,7 +44,7 @@ export default function Pipeline() {
               <LayoutGrid size={13} />
             </button>
             <button
-              title="Danh sách"
+              title={t("toolbar.listView")}
               className="px-2.5 py-1.5 bg-background text-muted-foreground flex items-center border-0 border-l border-border hover:bg-muted transition-colors cursor-pointer"
             >
               <List size={13} />
@@ -57,7 +59,7 @@ export default function Pipeline() {
             className="h-8 gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs"
           >
             <Filter size={13} />
-            Lọc theo
+            {t("toolbar.filter")}
           </Button>
 
           <Button
@@ -65,7 +67,7 @@ export default function Pipeline() {
             size="sm"
             className="h-8 gap-1 border-border text-muted-foreground hover:text-foreground text-xs"
           >
-            Tất cả nhân viên
+            {t("toolbar.allReps")}
             <ChevronDown size={12} />
           </Button>
 
@@ -75,7 +77,7 @@ export default function Pipeline() {
             onClick={() => setCreateOpen(true)}
           >
             <Plus size={13} />
-            Thêm deal
+            {t("toolbar.addDeal")}
           </Button>
         </div>
       </header>

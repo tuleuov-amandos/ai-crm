@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   ArrowLeft,
   MoreHorizontal,
@@ -39,6 +40,8 @@ import { useDealActivities } from "@/hooks/useActivities";
 import { EditDealSheet } from "../_components/EditDealSheet";
 
 export default function DealDetail() {
+  const t = useTranslations("pipeline");
+  const tCommon = useTranslations("common");
   const params = useParams();
   const id = params.id as string;
 
@@ -61,7 +64,7 @@ export default function DealDetail() {
     return (
       <div className="flex items-center justify-center h-60">
         <p className="text-muted-foreground" style={{ fontSize: 14 }}>
-          Không tìm thấy deal
+          {t("notFound")}
         </p>
       </div>
     );
@@ -92,7 +95,7 @@ export default function DealDetail() {
               className="text-muted-foreground hover:text-foreground transition-colors"
               style={{ textDecoration: "none", fontSize: 13 }}
             >
-              Pipeline
+              {t("title")}
             </Link>
             <span className="text-muted-foreground/40" style={{ fontSize: 12 }}>/</span>
             <Link
@@ -100,7 +103,7 @@ export default function DealDetail() {
               className="text-muted-foreground hover:text-foreground transition-colors"
               style={{ textDecoration: "none", fontSize: 13 }}
             >
-              {deal?.contact.name ?? "Ngân hàng JKL"}
+              {deal?.contact.name ?? ""}
             </Link>
             <span className="text-muted-foreground/40" style={{ fontSize: 12 }}>/</span>
             <span className="text-foreground" style={{ fontSize: 13, fontWeight: 500 }}>
@@ -118,7 +121,7 @@ export default function DealDetail() {
             className="h-8 gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs"
           >
             <Bell size={12} />
-            Theo dõi
+            {t("detail.follow")}
           </Button>
 
           <Button
@@ -127,12 +130,12 @@ export default function DealDetail() {
             className="h-8 gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs"
           >
             <Share2 size={12} />
-            Chia sẻ
+            {t("detail.share")}
           </Button>
 
           <Button size="sm" className="h-8 gap-1.5 text-xs">
             <Plus size={13} />
-            Thêm hoạt động
+            {t("detail.addActivity")}
           </Button>
 
           <DropdownMenu>
@@ -151,7 +154,7 @@ export default function DealDetail() {
                 onClick={() => setEditOpen(true)}
               >
                 <Pencil size={12} className="mr-2" />
-                Chỉnh sửa deal
+                {t("detail.editDeal")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -160,7 +163,7 @@ export default function DealDetail() {
                 onClick={() => setDeleteOpen(true)}
               >
                 <Trash2 size={12} className="mr-2" />
-                Xóa deal
+                {t("detail.deleteDeal")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -180,19 +183,22 @@ export default function DealDetail() {
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle style={{ fontSize: 15 }}>Xóa deal này?</AlertDialogTitle>
+            <AlertDialogTitle style={{ fontSize: 15 }}>{t("deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription style={{ fontSize: 13 }}>
-              Deal <strong>{deal?.title ?? "này"}</strong> sẽ bị xóa vĩnh viễn và không thể khôi phục.
+              {t.rich("deleteDialog.description", {
+                title: deal?.title ?? "",
+                b: (chunks) => <strong>{chunks}</strong>,
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel style={{ fontSize: 13 }}>Hủy</AlertDialogCancel>
+            <AlertDialogCancel style={{ fontSize: 13 }}>{tCommon("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               style={{ fontSize: 13 }}
               className="bg-destructive text-white hover:bg-destructive/90"
             >
-              Xóa deal
+              {t("deleteDialog.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
