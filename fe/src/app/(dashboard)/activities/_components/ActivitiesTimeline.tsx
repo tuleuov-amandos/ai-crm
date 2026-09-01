@@ -1,7 +1,5 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
-
 import { ActivityGroup, ActivityItem } from "./types";
 import { ActivityCard } from "./ActivityCard";
 import { DateDivider } from "./DateDivider";

@@ -22,8 +22,8 @@ export class AiService {
       model: AI_MODEL,
       messages: [{ role: 'user', content: prompt }],
       temperature: options?.temperature ?? 0.1,
-    });
-    return response.choices[0]?.message?.content || '';
+    })
+    return response.choices[0]?.message?.content || ''
   }
 
   async enqueueAnalysis(opts: EnqueueOpts) {
@@ -31,7 +31,7 @@ export class AiService {
     const payload = { jobId, ...opts }
 
     try {
-      const job = await aiQueue.add('analyze', payload, {
+      await aiQueue.add('analyze', payload, {
         attempts: 3,
         backoff: { type: 'fixed', delay: 5000 },
         removeOnComplete: true,
@@ -39,7 +39,7 @@ export class AiService {
       })
 
       return jobId
-    } catch (err) {
+    } catch {
       // bubble up as 503 so controller can return SERVICE_UNAVAILABLE
       throw new HttpException('AI queue unavailable. Please try later.', HttpStatus.SERVICE_UNAVAILABLE)
     }
@@ -53,7 +53,7 @@ export class AiService {
     dealId: string,
     sourceNote?: string,
   ) {
-    return saveAiResultAtomic(this.prisma, parsed, jobId, tenantId, dealId, sourceNote, this.logger)
+    return saveAiResultAtomic(this.prisma, parsed, jobId, tenantId, dealId, sourceNote)
   }
 }
 
@@ -65,10 +65,7 @@ export async function saveAiResultAtomic(
   tenantId: string,
   dealId: string,
   sourceNote?: string,
-  logger?: Logger,
 ) {
-  const log = logger ?? new Logger('saveAiResultAtomic')
-
   return prisma.$transaction(async (tx) => {
     // create SUMMARY
     await tx.aiSuggestion.create({

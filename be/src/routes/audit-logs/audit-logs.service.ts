@@ -1,29 +1,26 @@
-import { Injectable } from '@nestjs/common';
-import { AuditLogsRepository } from './audit-logs.repo';
-import { GetAuditLogsQueryType } from './audit-logs.model';
+import { Injectable } from '@nestjs/common'
+import { AuditLogsRepository } from './audit-logs.repo'
+import { AuditLogChanges, GetAuditLogsQueryType } from './audit-logs.model'
 
 @Injectable()
 export class AuditLogsService {
   constructor(private readonly auditLogsRepository: AuditLogsRepository) {}
-  
+
   async logAction(params: {
-    tenantId: string,
+    tenantId: string
     userId: string
-    action: string,
-    targetType: string,
-    targetId: string,
-    targetName?: string | null,
-    changes: Record<string, unknown>;
-  }){
-    return this.auditLogsRepository.create(params);
+    action: string
+    targetType: string
+    targetId: string
+    targetName?: string | null
+    changes: AuditLogChanges
+  }) {
+    return this.auditLogsRepository.create(params)
   }
-  
-  async getLogs(
-    tenantId: string,
-    query: GetAuditLogsQueryType
-  ) {
-    const limit = query.limit || 20;
-    const {cursor, action, targetType, userId, search} = query;
+
+  async getLogs(tenantId: string, query: GetAuditLogsQueryType) {
+    const limit = query.limit || 20
+    const { cursor, action, targetType, userId, search } = query
 
     const logs = await this.auditLogsRepository.getLogsByTenant({
       tenantId,
@@ -33,20 +30,20 @@ export class AuditLogsService {
         action,
         targetType,
         userId,
-        search
-      }
-    });
+        search,
+      },
+    })
 
-    const hasNextPage = logs.length > limit;
-    const data = hasNextPage ? logs.slice(0, -1) : logs;
-    const nextCursor = hasNextPage ? logs[logs.length - 1].id : null;
+    const hasNextPage = logs.length > limit
+    const data = hasNextPage ? logs.slice(0, -1) : logs
+    const nextCursor = hasNextPage ? logs[logs.length - 1].id : null
 
-    return { 
+    return {
       data,
       pagination: {
         nextCursor,
-        hasNextPage
-      }
-    };
+        hasNextPage,
+      },
+    }
   }
 }

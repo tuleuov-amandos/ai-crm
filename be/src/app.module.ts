@@ -8,24 +8,32 @@ import { APP_PIPE } from '@nestjs/core/constants'
 import { MyZodValidationPipe } from './common/pipe/custom-zod-validation.pipe'
 import { HttpExceptionFilter } from './common/filters/http-exception.filter'
 import { AuthModule } from './routes/auth/auth.module'
-import { ContactsModule } from './routes/contacts/contacts.module';
-import { ActivitiesModule } from './routes/activities/activities.module';
-import { DealModule } from './routes/deal/deal.module';
-import { UsersModule } from './routes/users/users.module';
-import { InvitationsModule } from './routes/invitations/invitations.module';
-import { DashboardModule } from './routes/dashboard/dashboard.module';
-import { ReportsModule } from './routes/reports/reports.module';
-import { AiModule } from './routes/ai/ai.module';
+import { ContactsModule } from './routes/contacts/contacts.module'
+import { ActivitiesModule } from './routes/activities/activities.module'
+import { DealModule } from './routes/deal/deal.module'
+import { UsersModule } from './routes/users/users.module'
+import { InvitationsModule } from './routes/invitations/invitations.module'
+import { DashboardModule } from './routes/dashboard/dashboard.module'
+import { ReportsModule } from './routes/reports/reports.module'
+import { AiModule } from './routes/ai/ai.module'
 import { TenantInterceptor } from './common/interceptors/tenant.interceptor'
-import { AuditLogsModule } from './routes/audit-logs/audit-logs.module';
-import { HealthModule } from './routes/health/health.module';
+import { AuditLogsModule } from './routes/audit-logs/audit-logs.module'
+import { HealthModule } from './routes/health/health.module'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 @Module({
   imports: [
-    CommonModule, AuthModule, ContactsModule,
-    ActivitiesModule, DealModule, UsersModule,
-    InvitationsModule, DashboardModule, ReportsModule,
-    AiModule, AuditLogsModule, HealthModule,
+    CommonModule,
+    AuthModule,
+    ContactsModule,
+    ActivitiesModule,
+    DealModule,
+    UsersModule,
+    InvitationsModule,
+    DashboardModule,
+    ReportsModule,
+    AiModule,
+    AuditLogsModule,
+    HealthModule,
     ThrottlerModule.forRoot({
       throttlers: [
         {
@@ -47,11 +55,11 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
     {
       provide: APP_INTERCEPTOR,
       useClass: TenantInterceptor,
-    },  
+    },
     {
-        provide: APP_GUARD,
-        useClass: ThrottlerGuard
-    }
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
-export class AppModule { }
+export class AppModule {}

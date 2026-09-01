@@ -31,9 +31,9 @@ export class TaskRepository {
 
   async update(dealId: string, taskId: string, data: UpdateTaskBodyType) {
     const updateData: Partial<{
-      title: string;
-      done: boolean;
-      dueDate: Date | null;
+      title: string
+      done: boolean
+      dueDate: Date | null
     }> = {}
     if (data.title !== undefined) updateData.title = data.title
     if (data.done !== undefined) updateData.done = data.done
@@ -51,5 +51,3 @@ export class TaskRepository {
     })
   }
 }
-
-

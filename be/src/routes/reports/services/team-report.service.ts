@@ -14,11 +14,7 @@ export class TeamReportService {
     private readonly caslAbilityFactory: CaslAbilityFactory,
   ) {}
 
-  async getTeamPerformance(
-    startDateStr: string | undefined,
-    endDateStr: string | undefined,
-    user: AccessTokenPayload,
-  ) {
+  async getTeamPerformance(startDateStr: string | undefined, endDateStr: string | undefined, user: AccessTokenPayload) {
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('read', subject('Report', { view: 'team' } as any))) {
       throw new ForbiddenException('Bạn không có quyền xem báo cáo hiệu suất')
@@ -41,7 +37,7 @@ export class TeamReportService {
         const lostDeals = await this.reportsRepo.findUserClosedDeals(u.id, DealStage.CLOSED_LOST, start, end)
 
         const targets = await this.reportsRepo.findKpiTargets({ userId: u.id })
-        
+
         let totalTarget = 0
         const temp = new Date(start)
         while (temp <= end) {
@@ -59,7 +55,7 @@ export class TeamReportService {
         let avgDaysToClose = 0
         if (closed.length > 0) {
           const totalDays = closed.reduce((sum, d) => {
-            const days = Math.round((d.closeDate!.getTime() - d.createdAt.getTime()) / (1000 * 60 * 60 * 24))
+            const days = Math.round((d.closeDate.getTime() - d.createdAt.getTime()) / (1000 * 60 * 60 * 24))
             return sum + Math.max(0, days)
           }, 0)
           avgDaysToClose = Math.round(totalDays / closed.length)
@@ -80,10 +76,7 @@ export class TeamReportService {
     return { reps: repsPerformance }
   }
 
-  async updateKpiTarget(
-    dto: UpdateKpiTargetDto,
-    user: AccessTokenPayload,
-  ) {
+  async updateKpiTarget(dto: UpdateKpiTargetDto, user: AccessTokenPayload) {
     const ability = await this.caslAbilityFactory.createForUser(user)
     if (ability.cannot('update', 'KpiTarget')) {
       throw new ForbiddenException('Bạn không có quyền cập nhật KPI target.')

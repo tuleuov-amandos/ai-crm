@@ -47,5 +47,17 @@ COPY package.json ./
 
 EXPOSE 3001
 
+# ─── Single image, two services ─────────────────────────────────────────────
+# This one image runs both roles; the process is chosen by the start command:
+#
+#   API    (default)  ->  node dist/src/main.js
+#   Worker            ->  node dist/src/worker.js   (npm run start:worker)
+#
+# Railway: create two services from this repo/image. Leave the API service on
+# the default CMD and set the worker service's "Custom Start Command" to
+#   node dist/src/worker.js
+# Docker Compose: see the `worker` service in ../docker-compose.yml, which
+# overrides `command:` on the same build.
+#
 # Use dist/src/main.js because current build output is under dist/src
 CMD ["node", "dist/src/main.js"]

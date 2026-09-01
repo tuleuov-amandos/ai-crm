@@ -40,11 +40,6 @@ export function TopDealsTable({ deals = [] }: TopDealsTableProps) {
         filter === "won" ? d.stage === "CLOSED_WON" : d.stage === "CLOSED_LOST"
       );
 
-  const handleFilterChange = (newFilter: Filter) => {
-    setFilter(newFilter);
-    setCurrentPage(1);
-  }
-
   const totalItems = filtered.length;
   const totalPages = Math.ceil(totalItems / pageSize);
   const startIndex = (currentPage - 1) * pageSize;

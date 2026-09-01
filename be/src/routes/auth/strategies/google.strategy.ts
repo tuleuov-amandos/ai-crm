@@ -1,7 +1,7 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
-import { Strategy, Profile, VerifyCallback } from 'passport-google-oauth20';
-import envConfig from 'src/common/config';
+import { Injectable, UnauthorizedException } from '@nestjs/common'
+import { PassportStrategy } from '@nestjs/passport'
+import { Strategy, Profile, VerifyCallback } from 'passport-google-oauth20'
+import envConfig from 'src/common/config'
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -11,17 +11,12 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       clientSecret: envConfig.GOOGLE_CLIENT_SECRET,
       callbackURL: envConfig.GOOGLE_CALLBACK_URL,
       scope: ['email', 'profile'],
-    });
+    })
   }
 
-  async validate(
-    accessToken: string,
-    refreshToken: string,
-    profile: Profile,
-    done: VerifyCallback,
-  ): Promise<void> {
-    const { id, name, emails, photos } = profile;
-    const primaryEmail = emails?.[0];
+  async validate(accessToken: string, refreshToken: string, profile: Profile, done: VerifyCallback): Promise<void> {
+    const { id, name, emails, photos } = profile
+    const primaryEmail = emails?.[0]
 
     // Google's `verified` flag confirms the caller actually owns this
     // mailbox (via Google's own verification or, for Workspace domains,
@@ -30,7 +25,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     // silently attach their Google identity to that email's existing
     // password-based account — a full account takeover.
     if (!primaryEmail?.value || !primaryEmail.verified) {
-      return done(new UnauthorizedException('Email Google chưa được xác minh'), false);
+      return done(new UnauthorizedException('Email Google chưa được xác minh'), false)
     }
 
     const user = {
@@ -41,7 +36,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       name: name?.givenName + ' ' + name?.familyName,
       picture: photos?.[0]?.value,
       accessToken,
-    };
-    done(null, user);
+    }
+    done(null, user)
   }
 }

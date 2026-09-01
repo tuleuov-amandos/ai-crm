@@ -8,9 +8,9 @@ export class DealRepository {
 
   findAllByTenant(filters?: { ownerId?: string }) {
     return this.prismaService.deal.findMany({
-      where: { 
+      where: {
         deletedAt: null,
-        ...(filters?.ownerId && { ownerId: filters.ownerId })
+        ...(filters?.ownerId && { ownerId: filters.ownerId }),
       },
       include: {
         contact: { select: { id: true, name: true } },
@@ -22,10 +22,10 @@ export class DealRepository {
 
   findDealsByStage(stage: DealStageType, filters?: { ownerId?: string }) {
     return this.prismaService.deal.findMany({
-      where: { 
-        stage: stage, 
+      where: {
+        stage: stage,
         deletedAt: null,
-        ...(filters?.ownerId && { ownerId: filters.ownerId })
+        ...(filters?.ownerId && { ownerId: filters.ownerId }),
       },
       include: {
         contact: { select: { id: true, name: true } },
@@ -36,10 +36,10 @@ export class DealRepository {
 
   findOne(dealId: string, filters?: { ownerId?: string }) {
     return this.prismaService.deal.findFirst({
-      where: { 
-        id: dealId, 
+      where: {
+        id: dealId,
         deletedAt: null,
-        ...(filters?.ownerId && { ownerId: filters.ownerId })
+        ...(filters?.ownerId && { ownerId: filters.ownerId }),
       },
       include: {
         contact: true,
@@ -109,4 +109,3 @@ export class DealRepository {
     })
   }
 }
-

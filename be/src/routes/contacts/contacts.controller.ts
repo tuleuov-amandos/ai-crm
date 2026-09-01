@@ -1,11 +1,19 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOkResponse } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { ContactsService } from './contacts.service';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { AccessTokenPayload } from 'src/common/types/jwt.type';
-import { CreateContactBodyDto, CreateContactResDto, GetContactResDto, GetContactsQueryDto, GetContactsResDto, UpdateContactBodyDto, BulkImportContactsBodyDto } from './contacts.dto';
-import { ZodSerializerDto } from 'nestjs-zod';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common'
+import { ApiTags, ApiOkResponse } from '@nestjs/swagger'
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard'
+import { ContactsService } from './contacts.service'
+import { CurrentUser } from 'src/common/decorators/current-user.decorator'
+import { AccessTokenPayload } from 'src/common/types/jwt.type'
+import {
+  CreateContactBodyDto,
+  CreateContactResDto,
+  GetContactResDto,
+  GetContactsQueryDto,
+  GetContactsResDto,
+  UpdateContactBodyDto,
+  BulkImportContactsBodyDto,
+} from './contacts.dto'
+import { ZodSerializerDto } from 'nestjs-zod'
 
 @ApiTags('Contacts')
 @Controller('contacts')
@@ -17,36 +25,30 @@ export class ContactsController {
   @ApiOkResponse({ type: GetContactsResDto })
   @ZodSerializerDto(GetContactsResDto)
   getContacts(@CurrentUser() user: AccessTokenPayload, @Query() query: GetContactsQueryDto) {
-    return this.contactService.getAllContacts(user.tenantId, query, user);
+    return this.contactService.getAllContacts(user.tenantId, query, user)
   }
 
   @Post('bulk')
-  bulkImport(
-    @CurrentUser() user: AccessTokenPayload,
-    @Body() body: BulkImportContactsBodyDto,
-  ) {
-    return this.contactService.bulkImport(user.tenantId, user.userId, body);
+  bulkImport(@CurrentUser() user: AccessTokenPayload, @Body() body: BulkImportContactsBodyDto) {
+    return this.contactService.bulkImport(user.tenantId, user.userId, body)
   }
 
   @Post('import/map-columns')
   mapColumns(@Body() body: { headers: string[] }) {
-    return this.contactService.aiMapColumns(body.headers);
+    return this.contactService.aiMapColumns(body.headers)
   }
 
   @Get(':id')
   @ApiOkResponse({ type: GetContactResDto })
   @ZodSerializerDto(GetContactResDto)
   getContactById(@CurrentUser() user: AccessTokenPayload, @Param('id') contactId: string) {
-    return this.contactService.getContactById(contactId, user.tenantId, user);
+    return this.contactService.getContactById(contactId, user.tenantId, user)
   }
 
   @Post()
   @ApiOkResponse({ type: CreateContactResDto })
   @ZodSerializerDto(CreateContactResDto)
-  createContact(
-    @CurrentUser() user: AccessTokenPayload,
-    @Body() body: CreateContactBodyDto,
-  ) {
+  createContact(@CurrentUser() user: AccessTokenPayload, @Body() body: CreateContactBodyDto) {
     return this.contactService.createContact(user.tenantId, user.userId, body)
   }
 
@@ -60,20 +62,12 @@ export class ContactsController {
   }
 
   @Delete(':id')
-  deleteContact(
-    @CurrentUser() user: AccessTokenPayload,
-    @Param('id') contactId: string,
-  ) {
+  deleteContact(@CurrentUser() user: AccessTokenPayload, @Param('id') contactId: string) {
     return this.contactService.delete(contactId, user.tenantId, user)
   }
 
   @Patch(':id/restore')
-  restoreContact(
-    @CurrentUser() user: AccessTokenPayload,
-    @Param('id') contactId: string,
-  ) {
+  restoreContact(@CurrentUser() user: AccessTokenPayload, @Param('id') contactId: string) {
     return this.contactService.restore(contactId, user.tenantId, user)
   }
 }
-
-

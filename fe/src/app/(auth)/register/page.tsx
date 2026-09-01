@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { RegisterBodyType } from "@/lib/validations/auth.schema";
-import { useRouter} from "next/navigation";
 import { RegisterBodySchema } from '@/lib/validations/auth.schema';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SalesFlowLogo } from "@/components/SalesFlowLogo";
@@ -126,7 +125,6 @@ function PasswordStrengthMeter({ password }: { password: string }) {
 
 export default function RegisterPage() {
   const { mutate: authRegister, isPending, } = useRegister();
-  const router = useRouter();
   const {
     register,
     handleSubmit,

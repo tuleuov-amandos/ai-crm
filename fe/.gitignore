@@ -38,7 +38,9 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
+# next-env.d.ts is committed: the standalone `tsc --noEmit` CI step runs without a
+# prior `next build`, so it needs this file for the next/image-types module decls
+# (*.ico/*.png imports). Next regenerates it on dev/build; it's marked do-not-edit.
 
 # file take note about problems
 Promlem.md

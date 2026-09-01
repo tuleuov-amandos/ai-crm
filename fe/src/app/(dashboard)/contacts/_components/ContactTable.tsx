@@ -389,7 +389,7 @@ function ContactTable({
                   {/* ── Tags ── */}
                   <TableCell className="px-4 py-3">
                     <div className="flex gap-1 flex-wrap">
-                      {contact?.tags?.map((tag, i) => (
+                      {contact?.tags?.map((tag) => (
                         <span
                           key={tag}
                           className={`inline-block px-2 py-0.5 rounded-full ${CONTACT_TAG_COLOR[tag]}`}

@@ -6,7 +6,7 @@ import {
   XAxis, YAxis, Tooltip, Area,
   Line, CartesianGrid, ComposedChart
 } from "recharts";
-import { Activity, TrendingUp, BarChart3 } from "lucide-react";
+import { Activity, TrendingUp } from "lucide-react";
 import { ChartCard } from "./ChartCard";
 import { EmptyState } from "./EmptyState";
 import { formatVndShort, STAGE_COLORS } from "@/lib/helper";

@@ -27,12 +27,12 @@ export class InvitationsService {
     private readonly redisService: RedisService,
     private readonly sharedUserRepo: SharedUserRepository,
     private readonly invitationRepo: InvitationRepository,
-    private readonly prismaService: PrismaService
+    private readonly prismaService: PrismaService,
   ) {}
 
   // ─── CREATE INVITATION ────────────────────────────────────────────────────
 
-async createInvitation(body: CreateInvitationType, tenantId: string, currentUser: AccessTokenPayload) {
+  async createInvitation(body: CreateInvitationType, tenantId: string, currentUser: AccessTokenPayload) {
     const existingUser = await this.sharedUserRepo.findUniqueEmail(body.email)
     if (existingUser) {
       throw new ConflictException('Email này đã đăng ký tài khoản ở một workspace khác')
@@ -43,7 +43,7 @@ async createInvitation(body: CreateInvitationType, tenantId: string, currentUser
     }
     // Find Role in tenant based on submitted name
     const dbRole = await this.prismaService.role.findFirst({
-      where: { tenantId, name: body.role }
+      where: { tenantId, name: body.role },
     })
     if (!dbRole) {
       throw new BadRequestException('Vai trò không hợp lệ')
@@ -75,7 +75,6 @@ async createInvitation(body: CreateInvitationType, tenantId: string, currentUser
     }
   }
 
-
   // ─── GET INVITATIONS ──────────────────────────────────────────────────────
 
   async getInvitationsByTenant(tenantId: string) {
@@ -95,7 +94,7 @@ async createInvitation(body: CreateInvitationType, tenantId: string, currentUser
 
   // ─── VERIFY TOKEN ─────────────────────────────────────────────────────────
 
-async verifyInvitationToken(token: string) {
+  async verifyInvitationToken(token: string) {
     const invitation = await this.invitationRepo.findByToken(token)
     if (!invitation) {
       throw new BadRequestException('Lời mời không hợp lệ hoặc link đã hỏng')
@@ -117,7 +116,7 @@ async verifyInvitationToken(token: string) {
 
   // ─── ACCEPT INVITATION ────────────────────────────────────────────────────
 
- async acceptInvitation(body: AcceptInvitationType) {
+  async acceptInvitation(body: AcceptInvitationType) {
     const invitation = await this.invitationRepo.findByTokenOnly(body.token)
     if (!invitation || invitation.status !== 'PENDING' || invitation.expiresAt < new Date()) {
       throw new BadRequestException('Lời mời không hợp lệ hoặc đã hết hạn')
@@ -160,7 +159,7 @@ async verifyInvitationToken(token: string) {
 
   // ─── UPDATE INVITATION ────────────────────────────────────────────────────
 
- async updateInvitation(id: string, body: UpdateInvitationType, tenantId: string, currentUser: AccessTokenPayload) {
+  async updateInvitation(id: string, body: UpdateInvitationType, tenantId: string, currentUser: AccessTokenPayload) {
     const invitation = await this.invitationRepo.findByIdAndTenant(id, tenantId)
     if (!invitation) {
       throw new NotFoundException('Không tìm thấy lời mời')
@@ -169,10 +168,10 @@ async verifyInvitationToken(token: string) {
       throw new BadRequestException('Chỉ có thể chỉnh sửa lời mời đang ở trạng thái chờ kích hoạt')
     }
     const updateData: {
-      token: string;
-      expiresAt: Date;
-      email?: string;
-      roleId?: string;
+      token: string
+      expiresAt: Date
+      email?: string
+      roleId?: string
     } = {
       token: uuidv4(),
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),

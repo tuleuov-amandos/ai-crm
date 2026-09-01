@@ -7,7 +7,6 @@ import {
   GetActivitiesQueryType,
   ActivityBaseType,
 } from './activities.model'
-import { ROLE } from 'src/common/constants/role.constanst'
 
 // ActivityWithRelations matches ActivityBaseType (with nested user, contact, deal)
 export type ActivityWithRelations = ActivityBaseType
@@ -132,5 +131,3 @@ export class ActivitiesRepository {
     })
   }
 }
-
-

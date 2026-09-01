@@ -120,9 +120,9 @@ describe('InvitationsService', () => {
       })
       mockPrismaService.role.findFirst.mockResolvedValue({ id: 'role-admin', name: ROLE.ADMIN, tenantId })
 
-      await expect(
-        service.updateInvitation('inv-1', { role: ROLE.ADMIN }, tenantId, managerUser),
-      ).rejects.toThrow(ForbiddenException)
+      await expect(service.updateInvitation('inv-1', { role: ROLE.ADMIN }, tenantId, managerUser)).rejects.toThrow(
+        ForbiddenException,
+      )
 
       expect(mockInvitationRepo.update).not.toHaveBeenCalled()
     })

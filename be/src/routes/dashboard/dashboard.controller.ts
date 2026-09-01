@@ -16,10 +16,7 @@ export class DashboardController {
   @Get()
   @ApiOkResponse({ type: DashboardResDto })
   @ZodSerializerDto(DashboardResDto)
-  getDashboardData(
-    @Query() query: GetDashboardQueryDto,
-    @CurrentUser() user: AccessTokenPayload,
-  ) {
+  getDashboardData(@Query() query: GetDashboardQueryDto, @CurrentUser() user: AccessTokenPayload) {
     return this.dashboardService.getDashboardData(user.tenantId, query.period, user)
   }
 }

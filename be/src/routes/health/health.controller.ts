@@ -18,10 +18,7 @@ export class HealthController {
 
   @Get('ready')
   async readiness() {
-    const [dbStatus, redisStatus] = await Promise.all([
-      this.checkDatabase(),
-      this.checkRedis(),
-    ])
+    const [dbStatus, redisStatus] = await Promise.all([this.checkDatabase(), this.checkRedis()])
 
     const checks = { db: dbStatus, redis: redisStatus }
     const isReady = dbStatus === 'up' && redisStatus === 'up'

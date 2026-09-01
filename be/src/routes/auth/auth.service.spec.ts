@@ -57,9 +57,9 @@ describe('AuthService', () => {
 
   describe('validateGoogleUser', () => {
     it('rejects an unverified email even if the caller claims emailVerified', async () => {
-      await expect(
-        service.validateGoogleUser({ ...googleProfile, emailVerified: false }),
-      ).rejects.toThrow(UnauthorizedException)
+      await expect(service.validateGoogleUser({ ...googleProfile, emailVerified: false })).rejects.toThrow(
+        UnauthorizedException,
+      )
 
       expect(mockPrismaService.account.findUnique).not.toHaveBeenCalled()
     })
@@ -84,9 +84,7 @@ describe('AuthService', () => {
         role: { name: 'ADMIN' },
       })
 
-      await expect(service.validateGoogleUser(googleProfile)).rejects.toThrow(
-        UnauthorizedException,
-      )
+      await expect(service.validateGoogleUser(googleProfile)).rejects.toThrow(UnauthorizedException)
 
       expect(mockPrismaService.account.create).not.toHaveBeenCalled()
     })

@@ -14,23 +14,30 @@ export const TaskBaseSchema = z.object({
 // CREATE
 export const CreateTaskBodySchema = TaskBaseSchema.pick({
   title: true,
-}).extend({
-  dueDate: zIsoDatetime.nullable().optional(),
-}).strict()
+})
+  .extend({
+    dueDate: zIsoDatetime.nullable().optional(),
+  })
+  .strict()
 
 // CREATE BULK
-export const CreateTasksBulkBodySchema = z.object({
-  tasks: z.array(CreateTaskBodySchema),
-}).strict()
+export const CreateTasksBulkBodySchema = z
+  .object({
+    tasks: z.array(CreateTaskBodySchema),
+  })
+  .strict()
 
 // UPDATE
-export const UpdateTaskBodySchema = z.object({
-  title: z.string().min(1, 'Tiêu đề không được để trống').max(200).optional(),
-  done: z.boolean().optional(),
-  dueDate: zIsoDatetime.nullable().optional(),
-}).strict().refine((data) => Object.keys(data).length > 0, {
-  message: 'Ít nhất phải có một trường được cập nhật',
-})
+export const UpdateTaskBodySchema = z
+  .object({
+    title: z.string().min(1, 'Tiêu đề không được để trống').max(200).optional(),
+    done: z.boolean().optional(),
+    dueDate: zIsoDatetime.nullable().optional(),
+  })
+  .strict()
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'Ít nhất phải có một trường được cập nhật',
+  })
 
 // RESPONSES
 export const TaskResSchema = TaskBaseSchema

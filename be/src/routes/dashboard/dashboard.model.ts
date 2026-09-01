@@ -3,9 +3,11 @@ import { z } from 'zod'
 export const DashboardPeriodEnum = z.enum(['week', 'month', 'quarter'])
 export type DashboardPeriodType = z.infer<typeof DashboardPeriodEnum>
 
-export const GetDashboardQuerySchema = z.object({
-  period: DashboardPeriodEnum.default('month'),
-}).strict()
+export const GetDashboardQuerySchema = z
+  .object({
+    period: DashboardPeriodEnum.default('month'),
+  })
+  .strict()
 
 export type GetDashboardQueryType = z.infer<typeof GetDashboardQuerySchema>
 
@@ -19,10 +21,12 @@ export const MetricCardSchema = z.object({
   value: z.number(),
   trend: MetricTrendSchema.optional(),
   subtext: z.string().optional(),
-  progress: z.object({
-    current: z.number(),
-    target: z.number(),
-  }).optional(),
+  progress: z
+    .object({
+      current: z.number(),
+      target: z.number(),
+    })
+    .optional(),
 })
 
 export const PipelineStageSchema = z.object({

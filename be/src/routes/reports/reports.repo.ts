@@ -134,5 +134,3 @@ export class ReportsRepository {
     })
   }
 }
-
-

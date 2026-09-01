@@ -1,30 +1,26 @@
-import z from "zod";
-import { zIsoDatetime } from "src/common/utils/zod.util";
+import z from 'zod'
+import { zIsoDatetime } from 'src/common/utils/zod.util'
 
-export const ContactTagConst  = {
-  Enterprise: "Enterprise",
-  Vip: "Vip",
-  Potential: "Tiềm năng"
-} as const;
+export const ContactTagConst = {
+  Enterprise: 'Enterprise',
+  Vip: 'Vip',
+  Potential: 'Tiềm năng',
+} as const
 
-export type ContactTagType  = typeof ContactTagConst [keyof typeof ContactTagConst ];
+export type ContactTagType = (typeof ContactTagConst)[keyof typeof ContactTagConst]
 
 // ─────────────────────────────────────────
 // BASE SCHEMAS — Not used directly for Res/Body
 // ─────────────────────────────────────────
 const ContactBaseSchema = z.object({
-  id:        z.string(),
-  tenantId:  z.string(),
-  name:      z.string().min(2).max(100),
-  email:     z.string().optional().nullable(),
-  phone:     z.string().optional().nullable(),
-  company:   z.string().optional().nullable(),
-  position:  z.string().optional().nullable(),
-  tags:      z.array(z.enum([
-    ContactTagConst.Enterprise,
-    ContactTagConst.Vip,
-    ContactTagConst.Potential,
-  ])).optional(),
+  id: z.string(),
+  tenantId: z.string(),
+  name: z.string().min(2).max(100),
+  email: z.string().optional().nullable(),
+  phone: z.string().optional().nullable(),
+  company: z.string().optional().nullable(),
+  position: z.string().optional().nullable(),
+  tags: z.array(z.enum([ContactTagConst.Enterprise, ContactTagConst.Vip, ContactTagConst.Potential])).optional(),
   createdAt: zIsoDatetime,
   updatedAt: zIsoDatetime,
   deletedAt: zIsoDatetime.nullable(),
@@ -33,50 +29,54 @@ const ContactBaseSchema = z.object({
 // ─────────────────────────────────────────
 // CREATE — POST /contacts
 // ─────────────────────────────────────────
-export const CreateContactBodySchema = ContactBaseSchema
-  .pick({ name: true, email: true, phone: true, company: true, position: true, tags: true})
-  .strict()
+export const CreateContactBodySchema = ContactBaseSchema.pick({
+  name: true,
+  email: true,
+  phone: true,
+  company: true,
+  position: true,
+  tags: true,
+}).strict()
 
-export const CreateContactResSchema = ContactBaseSchema
-  .omit({ deletedAt: true })
+export const CreateContactResSchema = ContactBaseSchema.omit({ deletedAt: true })
 
 export type CreateContactBodyType = z.infer<typeof CreateContactBodySchema>
-export type CreateContactResType  = z.infer<typeof CreateContactResSchema>
+export type CreateContactResType = z.infer<typeof CreateContactResSchema>
 
 // ─────────────────────────────────────────
 // UPDATE — PATCH /contacts/:id
 // ─────────────────────────────────────────
-export const UpdateContactBodySchema = CreateContactBodySchema
-  .partial()
-  .refine(
-    data => Object.keys(data).length > 0,
-    { message: 'Ít nhất phải có một trường được cập nhật' }
-  )
+export const UpdateContactBodySchema = CreateContactBodySchema.partial().refine(
+  (data) => Object.keys(data).length > 0,
+  { message: 'Ít nhất phải có một trường được cập nhật' },
+)
 
-export const UpdateContactResSchema = CreateContactResSchema  // returns same as Create
+export const UpdateContactResSchema = CreateContactResSchema // returns same as Create
 
 export type UpdateContactBodyType = z.infer<typeof UpdateContactBodySchema>
-export type UpdateContactResType  = z.infer<typeof UpdateContactResSchema>
+export type UpdateContactResType = z.infer<typeof UpdateContactResSchema>
 
 // ─────────────────────────────────────────
 // GET ONE — GET /contacts/:id
 // ─────────────────────────────────────────
-export const GetContactResSchema = ContactBaseSchema
-  .omit({ deletedAt: true })
-  .extend({
-    deals: z.array(z.object({
-      id:    z.string(),
+export const GetContactResSchema = ContactBaseSchema.omit({ deletedAt: true }).extend({
+  deals: z.array(
+    z.object({
+      id: z.string(),
       title: z.string(),
       stage: z.string(),
       value: z.coerce.number(),
-    })),
-    activities: z.array(z.object({
-      id:   z.string(),
+    }),
+  ),
+  activities: z.array(
+    z.object({
+      id: z.string(),
       type: z.string(),
       note: z.string(),
       date: zIsoDatetime,
-    })),
-  })
+    }),
+  ),
+})
 
 export type GetContactResType = z.infer<typeof GetContactResSchema>
 
@@ -95,27 +95,27 @@ export const GetContactWithDealsActivitiesResSchema = ContactBaseSchema.omit({
       date: zIsoDatetime,
     }),
   ),
-});
+})
 export type GetContactWithDealsActivitiesResType = z.infer<typeof GetContactWithDealsActivitiesResSchema>
 // ─────────────────────────────────────────
 // GET ALL — GET /contacts
 // ─────────────────────────────────────────
 export const GetContactsQuerySchema = z.object({
   cursor: z.string().optional(),
-  limit:  z.coerce.number().min(1).max(100).default(10),
+  limit: z.coerce.number().min(1).max(100).default(10),
   search: z.string().optional(),
-  tag:    z.string().optional(),
+  tag: z.string().optional(),
 })
 
 export const GetContactsResSchema = z.object({
-  data: z.array(CreateContactResSchema),  // reuse, do not expose deletedAt
+  data: z.array(CreateContactResSchema), // reuse, do not expose deletedAt
   pagination: z.object({
     nextCursor: z.string().nullable(),
     hasNextPage: z.boolean(),
   }),
 })
 export const GetContactsWithDealsActivitiesResSchema = z.object({
-  data: z.array(GetContactWithDealsActivitiesResSchema),  // reuse, do not expose deletedAt
+  data: z.array(GetContactWithDealsActivitiesResSchema), // reuse, do not expose deletedAt
   pagination: z.object({
     nextCursor: z.string().nullable(),
     hasNextPage: z.boolean(),
@@ -123,33 +123,32 @@ export const GetContactsWithDealsActivitiesResSchema = z.object({
 })
 
 export type GetContactsQueryType = z.infer<typeof GetContactsQuerySchema>
-export type GetContactsResType   = z.infer<typeof GetContactsWithDealsActivitiesResSchema>
+export type GetContactsResType = z.infer<typeof GetContactsWithDealsActivitiesResSchema>
 
 // Validation schema for each contact row imported from Excel
 export const BulkImportContactItemSchema = z.object({
-  name: z.string().min(2, "Tên phải có ít nhất 2 ký tự"),
-  email: z.string().email("Email không đúng định dạng").optional().nullable().or(z.literal('')),
+  name: z.string().min(2, 'Tên phải có ít nhất 2 ký tự'),
+  email: z.string().email('Email không đúng định dạng').optional().nullable().or(z.literal('')),
   phone: z.string().optional().nullable().or(z.literal('')),
   company: z.string().optional().nullable().or(z.literal('')),
   position: z.string().optional().nullable().or(z.literal('')),
   tags: z.array(z.string()).optional(),
-  ownerEmail: z.string().email("Email người sở hữu không đúng định dạng").optional().nullable().or(z.literal('')),
+  ownerEmail: z.string().email('Email người sở hữu không đúng định dạng').optional().nullable().or(z.literal('')),
   dealTitle: z.string().optional().nullable().or(z.literal('')),
-  dealValue: z.preprocess(
-    (val) => {
-      if (val === '' || val === null || val === undefined) return null;
-      const parsed = Number(val);
-      return isNaN(parsed) ? null : parsed;
-    },
-    z.number().min(0, "Giá trị deal không được âm").nullable()
-  ).optional(),
+  dealValue: z
+    .preprocess((val) => {
+      if (val === '' || val === null || val === undefined) return null
+      const parsed = Number(val)
+      return isNaN(parsed) ? null : parsed
+    }, z.number().min(0, 'Giá trị deal không được âm').nullable())
+    .optional(),
   dealStage: z.string().optional().nullable().or(z.literal('')),
   dealNote: z.string().optional().nullable().or(z.literal('')),
-});
+})
 
 // Validation schema for the request body sent to the API
 export const BulkImportContactsBodySchema = z.object({
   contacts: z.array(BulkImportContactItemSchema),
-});
+})
 
-export type BulkImportContactsBodyType = z.infer<typeof BulkImportContactsBodySchema>;
+export type BulkImportContactsBodyType = z.infer<typeof BulkImportContactsBodySchema>

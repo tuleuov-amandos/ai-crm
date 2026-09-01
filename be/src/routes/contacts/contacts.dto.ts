@@ -1,32 +1,34 @@
-import { createZodDto } from "nestjs-zod";
+import { createZodDto } from 'nestjs-zod'
 import {
   // CREATE
-  CreateContactBodySchema, CreateContactResSchema,
+  CreateContactBodySchema,
+  CreateContactResSchema,
   // UPDATE
-  UpdateContactBodySchema, UpdateContactResSchema,
+  UpdateContactBodySchema,
+  UpdateContactResSchema,
   // GET ONE
   GetContactResSchema,
   // GET ALL
-  GetContactsQuerySchema, GetContactsResSchema,
+  GetContactsQuerySchema,
   GetContactsWithDealsActivitiesResSchema,
   // BULK IMPORT
   BulkImportContactsBodySchema,
-} from "./contacts.model";
+} from './contacts.model'
 
 // CREATE
 export class CreateContactBodyDto extends createZodDto(CreateContactBodySchema) {}
-export class CreateContactResDto  extends createZodDto(CreateContactResSchema) {}
+export class CreateContactResDto extends createZodDto(CreateContactResSchema) {}
 
 // UPDATE
 export class UpdateContactBodyDto extends createZodDto(UpdateContactBodySchema) {}
-export class UpdateContactResDto  extends createZodDto(UpdateContactResSchema) {}
+export class UpdateContactResDto extends createZodDto(UpdateContactResSchema) {}
 
 // GET ONE
 export class GetContactResDto extends createZodDto(GetContactResSchema) {}
 
 // GET ALL
 export class GetContactsQueryDto extends createZodDto(GetContactsQuerySchema) {}
-export class GetContactsResDto   extends createZodDto(GetContactsWithDealsActivitiesResSchema) {}
+export class GetContactsResDto extends createZodDto(GetContactsWithDealsActivitiesResSchema) {}
 
 // BULK IMPORT
-export class BulkImportContactsBodyDto extends createZodDto(BulkImportContactsBodySchema) {}
+export class BulkImportContactsBodyDto extends createZodDto(BulkImportContactsBodySchema) {}

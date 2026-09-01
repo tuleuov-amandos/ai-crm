@@ -54,9 +54,6 @@ describe('GoogleStrategy', () => {
 
     await strategy.validate('token', 'refresh', profile, done)
 
-    expect(done).toHaveBeenCalledWith(
-      null,
-      expect.objectContaining({ email: 'user@example.com', emailVerified: true }),
-    )
+    expect(done).toHaveBeenCalledWith(null, expect.objectContaining({ email: 'user@example.com', emailVerified: true }))
   })
 })

@@ -1,10 +1,5 @@
 import { createZodDto } from 'nestjs-zod'
-import {
-  CreateTaskBodySchema,
-  CreateTasksBulkBodySchema,
-  UpdateTaskBodySchema,
-  TaskResSchema,
-} from './task.model'
+import { CreateTaskBodySchema, CreateTasksBulkBodySchema, UpdateTaskBodySchema, TaskResSchema } from './task.model'
 
 export class CreateTaskBodyDto extends createZodDto(CreateTaskBodySchema) {}
 export class CreateTasksBulkBodyDto extends createZodDto(CreateTasksBulkBodySchema) {}
