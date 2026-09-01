@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Eye, Pencil, Plus, Users } from "lucide-react";
 import Link from "next/link";
-import { Button } from "../../../../components/ui/button";
+import { Button } from "@/components/ui/button";
 import { getInitials, relativeTime } from "@/lib/helper";
 import {
   Contact,

@@ -25,6 +25,7 @@ import logoImg from "@/app/favicon.ico";
 import { cn } from "@/lib/utils";
 import { Badge } from "./ui/badge";
 import { useLogout, useMe } from "@/hooks/useAuth";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 function getInitials(name?: string): string {
   if (!name) return "";
@@ -190,6 +191,10 @@ export function AppSidebar() {
           })}
         </SidebarContent>
         <SidebarFooter>
+          {/* Language switcher (временно здесь — задача i18n-инфраструктуры) */}
+          <div className="px-3 pt-3 shrink-0">
+            <LanguageSwitcher />
+          </div>
           {/* User section */}
           <div className="flex items-center gap-2 p-3 border-t border-border shrink-0">
             <Avatar className="size-[30px] shrink-0">

@@ -7,10 +7,10 @@ import { ChevronDown, Filter, Plus, Search, FileSpreadsheet } from "lucide-react
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useGetContacts } from "@/hooks/useContacts";
-import ContactTable from "@/app/(dashboard)/contacts/_components/ContactTable";
+import ContactTable from "@/app/[locale]/(dashboard)/contacts/_components/ContactTable";
 import { Contact, ContactTagConst } from "@/lib/validations/contacts.scheme";
-import ContactDialog from "@/app/(dashboard)/contacts/_components/ContactDialog";
-import ImportExcelDialog from "@/app/(dashboard)/contacts/_components/ImportExcelDialog";
+import ContactDialog from "@/app/[locale]/(dashboard)/contacts/_components/ContactDialog";
+import ImportExcelDialog from "@/app/[locale]/(dashboard)/contacts/_components/ImportExcelDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,

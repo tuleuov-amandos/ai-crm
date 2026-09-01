@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import { notFound } from "next/navigation";
+import { NextIntlClientProvider, hasLocale } from "next-intl";
+import "@/app/globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "./providers/queryProvider";
 import { ThemeProvider } from "next-themes";
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { routing } from "@/i18n/routing";
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
@@ -76,24 +79,37 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+
+export default async function RootLayout({
   children,
+  params,
 }: Readonly<{
   children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 }>) {
+  const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) {
+    notFound();
+  }
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body
         className={`${geistInter.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <QueryProvider> 
-              {children}
-          </QueryProvider>
-          <Toaster position="top-right" richColors />
-          <Analytics />
-          <SpeedInsights/>
-        </ThemeProvider>
+        <NextIntlClientProvider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <QueryProvider>
+                {children}
+            </QueryProvider>
+            <Toaster position="top-right" richColors />
+            <Analytics />
+            <SpeedInsights/>
+          </ThemeProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

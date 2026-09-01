@@ -29,7 +29,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import ContactDialog from "@/app/(dashboard)/contacts/_components/ContactDialog";
+import ContactDialog from "@/app/[locale]/(dashboard)/contacts/_components/ContactDialog";
 import { useGetContacts } from "@/hooks/useContacts";
 import { useCreateDeal } from "@/hooks/useDeals";
 import { useGetUsers } from "@/hooks/useUsers";

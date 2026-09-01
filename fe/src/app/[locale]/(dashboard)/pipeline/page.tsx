@@ -2,8 +2,8 @@
 
 import { Plus, Filter, LayoutGrid, List, ChevronDown } from "lucide-react";
 import { useState } from "react";
-import { KanbanBoard } from "@/app/(dashboard)/pipeline/_components/KanbanBoard";
-import { CreateDealSheet } from "@/app/(dashboard)/pipeline/_components/CreateDealSheet";
+import { KanbanBoard } from "@/app/[locale]/(dashboard)/pipeline/_components/KanbanBoard";
+import { CreateDealSheet } from "@/app/[locale]/(dashboard)/pipeline/_components/CreateDealSheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 

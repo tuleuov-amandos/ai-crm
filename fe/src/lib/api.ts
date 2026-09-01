@@ -1,4 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import { isLocaleRoot } from "@/i18n/pathname";
 
 // Use Next.js proxy (/api/*) instead of calling directly cross-origin
 // Helps sameSite: 'lax' cookie work since FE and proxy share the same origin
@@ -63,7 +64,10 @@ axiosInstance.interceptors.response.use(
     ) {
       isRefreshing = false;
       processQueue(error);
-      if (typeof window !== "undefined" && window.location.pathname !== "/") {
+      if (
+        typeof window !== "undefined" &&
+        !isLocaleRoot(window.location.pathname)
+      ) {
         window.location.href = "/login";
       }
       return Promise.reject(error);
@@ -93,7 +97,10 @@ axiosInstance.interceptors.response.use(
       return axiosInstance(originalRequest);
     } catch (refreshError) {
       processQueue(refreshError);
-      if (typeof window !== "undefined" && window.location.pathname !== "/") {
+      if (
+        typeof window !== "undefined" &&
+        !isLocaleRoot(window.location.pathname)
+      ) {
         window.location.href = "/login";
       }
       return Promise.reject(refreshError);
