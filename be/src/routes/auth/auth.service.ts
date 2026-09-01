@@ -181,8 +181,22 @@ export class AuthService {
     }
   }
 
- async validateGoogleUser(profile: { provider: string; providerAccountId: string; email: string; name: string }) {
-    const { provider, providerAccountId, email, name } = profile;
+ async validateGoogleUser(profile: {
+    provider: string
+    providerAccountId: string
+    email: string
+    emailVerified: boolean
+    name: string
+  }) {
+    const { provider, providerAccountId, email, emailVerified, name } = profile;
+    // Defense-in-depth: the Google strategy already rejects unverified emails
+    // before this is called, but account-linking below is security-critical
+    // (an unverified email would let an attacker silently take over an
+    // existing password-based account), so re-check here rather than trust
+    // the caller.
+    if (!emailVerified) {
+      throw new UnauthorizedException('Email Google chưa được xác minh');
+    }
     // 1. Check Google linked account
     const account = await this.prismaService.account.findUnique({
       where: { provider_providerAccountId: { provider, providerAccountId } },
@@ -200,17 +214,16 @@ export class AuthService {
       include: { role: true },
     });
     if (user) {
-      await this.prismaService.account.create({
-        data: {
-          userId: user.id,
-          provider,
-          providerAccountId,
-        },
-      });
-      return {
-        ...user,
-        role: user.role.name as any,
-      };
+      // Do NOT auto-link: this project's password registration never verifies
+      // email ownership (no email-verification flow), so an attacker could
+      // pre-register a password account on someone else's email, then have
+      // that email's real owner sign in with Google and land in the
+      // attacker's account. Linking a Google identity to an existing
+      // password account must be an explicit, authenticated action taken
+      // from account settings, not an implicit side effect of login.
+      throw new UnauthorizedException(
+        'Email này đã được đăng ký bằng mật khẩu, vui lòng đăng nhập bằng mật khẩu',
+      );
     }
     // 3. If it's a completely new account
     const invitation = await this.prismaService.invitation.findFirst({

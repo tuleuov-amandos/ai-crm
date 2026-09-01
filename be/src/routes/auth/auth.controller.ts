@@ -30,6 +30,7 @@ interface GoogleAuthRequest extends Request {
     provider: string;
     providerAccountId: string;
     email: string;
+    emailVerified: boolean;
     name: string;
     picture?: string;
     accessToken: string;
