@@ -3,6 +3,7 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import { ClsService } from 'nestjs-cls'
 import envConfig from '../config'
 import { PrismaClient } from '../../../generated/prisma-client/client'
+import { getDatabaseSsl } from '../utils/database-ssl.util'
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -13,9 +14,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   constructor(private readonly cls?: ClsService) {
     const adapter = new PrismaPg({
       connectionString: envConfig.DATABASE_URL,
-      ssl: envConfig.DATABASE_URL.includes('amazonaws.com')
-        ? { rejectUnauthorized: false }
-        : undefined,
+      ssl: getDatabaseSsl(envConfig.DATABASE_URL),
     })
     
     // Call the original PrismaClient constructor
@@ -36,6 +35,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
               'AiSuggestion',
               'Invitation',
               'KpiTarget',
+              'AuditLog',
             ]
 
             if (tenantModels.includes(model)) {

@@ -38,6 +38,8 @@ const ConfigSchema = z.object({
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
   GOOGLE_CALLBACK_URL: z.string(),
+
+  DATABASE_SSL_CA_PATH: z.string().optional(),
 }).superRefine((data, ctx) => {
   if (data.AI_PROVIDER === 'openai' && !data.OPENAI_API_KEY) {
     ctx.addIssue({
@@ -69,5 +71,38 @@ if (!configServer.success) {
 // console.log(e);
 
 const envConfig = configServer.data
+
+// Denylist kept as a literal in code (never read from .env.example at runtime) so this
+// check can't turn into a silent no-op if that file is missing or unreachable from the
+// container's cwd. Mirrors the placeholders in .env.example — update both by hand if
+// those placeholders change.
+const INSECURE_DEFAULT_SECRETS = new Set([
+  'test-access-token-secret-local-only',
+  'test-refresh-token-secret-local-only',
+])
+
+const MIN_SECRET_LENGTH = 32
+
+if (envConfig.NODE_ENV === 'production') {
+  const errors: string[] = []
+
+  for (const key of ['ACCESS_TOKEN_SECRET', 'REFRESH_TOKEN_SECRET'] as const) {
+    const value = envConfig[key]
+    if (INSECURE_DEFAULT_SECRETS.has(value)) {
+      errors.push(`${key} is still set to the placeholder value from .env.example`)
+    } else if (value.length < MIN_SECRET_LENGTH) {
+      errors.push(`${key} must be at least ${MIN_SECRET_LENGTH} characters long`)
+    }
+  }
+
+  if (envConfig.ACCESS_TOKEN_SECRET === envConfig.REFRESH_TOKEN_SECRET) {
+    errors.push('ACCESS_TOKEN_SECRET and REFRESH_TOKEN_SECRET must not be the same value')
+  }
+
+  if (errors.length > 0) {
+    console.error(`FATAL: insecure token secret configuration in production:\n- ${errors.join('\n- ')}`)
+    process.exit(1)
+  }
+}
 
 export default envConfig

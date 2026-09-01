@@ -18,13 +18,14 @@ import { ReportsModule } from './routes/reports/reports.module';
 import { AiModule } from './routes/ai/ai.module';
 import { TenantInterceptor } from './common/interceptors/tenant.interceptor'
 import { AuditLogsModule } from './routes/audit-logs/audit-logs.module';
+import { HealthModule } from './routes/health/health.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 @Module({
   imports: [
-    CommonModule, AuthModule, ContactsModule, 
-    ActivitiesModule, DealModule, UsersModule, 
+    CommonModule, AuthModule, ContactsModule,
+    ActivitiesModule, DealModule, UsersModule,
     InvitationsModule, DashboardModule, ReportsModule,
-    AiModule, AuditLogsModule,
+    AiModule, AuditLogsModule, HealthModule,
     ThrottlerModule.forRoot({
       throttlers: [
         {

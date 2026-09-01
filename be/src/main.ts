@@ -8,7 +8,15 @@ import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.use(helmet()) 
+  // Trust exactly 1 proxy hop (Railway's edge proxy) so express derives req.ip
+  // from the outermost X-Forwarded-For entry it sets. Without this, req.ip is
+  // the proxy's own IP and the ThrottlerGuard's per-IP buckets collapse into
+  // one shared bucket for all clients. Using `true` (trust all hops) would let
+  // a client forge its own X-Forwarded-For prefix to spoof a different IP and
+  // evade the per-IP limit entirely — `1` trusts only the hop count we
+  // actually have.
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+  app.use(helmet())
   app.use(cookieParser());
   app.enableCors({
     origin: envConfig.FRONTEND_URL || 'http://localhost:3000',
@@ -16,27 +24,32 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Swagger setup
-  const config = new DocumentBuilder()
-    .setTitle('CRM SaaS API')
-    .setDescription('API documentation cho hệ thống CRM SaaS')
-    .setVersion('1.0')
-    .addCookieAuth('accessToken')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  // Clean up the OpenAPI doc for proper Zod schema representation
-  const cleanedDocument = cleanupOpenApiDoc(document);
-  SwaggerModule.setup('api-docs', app, cleanedDocument, {
-    swaggerOptions: {
-      persistAuthorization: true,
-    },
-  });
+  // Swagger setup — never mount the API schema in production, where it would
+  // be publicly reachable with no auth in front of it.
+  if (envConfig.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('CRM SaaS API')
+      .setDescription('API documentation cho hệ thống CRM SaaS')
+      .setVersion('1.0')
+      .addCookieAuth('accessToken')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    // Clean up the OpenAPI doc for proper Zod schema representation
+    const cleanedDocument = cleanupOpenApiDoc(document);
+    SwaggerModule.setup('api-docs', app, cleanedDocument, {
+      swaggerOptions: {
+        persistAuthorization: true,
+      },
+    });
+  }
 
   const port = envConfig.PORT  || 3001;
   await app.listen(port);
   console.log("Server running on port:", port);
-  console.log(`Swagger: http://localhost:${port}/api-docs`);
+  if (envConfig.NODE_ENV !== 'production') {
+    console.log(`Swagger: http://localhost:${port}/api-docs`);
+  }
 }
 bootstrap();
 

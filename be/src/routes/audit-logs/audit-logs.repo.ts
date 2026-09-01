@@ -37,6 +37,7 @@ export class AuditLogsRepository {
   }){
     return this.prismaService.auditLog.findMany({
       where: {
+        tenantId: params.tenantId,
         ...(params.query.action && { action: params.query.action }),
         ...(params.query.targetType && { targetType: params.query.targetType }),
         ...(params.query.userId && { userId: params.query.userId }),
