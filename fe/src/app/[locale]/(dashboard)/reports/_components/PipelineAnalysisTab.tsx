@@ -7,6 +7,7 @@ import {
   Line, CartesianGrid, ComposedChart
 } from "recharts";
 import { Activity, TrendingUp } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ChartCard } from "./ChartCard";
 import { EmptyState } from "./EmptyState";
 import { formatVndShort, STAGE_COLORS } from "@/lib/helper";
@@ -23,6 +24,7 @@ function getFunnelColor(stageName: string): string {
 import { CustomTooltipProps } from "@/lib/types/chart";
 
 const FunnelTooltip = ({ active, payload }: CustomTooltipProps) => {
+  const t = useTranslations("reports.pipelineTab");
   if (!active || !payload?.length) return null;
   const data = payload[0].payload as { stage: string; count: number; value: number; percentage: number };
   return (
@@ -30,15 +32,15 @@ const FunnelTooltip = ({ active, payload }: CustomTooltipProps) => {
       <p className="text-[#1A1A18] dark:text-foreground mb-1.5" style={{ fontWeight: 600 }}>{data.stage}</p>
       <div className="space-y-1">
         <div className="flex justify-between gap-6">
-          <span className="text-[#6B6B67] dark:text-muted-foreground">Số lượng deal:</span>
-          <span className="text-[#1A1A18] dark:text-foreground font-semibold">{data.count} deals</span>
+          <span className="text-[#6B6B67] dark:text-muted-foreground">{t("tooltipCount")}</span>
+          <span className="text-[#1A1A18] dark:text-foreground font-semibold">{t("tooltipCountValue", { count: data.count })}</span>
         </div>
         <div className="flex justify-between gap-6">
-          <span className="text-[#6B6B67] dark:text-muted-foreground">Tổng giá trị:</span>
+          <span className="text-[#6B6B67] dark:text-muted-foreground">{t("tooltipValue")}</span>
           <span className="text-[#1A1A18] dark:text-foreground font-semibold">{formatVndShort(data.value)}</span>
         </div>
         <div className="flex justify-between gap-6">
-          <span className="text-[#6B6B67] dark:text-muted-foreground">Tỷ lệ chuyển đổi:</span>
+          <span className="text-[#6B6B67] dark:text-muted-foreground">{t("tooltipConversion")}</span>
           <span className="text-[#1E90FF] font-semibold">{data.percentage}%</span>
         </div>
       </div>
@@ -47,11 +49,12 @@ const FunnelTooltip = ({ active, payload }: CustomTooltipProps) => {
 };
 
 const ForecastTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+  const t = useTranslations("reports.pipelineTab");
   if (!active || !payload?.length || label === undefined) return null;
   const labelStr = String(label);
   return (
     <div className="bg-white dark:bg-card border border-[#E8E7E2] dark:border-border rounded-lg shadow-md px-3 py-2.5 text-xs text-left">
-      <p className="text-[#1A1A18] dark:text-foreground mb-1.5" style={{ fontWeight: 600 }}>Tháng {labelStr.replace("T", "")}</p>
+      <p className="text-[#1A1A18] dark:text-foreground mb-1.5" style={{ fontWeight: 600 }}>{t("forecastTooltipMonth", { month: labelStr.replace("T", "") })}</p>
       {payload.map((p) => (
         <div key={p.dataKey} className="flex justify-between items-center gap-6 mb-1 last:mb-0">
           <div className="flex items-center gap-1.5">
@@ -66,6 +69,7 @@ const ForecastTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 };
 
 export function PipelineAnalysisTab() {
+  const t = useTranslations("reports.pipelineTab");
   const { data, isLoading } = useQuery({
     queryKey: ["reports", "pipeline-analysis"],
     queryFn: () => reportsService.getPipelineAnalysis(),
@@ -74,7 +78,7 @@ export function PipelineAnalysisTab() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[350px]">
-        <span className="text-[#6B6B67] text-sm">Đang tải phân tích phễu chuyển đổi...</span>
+        <span className="text-[#6B6B67] text-sm">{t("loading")}</span>
       </div>
     );
   }
@@ -90,14 +94,14 @@ export function PipelineAnalysisTab() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Funnel Chart */}
         <ChartCard
-          title="Phễu chuyển đổi bán hàng (Conversion Funnel)"
-          subtitle="Tỷ lệ hao hụt và giữ chân deal qua các bước trong kỳ báo cáo"
+          title={t("funnelTitle")}
+          subtitle={t("funnelSubtitle")}
         >
           {isFunnelEmpty ? (
             <EmptyState
               icon={Activity}
-              title="Chưa có dữ liệu phễu"
-              description="Hãy bắt đầu tạo các cơ hội kinh doanh (Deals) ở các giai đoạn khác nhau để xem phễu chuyển đổi."
+              title={t("funnelEmptyTitle")}
+              description={t("funnelEmptyDescription")}
               height={290}
             />
           ) : (
@@ -148,12 +152,12 @@ export function PipelineAnalysisTab() {
         {/* Funnel bottlenecks summary cards */}
         <div className="flex flex-col gap-4 justify-between">
           <div className="bg-white dark:bg-card rounded-[10px] border border-[#E8E7E2] dark:border-border p-5 flex flex-col gap-3 flex-1 shadow-sm">
-            <h4 className="text-[#1A1A18] dark:text-foreground font-bold text-xs" style={{ fontSize: 13 }}>Phân tích điểm nghẽn (Bottlenecks)</h4>
+            <h4 className="text-[#1A1A18] dark:text-foreground font-bold text-xs" style={{ fontSize: 13 }}>{t("bottlenecksTitle")}</h4>
             <div className="space-y-3 mt-1.5">
               {isFunnelEmpty ? (
-                <p className="text-[#6B6B67] dark:text-muted-foreground text-xs">Chưa có đủ dữ liệu phễu chuyển đổi để phân tích điểm nghẽn hiện tại.</p>
+                <p className="text-[#6B6B67] dark:text-muted-foreground text-xs">{t("bottlenecksInsufficient")}</p>
               ) : data.bottlenecks.length === 0 ? (
-                <p className="text-[#6B6B67] dark:text-muted-foreground text-xs">Không phát hiện điểm nghẽn nghiêm trọng nào trong phễu chuyển đổi hiện tại.</p>
+                <p className="text-[#6B6B67] dark:text-muted-foreground text-xs">{t("bottlenecksNone")}</p>
               ) : (
                 data.bottlenecks.map((b, idx) => (
                   <div key={idx} className="flex items-start gap-2.5">
@@ -178,11 +182,11 @@ export function PipelineAnalysisTab() {
 
           <div className="bg-[#534AB7] rounded-[10px] p-5 text-white flex flex-col justify-between" style={{ minHeight: 120 }}>
             <div>
-              <p className="opacity-80" style={{ fontSize: 11 }}>Tỉ lệ thắng phễu bán hàng (Conversion Funnel Win Velocity)</p>
+              <p className="opacity-80" style={{ fontSize: 11 }}>{t("winVelocityLabel")}</p>
               <p className="font-extrabold mt-1" style={{ fontSize: 26 }}>{isFunnelEmpty ? "0.0%" : data.averageWinVelocity}</p>
             </div>
             <p className="opacity-70 border-t border-white/20 pt-2.5 mt-2" style={{ fontSize: 10 }}>
-              Biểu diễn tỉ trọng số lượng cơ hội chuyển đổi thành Deal thắng thực tế trên tổng số Deal đã đóng.
+              {t("winVelocityFooter")}
             </p>
           </div>
         </div>
@@ -190,24 +194,24 @@ export function PipelineAnalysisTab() {
 
       {/* Row 2: Weighted Revenue Forecast */}
       <ChartCard
-        title="Dự báo doanh số cộng dồn (Weighted Revenue Forecast)"
-        subtitle="Biểu diễn xu hướng doanh số thực tế so với mục tiêu và dự báo dựa trên phễu"
+        title={t("forecastTitle")}
+        subtitle={t("forecastSubtitle")}
         action={
           !isForecastEmpty && (
             <div className="flex items-center gap-3 mr-1">
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-3 rounded-sm shrink-0" style={{ background: "#534AB7" }} />
-                <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 11 }}>Đà đạt</span>
+                <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 11 }}>{t("legendMomentum")}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-3 h-3 rounded-sm shrink-0" style={{ background: "#877EF2" }} />
-                <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 11 }}>Dự báo (Weighted)</span>
+                <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 11 }}>{t("legendForecastWeighted")}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <svg width="16" height="8">
                   <line x1="0" y1="4" x2="16" y2="4" stroke="#FBBF24" strokeWidth="2" strokeDasharray="4 2" />
                 </svg>
-                <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 11 }}>Chỉ tiêu Target</span>
+                <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 11 }}>{t("legendTarget")}</span>
               </div>
             </div>
           )
@@ -216,8 +220,8 @@ export function PipelineAnalysisTab() {
         {isForecastEmpty ? (
           <EmptyState
             icon={TrendingUp}
-            title="Chưa có dự báo doanh số"
-            description="Chưa có thông tin doanh số thực tế và dự báo chốt hợp đồng (weighted) trong khoảng thời gian này."
+            title={t("forecastEmptyTitle")}
+            description={t("forecastEmptyDescription")}
             height={260}
           />
         ) : (
@@ -232,7 +236,7 @@ export function PipelineAnalysisTab() {
               <Area
                 type="monotone"
                 dataKey="actual"
-                name="Doanh thu thực"
+                name={t("seriesActual")}
                 fill="rgba(83, 74, 183, 0.08)"
                 stroke="#534AB7"
                 strokeWidth={2.5}
@@ -242,7 +246,7 @@ export function PipelineAnalysisTab() {
               <Area
                 type="monotone"
                 dataKey="forecast"
-                name="Dự báo chốt"
+                name={t("seriesForecast")}
                 fill="rgba(135, 126, 242, 0.04)"
                 stroke="#877EF2"
                 strokeWidth={2}
@@ -254,7 +258,7 @@ export function PipelineAnalysisTab() {
               <Line
                 type="monotone"
                 dataKey="target"
-                name="Target"
+                name={t("seriesTarget")}
                 stroke="#FBBF24"
                 strokeWidth={2}
                 strokeDasharray="5 3"

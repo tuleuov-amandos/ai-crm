@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { Edit2, Users } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar,
@@ -41,20 +42,23 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   );
 };
 
-const LEGEND = [
-  { color: "#534AB7", label: "Thực tế" },
-  { color: "#AFA9EC", label: "Target" },
-];
-
 interface TeamPerformanceTabProps {
   startDate?: string;
   endDate?: string;
 }
 
 export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabProps) {
+  const t = useTranslations("reports.team");
+  const tUnits = useTranslations("reports.units");
+  const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
   const { data: me } = useMe();
   const isAdminOrManager = me?.role === "ADMIN" || me?.role === "MANAGER";
+
+  const LEGEND = [
+    { color: "#534AB7", label: t("actual") },
+    { color: "#AFA9EC", label: t("target") },
+  ];
 
   // Fetch real team performance data
   const { data: teamData = [], isLoading } = useQuery({
@@ -76,12 +80,12 @@ export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabPro
       reportsService.updateKpiTarget(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reports"] });
-      toast.success("Cập nhật target KPI thành công!");
+      toast.success(t("toastSuccess"));
       setIsModalOpen(false);
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error.response?.data?.message || "Cập nhật target KPI thất bại.");
+      toast.error(error.response?.data?.message || t("toastError"));
     },
   });
 
@@ -98,7 +102,7 @@ export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabPro
     if (!editingUserId) return;
     const numericTarget = parseFloat(targetVal);
     if (isNaN(numericTarget) || numericTarget < 0) {
-      toast.error("Vui lòng nhập target hợp lệ.");
+      toast.error(t("invalidTarget"));
       return;
     }
 
@@ -116,7 +120,7 @@ export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabPro
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[350px]">
-        <span className="text-[#6B6B67] text-sm">Đang tải dữ liệu hiệu suất đội ngũ...</span>
+        <span className="text-[#6B6B67] text-sm">{t("loading")}</span>
       </div>
     );
   }
@@ -127,8 +131,8 @@ export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabPro
     <div className="flex flex-col gap-5">
       {/* Chart Row */}
       <ChartCard
-        title="So sánh doanh số thực tế vs Chỉ tiêu"
-        subtitle="Doanh số đạt được so với chỉ tiêu giao cho từng thành viên trong kỳ"
+        title={t("chartTitle")}
+        subtitle={t("chartSubtitle")}
         action={
           !isDataEmpty && (
             <div className="flex items-center gap-3 mr-1">
@@ -145,8 +149,8 @@ export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabPro
         {isDataEmpty ? (
           <EmptyState
             icon={Users}
-            title="Chưa có dữ liệu hiệu suất"
-            description="Chưa có thông tin doanh số thực tế và chỉ tiêu cho từng thành viên trong khoảng thời gian này."
+            title={t("emptyTitle")}
+            description={t("emptyDescription")}
             height={240}
           />
         ) : (
@@ -156,8 +160,8 @@ export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabPro
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={formatVndShort} width={44} />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="actual" name="Thực tế" fill="#534AB7" radius={[4, 4, 0, 0]} maxBarSize={30} />
-              <Bar dataKey="target" name="Target" fill="#AFA9EC" radius={[4, 4, 0, 0]} maxBarSize={30} />
+              <Bar dataKey="actual" name={t("actual")} fill="#534AB7" radius={[4, 4, 0, 0]} maxBarSize={30} />
+              <Bar dataKey="target" name={t("target")} fill="#AFA9EC" radius={[4, 4, 0, 0]} maxBarSize={30} />
             </BarChart>
           </ResponsiveContainer>
         )}
@@ -167,8 +171,8 @@ export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabPro
       <div className="bg-white dark:bg-card rounded-[10px] border border-[#E8E7E2] dark:border-border overflow-hidden shadow-sm">
         <div className="p-4 border-b border-[#E8E7E2] dark:border-border flex items-center justify-between">
           <div>
-            <h3 className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 13, fontWeight: 600 }}>Chi tiết chỉ số hiệu suất</h3>
-            <p className="text-[#6B6B67] dark:text-muted-foreground mt-0.5" style={{ fontSize: 11 }}>Đo lường chi tiết năng lực bán hàng và tần suất hoạt động</p>
+            <h3 className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 13, fontWeight: 600 }}>{t("tableTitle")}</h3>
+            <p className="text-[#6B6B67] dark:text-muted-foreground mt-0.5" style={{ fontSize: 11 }}>{t("tableSubtitle")}</p>
           </div>
         </div>
 
@@ -176,20 +180,20 @@ export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabPro
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-[#E8E7E2] dark:border-border bg-[#F8F8F7] dark:bg-muted/30">
-                <th className="p-3 pl-4 text-[#6B6B67] dark:text-muted-foreground font-medium" style={{ fontSize: 11 }}>NHÂN VIÊN</th>
-                <th className="p-3 text-[#6B6B67] dark:text-muted-foreground font-medium text-right" style={{ fontSize: 11 }}>DOANH SỐ ĐẠT</th>
-                <th className="p-3 text-[#6B6B67] dark:text-muted-foreground font-medium text-right" style={{ fontSize: 11 }}>CHỈ TIÊU (TARGET)</th>
-                <th className="p-3 text-[#6B6B67] dark:text-muted-foreground font-medium text-right" style={{ fontSize: 11 }}>TỶ LỆ ĐẠT</th>
-                <th className="p-3 text-[#6B6B67] dark:text-muted-foreground font-medium text-right" style={{ fontSize: 11 }}>TỶ LỆ CHỐT (WIN RATE)</th>
-                <th className="p-3 text-[#6B6B67] dark:text-muted-foreground font-medium text-right" style={{ fontSize: 11 }}>HOẠT ĐỘNG</th>
-                <th className="p-3 pr-4 text-[#6B6B67] dark:text-muted-foreground font-medium text-right" style={{ fontSize: 11 }}>SỐ NGÀY CHỐT TB</th>
+                <th className="p-3 pl-4 text-[#6B6B67] dark:text-muted-foreground font-medium" style={{ fontSize: 11 }}>{t("colEmployee")}</th>
+                <th className="p-3 text-[#6B6B67] dark:text-muted-foreground font-medium text-right" style={{ fontSize: 11 }}>{t("colRevenue")}</th>
+                <th className="p-3 text-[#6B6B67] dark:text-muted-foreground font-medium text-right" style={{ fontSize: 11 }}>{t("colTarget")}</th>
+                <th className="p-3 text-[#6B6B67] dark:text-muted-foreground font-medium text-right" style={{ fontSize: 11 }}>{t("colAttainment")}</th>
+                <th className="p-3 text-[#6B6B67] dark:text-muted-foreground font-medium text-right" style={{ fontSize: 11 }}>{t("colWinRate")}</th>
+                <th className="p-3 text-[#6B6B67] dark:text-muted-foreground font-medium text-right" style={{ fontSize: 11 }}>{t("colActivities")}</th>
+                <th className="p-3 pr-4 text-[#6B6B67] dark:text-muted-foreground font-medium text-right" style={{ fontSize: 11 }}>{t("colAvgDays")}</th>
               </tr>
             </thead>
             <tbody>
               {isDataEmpty ? (
                 <tr>
                   <td colSpan={7} className="p-8 text-center text-[#6B6B67] text-xs">
-                    Không tìm thấy dữ liệu hiệu suất của nhân viên nào.
+                    {t("emptyRows")}
                   </td>
                 </tr>
               ) : (
@@ -226,7 +230,7 @@ export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabPro
                             <button
                               onClick={() => handleOpenEdit(row.userId, row.name, row.target)}
                               className="p-1 hover:bg-[#EEEDFE] dark:hover:bg-muted rounded text-[#534AB7] dark:text-primary hover:text-[#4840A0] transition-colors cursor-pointer"
-                              title="Chỉnh sửa KPI Target"
+                              title={t("editTargetTitle")}
                             >
                               <Edit2 size={11} />
                             </button>
@@ -256,7 +260,7 @@ export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabPro
                       </td>
                       {/* Average Days to Close */}
                       <td className="p-3 pr-4 text-[#6B6B67] dark:text-muted-foreground text-right tabular-nums" style={{ fontSize: 12 }}>
-                        {row.avgDaysToClose} ngày
+                        {row.avgDaysToClose} {tUnits("days")}
                       </td>
                     </tr>
                   );
@@ -271,11 +275,11 @@ export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabPro
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle style={{ fontSize: 14, fontWeight: 600 }}>Thiết lập chỉ tiêu KPI</DialogTitle>
+            <DialogTitle style={{ fontSize: 14, fontWeight: 600 }}>{t("dialogTitle")}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4 text-xs">
             <div className="grid grid-cols-4 items-center gap-3">
-              <Label className="text-right">Nhân viên</Label>
+              <Label className="text-right">{t("dialogEmployee")}</Label>
               <Input
                 value={editingUserName}
                 disabled
@@ -283,10 +287,10 @@ export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabPro
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-3">
-              <Label className="text-right">Thời gian</Label>
+              <Label className="text-right">{t("dialogPeriod")}</Label>
               <div className="col-span-3 flex gap-2">
                 <div className="flex-1 flex items-center gap-1.5">
-                  <span className="text-[10px] text-muted-foreground shrink-0">Tháng</span>
+                  <span className="text-[10px] text-muted-foreground shrink-0">{t("dialogMonth")}</span>
                   <Input
                     type="number"
                     min={1}
@@ -297,7 +301,7 @@ export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabPro
                   />
                 </div>
                 <div className="flex-1 flex items-center gap-1.5">
-                  <span className="text-[10px] text-muted-foreground shrink-0">Năm</span>
+                  <span className="text-[10px] text-muted-foreground shrink-0">{t("dialogYear")}</span>
                   <Input
                     type="number"
                     min={2020}
@@ -310,14 +314,14 @@ export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabPro
               </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-3">
-              <Label className="text-right">Chỉ tiêu (triệu VND)</Label>
+              <Label className="text-right">{t("dialogTargetLabel")}</Label>
               <Input
                 type="number"
                 min={0}
                 value={targetVal}
                 onChange={(e) => setTargetVal(e.target.value)}
                 className="col-span-3 text-xs h-9"
-                placeholder="Ví dụ: 500 (tương đương 500 triệu)"
+                placeholder={t("dialogTargetPlaceholder")}
               />
             </div>
           </div>
@@ -328,7 +332,7 @@ export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabPro
               onClick={() => setIsModalOpen(false)}
               className="text-xs h-8"
             >
-              Hủy
+              {tCommon("cancel")}
             </Button>
             <Button
               size="sm"
@@ -337,7 +341,7 @@ export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabPro
               style={{ background: "#534AB7" }}
               className="text-xs h-8 text-white"
             >
-              {updateTargetMutation.isPending ? "Đang lưu..." : "Lưu thay đổi"}
+              {updateTargetMutation.isPending ? tCommon("saving") : tCommon("saveChanges")}
             </Button>
           </DialogFooter>
         </DialogContent>

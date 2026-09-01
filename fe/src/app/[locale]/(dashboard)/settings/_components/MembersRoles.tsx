@@ -6,6 +6,7 @@ import {
   Crown, BarChart2 as ChartIcon, Info,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button }                  from "@/components/ui/button";
@@ -48,11 +49,12 @@ interface Member {
 }
 
 function RoleBadge({ role, status }: { role: MemberRole; status: MemberStatus }) {
+  const t = useTranslations("settings.members");
   if (status === "pending") {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FAEEDA] dark:bg-amber-950/20 text-[#854F0B] dark:text-amber-400 font-semibold" style={{ fontSize: 11 }}>
         <Clock size={10} />
-        Mời chờ
+        {t("badgePending")}
       </span>
     );
   }
@@ -76,6 +78,8 @@ function RoleBadge({ role, status }: { role: MemberRole; status: MemberStatus })
 }
 
 function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const t = useTranslations("settings.members");
+  const tCommon = useTranslations("common");
   const [email,   setEmail]   = useState("");
   const [role,    setRole]    = useState<string>("SALES_REP");
   const [message, setMessage] = useState("");
@@ -112,7 +116,7 @@ function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) 
         {/* Header */}
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-[#E8E7E2] dark:border-border">
           <DialogTitle className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 16, fontWeight: 600 }}>
-            Mời thành viên mới
+            {t("inviteModalTitle")}
           </DialogTitle>
         </DialogHeader>
 
@@ -121,10 +125,10 @@ function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) 
 
           {/* Email */}
           <div className="flex flex-col gap-1.5">
-            <Label className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 13 }}>Địa chỉ email</Label>
+            <Label className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 13 }}>{t("emailLabel")}</Label>
             <Input
               type="email"
-              placeholder="email@congtyabc.vn"
+              placeholder={t("emailPlaceholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="h-10 rounded-[10px] border-[#E8E7E2] dark:border-border text-[#1A1A18] dark:text-foreground focus-visible:ring-[#534AB7]/30 focus-visible:border-[#534AB7]"
@@ -134,7 +138,7 @@ function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) 
 
           {/* Role radio cards */}
           <div className="flex flex-col gap-1.5">
-            <Label className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 13 }}>Vai trò</Label>
+            <Label className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 13 }}>{t("roleLabel")}</Label>
             <RadioGroup
               value={role}
               onValueChange={(v) => setRole(v)}
@@ -162,7 +166,7 @@ function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) 
                         </p>
                       </div>
                       <p className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 12 }}>
-                        {r.description || `Vai trò ${r.name} trong hệ thống.`}
+                        {r.description || t("roleDescFallback", { name: r.name })}
                       </p>
                     </div>
                   </label>
@@ -174,11 +178,11 @@ function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) 
           {/* Message */}
           <div className="flex flex-col gap-1.5">
             <Label className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 13 }}>
-              Tin nhắn{" "}
-              <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontWeight: 400 }}>(tùy chọn)</span>
+              {t("messageLabel")}{" "}
+              <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontWeight: 400 }}>{t("optional")}</span>
             </Label>
             <Textarea
-              placeholder="Nhắn gửi thêm..."
+              placeholder={t("messagePlaceholder")}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={3}
@@ -192,7 +196,7 @@ function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) 
         <DialogFooter className="px-6 pb-6 flex-row items-center justify-between gap-0">
           <p className="flex items-center gap-1.5 text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 12 }}>
             <Info size={12} />
-            Lời mời có hiệu lực trong 7 ngày.
+            {t("inviteExpiry")}
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -201,7 +205,7 @@ function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) 
               className="h-9 rounded-[10px] border-[#E8E7E2] dark:border-border text-[#6B6B67] dark:text-muted-foreground hover:bg-[#F8F8F7] dark:hover:bg-muted hover:text-[#1A1A18] dark:hover:text-foreground"
               style={{ fontSize: 13 }}
             >
-              Hủy
+              {tCommon("cancel")}
             </Button>
             <Button
               onClick={handleSend}
@@ -209,7 +213,7 @@ function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) 
               className="h-9 rounded-[10px] bg-[#534AB7] hover:bg-[#4840A0] text-white"
               style={{ fontSize: 13 }}
             >
-              {createMutation.isPending ? "Đang gửi..." : "Gửi lời mời"}
+              {createMutation.isPending ? t("sending") : t("sendInvite")}
             </Button>
           </div>
         </DialogFooter>
@@ -220,6 +224,8 @@ function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) 
 
 // ── Main component ─────────────────────────────────────────────────────────────
 export function MembersRoles() {
+  const t = useTranslations("settings.members");
+  const tCommon = useTranslations("common");
   const [showInvite, setShowInvite] = useState(false);
   const [search,     setSearch]     = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -259,8 +265,8 @@ export function MembersRoles() {
       email: u.email,
       role: roleMapped,
       status: "active" as const,
-      joinedAt: "Đang hoạt động",
-      lastSeen: "Vừa mới đây",
+      joinedAt: t("joinedActive"),
+      lastSeen: t("lastSeenRecently"),
     };
   });
 
@@ -283,10 +289,10 @@ export function MembersRoles() {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 20, fontWeight: 600, lineHeight: 1 }}>
-              Members &amp; Roles
+              {t("heading")}
             </h1>
             <p className="text-[#6B6B67] dark:text-muted-foreground mt-1.5" style={{ fontSize: 13 }}>
-              Quản lý thành viên và phân quyền trong workspace
+              {t("subtitle")}
             </p>
           </div>
           <Button
@@ -295,7 +301,7 @@ export function MembersRoles() {
             style={{ fontSize: 13 }}
           >
             <Plus size={14} />
-            Mời thành viên
+            {t("inviteMember")}
           </Button>
         </div>
 
@@ -310,11 +316,11 @@ export function MembersRoles() {
             <div className="flex items-center gap-1.5 flex-1">
               <Clock size={13} className="text-[#D97706] dark:text-amber-400" />
               <p className="text-[#92400E] dark:text-amber-300" style={{ fontSize: 13 }}>
-                <strong style={{ fontWeight: 600 }}>{pendingInvitations.length} lời mời đang chờ phản hồi</strong>
+                <strong style={{ fontWeight: 600 }}>{t("pendingBanner", { count: pendingInvitations.length })}</strong>
               </p>
             </div>
             <span className="text-xs text-[#D97706] dark:text-amber-400 font-medium mr-2">
-              Xem ở tab Lời mời
+              {t("pendingBannerCta")}
             </span>
           </div>
         )}
@@ -322,10 +328,10 @@ export function MembersRoles() {
         {/* Stats row */}
         <div className="grid grid-cols-4 gap-4">
           {[
-            { label: "Tổng thành viên", value: `${membersList.length} / 10`, note: "Free plan limit"   },
-            { label: "Admin",           value: `${membersList.filter(m => m.role === "Admin").length}`, note: "Quản lý workspace" },
-            { label: "Manager",         value: `${membersList.filter(m => m.role === "Manager").length}`, note: "Quản lý đội sales" },
-            { label: "Sales Rep",       value: `${membersList.filter(m => m.role === "Sales Rep").length}`, note: "Thành viên sales"  },
+            { label: t("statTotalMembers"), value: `${membersList.length} / 10`, note: t("statFreePlanLimit") },
+            { label: "Admin",               value: `${membersList.filter(m => m.role === "Admin").length}`, note: t("statAdminNote") },
+            { label: "Manager",             value: `${membersList.filter(m => m.role === "Manager").length}`, note: t("statManagerNote") },
+            { label: "Sales Rep",           value: `${membersList.filter(m => m.role === "Sales Rep").length}`, note: t("statSalesNote") },
           ].map((s) => (
             <div key={s.label} className="bg-white dark:bg-card rounded-[10px] border border-[#E8E7E2] dark:border-border px-5 py-4">
               <p className="text-[#6B6B67] dark:text-muted-foreground mb-1.5" style={{ fontSize: 12 }}>{s.label}</p>
@@ -346,7 +352,7 @@ export function MembersRoles() {
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tìm thành viên..."
+                placeholder={t("searchPlaceholder")}
                 className="pl-8 h-9 rounded-[10px] border-[#E8E7E2] dark:border-border bg-[#F8F8F7] dark:bg-muted text-[#1A1A18] dark:text-foreground focus-visible:ring-[#534AB7]/30 focus-visible:border-[#534AB7]"
                 style={{ fontSize: 13 }}
               />
@@ -358,10 +364,10 @@ export function MembersRoles() {
                 className="h-9 w-[160px] rounded-[10px] border-[#E8E7E2] dark:border-border bg-white dark:bg-card text-[#6B6B67] dark:text-muted-foreground focus:ring-[#534AB7]/30 focus:border-[#534AB7]"
                 style={{ fontSize: 13 }}
               >
-                <SelectValue placeholder="Tất cả role" />
+                <SelectValue placeholder={t("roleFilterAll")} />
               </SelectTrigger>
               <SelectContent className="rounded-[10px] border-[#E8E7E2] dark:border-border bg-background">
-                <SelectItem value="all"     style={{ fontSize: 13 }}>Tất cả role</SelectItem>
+                <SelectItem value="all"     style={{ fontSize: 13 }}>{t("roleFilterAll")}</SelectItem>
                 <SelectItem value="admin"   style={{ fontSize: 13 }}>Admin</SelectItem>
                 <SelectItem value="manager"   style={{ fontSize: 13 }}>Manager</SelectItem>
                 <SelectItem value="salesrep" style={{ fontSize: 13 }}>Sales Rep</SelectItem>
@@ -373,13 +379,13 @@ export function MembersRoles() {
           {usersLoading ? (
             <div className="flex flex-col items-center justify-center p-10 text-[#6B6B67]" style={{ fontSize: 13, minHeight: 200 }}>
               <RefreshCw size={20} className="animate-spin text-[#534AB7] mb-2" />
-              Đang tải danh sách thành viên...
+              {t("loadingMembers")}
             </div>
           ) : (
             <table className="w-full" style={{ borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                  {["Thành viên", "Role", "Trạng thái", "Ngày tham gia", "Hoạt động gần nhất", "Hành động"].map((col) => (
+                  {[t("colMember"), t("colRole"), t("colStatus"), t("colJoined"), t("colLastActive"), t("colActions")].map((col) => (
                     <th
                       key={col}
                       className="text-left text-[#6B6B67] dark:text-muted-foreground px-5 py-3"
@@ -413,7 +419,7 @@ export function MembersRoles() {
                             <p className="text-[#1A1A18] dark:text-foreground truncate" style={{ fontSize: 13, fontWeight: 500 }}>{m.name}</p>
                             {m.isYou && (
                               <span className="px-1.5 py-0.5 rounded shrink-0 text-[#6B6B67] dark:text-muted-foreground bg-[#F1EFE8] dark:bg-muted" style={{ fontSize: 10 }}>
-                                Bạn
+                                {t("badgeYou")}
                               </span>
                             )}
                           </div>
@@ -432,12 +438,12 @@ export function MembersRoles() {
                       {m.status === "active" ? (
                         <div className="flex items-center gap-1.5">
                           <div className="size-2 rounded-full shrink-0" style={{ background: "#1D9E75" }} />
-                          <span className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 12 }}>Hoạt động</span>
+                          <span className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 12 }}>{t("statusActive")}</span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-1.5">
                           <div className="size-2 rounded-full shrink-0 border-2" style={{ borderColor: "#D97706" }} />
-                          <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 12 }}>Chưa tham gia</span>
+                          <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 12 }}>{t("statusNotJoined")}</span>
                         </div>
                       )}
                     </td>
@@ -460,22 +466,22 @@ export function MembersRoles() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => toast.success(`Đã gửi lại lời mời cho ${m.name}`)}
+                              onClick={() => toast.success(t("toastResent", { name: m.name }))}
                               className="h-7 px-2 rounded-lg text-[#534AB7] dark:text-primary hover:bg-[#EEEDFE] dark:hover:bg-muted hover:text-[#534AB7] dark:hover:text-primary"
                               style={{ fontSize: 12 }}
                             >
                               <RefreshCw size={11} className="mr-1" />
-                              Gửi lại
+                              {t("resend")}
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => toast.info("Đã hủy lời mời")}
+                              onClick={() => toast.info(t("toastCancelled"))}
                               className="h-7 px-2 rounded-lg hover:bg-[#FEE2E2] dark:hover:bg-destructive/20 text-[#A32D2D] dark:text-destructive"
                               style={{ fontSize: 12 }}
                             >
                               <X size={11} className="mr-1" />
-                              Hủy
+                              {tCommon("cancel")}
                             </Button>
                           </>
                         ) : (
@@ -528,6 +534,8 @@ function EditMemberDialog({
   member: Member | null;
   onClose: () => void;
 }) {
+  const t = useTranslations("settings.members");
+  const tCommon = useTranslations("common");
   const updateMutation = useUpdateUser();
   const [name, setName] = useState("");
   const [role, setRole] = useState<string>("SALES_REP");
@@ -547,7 +555,7 @@ function EditMemberDialog({
   const handleSave = async () => {
     if (!member) return;
     if (!name.trim()) {
-      toast.error("Họ và tên không được để trống");
+      toast.error(t("fullNameRequired"));
       return;
     }
     try {
@@ -567,18 +575,18 @@ function EditMemberDialog({
       <DialogContent className="sm:max-w-[460px] p-0 gap-0 rounded-[10px] overflow-hidden bg-background" aria-describedby={undefined}>
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-[#E8E7E2] dark:border-border">
           <DialogTitle className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 16, fontWeight: 600 }}>
-            Chỉnh sửa thành viên
+            {t("editMemberTitle")}
           </DialogTitle>
         </DialogHeader>
 
         <div className="px-6 py-5 flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 13 }}>Địa chỉ email</Label>
+            <Label className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 13 }}>{t("emailLabel")}</Label>
             <Input type="email" value={member?.email || ""} disabled className="bg-[#F8F8F7] dark:bg-muted text-[#9A9A95] dark:text-muted-foreground border-[#E8E7E2] dark:border-border" style={{ fontSize: 13 }} />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 13 }}>Họ và tên</Label>
+            <Label className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 13 }}>{t("fullName")}</Label>
             <Input
               type="text"
               value={name}
@@ -589,7 +597,7 @@ function EditMemberDialog({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 13 }}>Vai trò</Label>
+            <Label className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 13 }}>{t("roleLabel")}</Label>
             <Select value={role} onValueChange={(v) => setRole(v)}>
               <SelectTrigger className="h-10 rounded-[10px] border-[#E8E7E2] dark:border-border text-[#1A1A18] dark:text-foreground focus:ring-[#534AB7]/30 focus:border-[#534AB7]" style={{ fontSize: 13 }}>
                 <SelectValue />
@@ -606,14 +614,14 @@ function EditMemberDialog({
         </div>
 
         <DialogFooter className="px-6 pb-6 gap-2 sm:gap-0">
-          <Button variant="outline" onClick={onClose} className="h-9 rounded-[10px] border-[#E8E7E2] dark:border-border text-[#6B6B67] dark:text-muted-foreground hover:bg-[#F8F8F7] dark:hover:bg-muted" style={{ fontSize: 13 }}>Hủy</Button>
+          <Button variant="outline" onClick={onClose} className="h-9 rounded-[10px] border-[#E8E7E2] dark:border-border text-[#6B6B67] dark:text-muted-foreground hover:bg-[#F8F8F7] dark:hover:bg-muted" style={{ fontSize: 13 }}>{tCommon("cancel")}</Button>
           <Button
             onClick={handleSave}
             disabled={updateMutation.isPending}
             className="h-9 rounded-[10px] bg-[#534AB7] hover:bg-[#4840A0] text-white"
             style={{ fontSize: 13 }}
           >
-            {updateMutation.isPending ? "Đang lưu..." : "Lưu thay đổi"}
+            {updateMutation.isPending ? tCommon("saving") : tCommon("saveChanges")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -629,6 +637,8 @@ function DeleteMemberDialog({
   memberId: string | null;
   onClose: () => void;
 }) {
+  const t = useTranslations("settings.members");
+  const tCommon = useTranslations("common");
   const deleteMutation = useDeleteUser();
 
   const handleDelete = async () => {
@@ -646,23 +656,23 @@ function DeleteMemberDialog({
       <DialogContent className="sm:max-w-[400px] rounded-[10px] bg-background" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 15, fontWeight: 600 }}>
-            Xóa thành viên khỏi Workspace
+            {t("deleteMemberTitle")}
           </DialogTitle>
         </DialogHeader>
         <div className="py-2">
           <p className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 13 }}>
-            Bạn có chắc chắn muốn xóa thành viên này khỏi workspace? Mọi quyền truy cập của họ sẽ bị thu hồi ngay lập tức.
+            {t("deleteMemberBody")}
           </p>
         </div>
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={onClose} className="h-9 rounded-[10px] border-[#E8E7E2] dark:border-border text-[#6B6B67] dark:text-muted-foreground hover:bg-[#F8F8F7] dark:hover:bg-muted" style={{ fontSize: 13 }}>Hủy bỏ</Button>
+          <Button variant="outline" onClick={onClose} className="h-9 rounded-[10px] border-[#E8E7E2] dark:border-border text-[#6B6B67] dark:text-muted-foreground hover:bg-[#F8F8F7] dark:hover:bg-muted" style={{ fontSize: 13 }}>{tCommon("cancel")}</Button>
           <Button
             onClick={handleDelete}
             disabled={deleteMutation.isPending}
             className="h-9 rounded-[10px] bg-[#DC2626] hover:bg-[#B91C1C] text-white"
             style={{ fontSize: 13 }}
           >
-            {deleteMutation.isPending ? "Đang xóa..." : "Xác nhận xóa"}
+            {deleteMutation.isPending ? tCommon("deleting") : t("confirmDelete")}
           </Button>
         </DialogFooter>
       </DialogContent>

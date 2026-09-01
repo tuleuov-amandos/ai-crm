@@ -8,10 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Search, RefreshCw, Eye } from "lucide-react";
 import { useDebounceValue } from "usehooks-ts";
+import { useTranslations } from "next-intl";
 import { AuditLogItem } from "@/services/audit-logs.service";
 import { formatDate } from "@/lib/helper";
 
 export default function AuditLogsPage() {
+  const t = useTranslations("auditLogs");
   const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebounceValue(search, 300);
   const [action, setAction] = useState<string>("all");
@@ -44,12 +46,12 @@ export default function AuditLogsPage() {
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">
       <header className="h-14 shrink-0 border-b flex items-center justify-between px-6 bg-background">
-        <h1 className="text-[#1A1A18] dark:text-foreground text-sm font-semibold tracking-tight">Audit Logs</h1>
+        <h1 className="text-[#1A1A18] dark:text-foreground text-sm font-semibold tracking-tight">{t("title")}</h1>
         <div className="flex items-center gap-2">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
             <Input
-              placeholder="Tìm theo đối tượng, người dùng..."
+              placeholder={t("searchPlaceholder")}
               className="h-8 pl-8 w-48 text-xs border-border"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -58,10 +60,10 @@ export default function AuditLogsPage() {
 
           <Select value={action} onValueChange={setAction}>
             <SelectTrigger className="w-[110px] h-8 text-xs">
-              <SelectValue placeholder="Hành động" />
+              <SelectValue placeholder={t("actionFilterPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Mọi hành động</SelectItem>
+              <SelectItem value="all">{t("actionAll")}</SelectItem>
               <SelectItem value="CREATE">CREATE</SelectItem>
               <SelectItem value="UPDATE">UPDATE</SelectItem>
               <SelectItem value="DELETE">DELETE</SelectItem>
@@ -70,10 +72,10 @@ export default function AuditLogsPage() {
 
           <Select value={targetType} onValueChange={setTargetType}>
             <SelectTrigger className="w-[110px] h-8 text-xs">
-              <SelectValue placeholder="Thực thể" />
+              <SelectValue placeholder={t("entityFilterPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Mọi thực thể</SelectItem>
+              <SelectItem value="all">{t("entityAll")}</SelectItem>
               <SelectItem value="DEAL">DEAL</SelectItem>
               <SelectItem value="CONTACT">CONTACT</SelectItem>
             </SelectContent>
@@ -91,12 +93,12 @@ export default function AuditLogsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[180px]">Thời gian</TableHead>
-                  <TableHead className="w-[160px]">Người thực hiện</TableHead>
-                  <TableHead className="w-[110px]">Hành động</TableHead>
-                  <TableHead className="w-[130px]">Loại thực thể</TableHead>
-                  <TableHead>Tên đối tượng</TableHead>
-                  <TableHead className="text-right w-[80px]">Chi tiết</TableHead>
+                  <TableHead className="w-[180px]">{t("colTime")}</TableHead>
+                  <TableHead className="w-[160px]">{t("colActor")}</TableHead>
+                  <TableHead className="w-[110px]">{t("colAction")}</TableHead>
+                  <TableHead className="w-[130px]">{t("colEntityType")}</TableHead>
+                  <TableHead>{t("colTargetName")}</TableHead>
+                  <TableHead className="text-right w-[80px]">{t("colDetails")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -106,7 +108,7 @@ export default function AuditLogsPage() {
                       {formatDate(log.createdAt)} <br />
                     </TableCell>
                     <TableCell className="text-sm font-medium text-[#1A1A18] dark:text-foreground">
-                      {log.user?.name || "Hệ thống"}
+                      {log.user?.name || t("system")}
                     </TableCell>
                     <TableCell>
                       <span className={`text-[10px] font-semibold px-2 py-0.5 border rounded-full ${getActionBadgeStyle(log.action)}`}>
@@ -129,7 +131,7 @@ export default function AuditLogsPage() {
                 ))}
                 {logs.length === 0 && !isLoading && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-sm text-muted-foreground">Không tìm thấy bản ghi nhật ký hoạt động nào.</TableCell>
+                    <TableCell colSpan={6} className="text-center py-8 text-sm text-muted-foreground">{t("emptyRows")}</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -145,7 +147,7 @@ export default function AuditLogsPage() {
                 onClick={() => fetchNextPage()}
                 disabled={isFetchingNextPage}
               >
-                {isFetchingNextPage ? "Đang tải..." : "Tải thêm nhật ký"}
+                {isFetchingNextPage ? t("loadingMore") : t("loadMore")}
               </Button>
             </div>
           )}
@@ -157,22 +159,22 @@ export default function AuditLogsPage() {
         {selectedLog && (
           <DialogContent className="max-w-xl font-sans">
             <DialogHeader>
-              <DialogTitle className="text-sm font-semibold">Chi tiết thay đổi</DialogTitle>
+              <DialogTitle className="text-sm font-semibold">{t("dialogTitle")}</DialogTitle>
               <DialogDescription className="text-xs">
-                Mô tả chi tiết những dữ liệu đã được điều chỉnh.
+                {t("dialogDescription")}
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-2 text-xs border-b pb-3">
                 <div>
-                  <span className="text-[#868E96] dark:text-muted-foreground block">Người thực hiện</span>
+                  <span className="text-[#868E96] dark:text-muted-foreground block">{t("detailActor")}</span>
                   <strong className="text-[#212529] dark:text-foreground">
                     {selectedLog.user?.name} ({(selectedLog.user?.role as any)?.name || (typeof selectedLog.user?.role === "string" ? selectedLog.user.role : "N/A")})
                   </strong>
                 </div>
                 <div>
-                  <span className="text-[#868E96] dark:text-muted-foreground block">Đối tượng tác động</span>
+                  <span className="text-[#868E96] dark:text-muted-foreground block">{t("detailTarget")}</span>
                   <strong className="text-[#212529] dark:text-foreground">{selectedLog.targetType}: {selectedLog.targetName}</strong>
                 </div>
               </div>
@@ -181,9 +183,9 @@ export default function AuditLogsPage() {
                 <Table className="text-xs">
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Trường</TableHead>
-                      <TableHead>Giá trị cũ (Old)</TableHead>
-                      <TableHead>Giá trị mới (New)</TableHead>
+                      <TableHead>{t("colField")}</TableHead>
+                      <TableHead>{t("colOld")}</TableHead>
+                      <TableHead>{t("colNew")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

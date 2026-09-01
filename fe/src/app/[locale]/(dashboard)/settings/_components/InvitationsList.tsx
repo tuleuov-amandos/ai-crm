@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useTranslations, useLocale } from "next-intl";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from "@/components/ui/dialog";
@@ -28,13 +29,14 @@ const formatRoleDisplayName = (name: string) => {
 
 // ── Copy link button component ───────────────────────────────────────────────
 function CopyLinkButton({ token }: { token: string }) {
+  const t = useTranslations("settings.invitations");
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
     const link = `${window.location.origin}/invite?token=${token}`;
     navigator.clipboard.writeText(link).catch(() => {});
     setCopied(true);
-    toast.success("Đã sao chép link mời");
+    toast.success(t("copyToast"));
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -49,12 +51,12 @@ function CopyLinkButton({ token }: { token: string }) {
       {copied ? (
         <>
           <Check size={11} className="text-[#1D9E75]" />
-          <span>Đã chép</span>
+          <span>{t("copied")}</span>
         </>
       ) : (
         <>
           <Copy size={11} />
-          <span>Chép link</span>
+          <span>{t("copyLink")}</span>
         </>
       )}
     </Button>
@@ -63,30 +65,31 @@ function CopyLinkButton({ token }: { token: string }) {
 
 // ── Status Badge ─────────────────────────────────────────────────────────────
 function InvitationStatusBadge({ status }: { status: string }) {
+  const t = useTranslations("settings.invitations");
   switch (status) {
     case "PENDING":
       return (
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FAEEDA] dark:bg-amber-950/20 text-[#854F0B] dark:text-amber-400" style={{ fontSize: 11, fontWeight: 600 }}>
           <Clock size={10} />
-          Chờ kích hoạt
+          {t("statusPending")}
         </span>
       );
     case "ACCEPTED":
       return (
         <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#EBFDF5] dark:bg-green-950/20 text-[#107C41] dark:text-green-400" style={{ fontSize: 11, fontWeight: 600 }}>
-          Đã tham gia
+          {t("statusAccepted")}
         </span>
       );
     case "EXPIRED":
       return (
         <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#FEE2E2] dark:bg-red-950/20 text-[#A32D2D] dark:text-red-400" style={{ fontSize: 11, fontWeight: 600 }}>
-          Hết hạn
+          {t("statusExpired")}
         </span>
       );
     case "REVOKED":
       return (
         <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#F1EFE8] dark:bg-muted text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 11, fontWeight: 600 }}>
-          Đã hủy
+          {t("statusRevoked")}
         </span>
       );
     default:
@@ -95,9 +98,12 @@ function InvitationStatusBadge({ status }: { status: string }) {
 }
 
 export function InvitationsList() {
+  const t = useTranslations("settings.invitations");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
   const { data: invitations, isLoading, refetch } = useGetInvitations();
   const revokeMutation = useRevokeInvitation();
-  
+
   const [confirmRevokeId, setConfirmRevokeId] = useState<string | null>(null);
   const [editingInv, setEditingInv] = useState<Invitation | null>(null);
 
@@ -110,7 +116,7 @@ export function InvitationsList() {
   const formatDate = (dateStr: string) => {
     try {
       const d = new Date(dateStr);
-      return d.toLocaleDateString("vi-VN", {
+      return d.toLocaleDateString(locale, {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
@@ -124,7 +130,7 @@ export function InvitationsList() {
     return (
       <div className="flex flex-col items-center justify-center p-8 bg-white dark:bg-card rounded-[10px] border border-[#E8E7E2] dark:border-border" style={{ minHeight: 300 }}>
         <RefreshCw size={24} className="animate-spin text-[#534AB7] dark:text-primary mb-2" />
-        <p className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 13 }}>Đang tải danh sách lời mời...</p>
+        <p className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 13 }}>{t("loading")}</p>
       </div>
     );
   }
@@ -136,8 +142,8 @@ export function InvitationsList() {
       {/* Tab Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 16, fontWeight: 600, lineHeight: 1 }}>Lời mời thành viên</h2>
-          <p className="text-[#6B6B67] dark:text-muted-foreground mt-1" style={{ fontSize: 13 }}>Theo dõi và quản lý các liên kết mời tham gia workspace</p>
+          <h2 className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 16, fontWeight: 600, lineHeight: 1 }}>{t("heading")}</h2>
+          <p className="text-[#6B6B67] dark:text-muted-foreground mt-1" style={{ fontSize: 13 }}>{t("subtitle")}</p>
         </div>
         <Button
           variant="outline"
@@ -146,7 +152,7 @@ export function InvitationsList() {
           style={{ fontSize: 12 }}
         >
           <RefreshCw size={12} className="mr-1.5" />
-          Làm mới
+          {tCommon("refresh")}
         </Button>
       </div>
 
@@ -155,9 +161,9 @@ export function InvitationsList() {
           <div className="size-12 rounded-full flex items-center justify-center mb-3 bg-[#EEEDFE] dark:bg-secondary">
             <Mail size={20} className="text-[#534AB7] dark:text-primary" />
           </div>
-          <p className="text-[#1A1A18] dark:text-foreground mb-1" style={{ fontSize: 14, fontWeight: 600 }}>Chưa có lời mời nào</p>
+          <p className="text-[#1A1A18] dark:text-foreground mb-1" style={{ fontSize: 14, fontWeight: 600 }}>{t("emptyTitle")}</p>
           <p className="text-[#6B6B67] dark:text-muted-foreground text-center max-w-[320px] mb-4" style={{ fontSize: 12 }}>
-            Khi bạn mời một thành viên mới, link mời và trạng thái của họ sẽ được hiển thị tại đây.
+            {t("emptyDescription")}
           </p>
         </div>
       ) : (
@@ -165,7 +171,7 @@ export function InvitationsList() {
           <table className="w-full" style={{ borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                {["Email người nhận", "Vai trò", "Trạng thái", "Ngày gửi", "Ngày hết hạn", "Liên kết mời", "Hành động"].map((col) => (
+                {[t("colEmail"), t("colRole"), t("colStatus"), t("colSentAt"), t("colExpiresAt"), t("colLink"), t("colActions")].map((col) => (
                   <th
                     key={col}
                     className="text-left text-[#6B6B67] dark:text-muted-foreground px-5 py-3"
@@ -231,7 +237,7 @@ export function InvitationsList() {
                           size="icon"
                           onClick={() => setEditingInv(inv)}
                           className="size-7 rounded-lg text-[#6B6B67] dark:text-muted-foreground hover:bg-[#EEEDFE] dark:hover:bg-muted hover:text-[#534AB7] dark:hover:text-primary"
-                          title="Chỉnh sửa lời mời"
+                          title={t("editTitle")}
                         >
                           <Pencil size={13} />
                         </Button>
@@ -240,7 +246,7 @@ export function InvitationsList() {
                           size="icon"
                           onClick={() => setConfirmRevokeId(inv.id)}
                           className="size-7 rounded-lg text-[#6B6B67] dark:text-muted-foreground hover:bg-[#FEE2E2] dark:hover:bg-destructive/20 hover:text-[#A32D2D] dark:hover:text-destructive"
-                          title="Hủy lời mời"
+                          title={t("revokeTitle")}
                         >
                           <Trash2 size={13} />
                         </Button>
@@ -258,11 +264,11 @@ export function InvitationsList() {
       <Dialog open={!!confirmRevokeId} onOpenChange={(v) => !v && setConfirmRevokeId(null)}>
         <DialogContent className="sm:max-w-[400px] rounded-[10px] bg-background" aria-describedby={undefined}>
           <DialogHeader>
-            <DialogTitle className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 15, fontWeight: 600 }}>Hủy lời mời</DialogTitle>
+            <DialogTitle className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 15, fontWeight: 600 }}>{t("revokeTitle")}</DialogTitle>
           </DialogHeader>
           <div className="py-2">
             <p className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 13 }}>
-              Bạn có chắc chắn muốn hủy lời mời này? Người nhận sẽ không thể sử dụng link mời này để kích hoạt tài khoản được nữa.
+              {t("revokeDialogBody")}
             </p>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
@@ -272,7 +278,7 @@ export function InvitationsList() {
               className="h-9 rounded-[10px] border-[#E8E7E2] dark:border-border text-[#6B6B67] dark:text-muted-foreground hover:bg-[#F8F8F7] dark:hover:bg-muted"
               style={{ fontSize: 13 }}
             >
-              Hủy bỏ
+              {tCommon("cancel")}
             </Button>
             <Button
               onClick={handleRevoke}
@@ -280,7 +286,7 @@ export function InvitationsList() {
               className="h-9 rounded-[10px] bg-[#DC2626] hover:bg-[#B91C1C] text-white"
               style={{ fontSize: 13 }}
             >
-              {revokeMutation.isPending ? "Đang hủy..." : "Đồng ý hủy"}
+              {revokeMutation.isPending ? t("revoking") : t("confirmRevoke")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -303,6 +309,8 @@ function EditInvitationDialog({
   invitation: Invitation | null;
   onClose: () => void;
 }) {
+  const t = useTranslations("settings.invitations");
+  const tCommon = useTranslations("common");
   const updateMutation = useUpdateInvitation();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<string>("SALES_REP");
@@ -322,7 +330,7 @@ function EditInvitationDialog({
   const handleSave = async () => {
     if (!invitation) return;
     if (!email.trim()) {
-      toast.error("Vui lòng nhập địa chỉ email");
+      toast.error(t("emailRequired"));
       return;
     }
     try {
@@ -344,19 +352,19 @@ function EditInvitationDialog({
         {/* Header */}
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-[#E8E7E2] dark:border-border">
           <DialogTitle className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 16, fontWeight: 600 }}>
-            Chỉnh sửa lời mời
+            {t("editTitle")}
           </DialogTitle>
         </DialogHeader>
 
         {/* Body */}
         <div className="px-6 py-5 flex flex-col gap-4">
-          
+
           {/* Email */}
           <div className="flex flex-col gap-1.5">
-            <Label className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 13 }}>Địa chỉ email</Label>
+            <Label className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 13 }}>{t("editEmailLabel")}</Label>
             <Input
               type="email"
-              placeholder="email@congtyabc.vn"
+              placeholder={t("emailPlaceholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="h-10 rounded-[10px] border-[#E8E7E2] dark:border-border text-[#1A1A18] dark:text-foreground focus-visible:ring-[#534AB7]/30 focus-visible:border-[#534AB7]"
@@ -366,7 +374,7 @@ function EditInvitationDialog({
 
           {/* Role */}
           <div className="flex flex-col gap-1.5">
-            <Label className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 13 }}>Vai trò</Label>
+            <Label className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 13 }}>{t("editRoleLabel")}</Label>
             <Select value={role} onValueChange={(v) => setRole(v)}>
               <SelectTrigger className="h-10 rounded-[10px] border-[#E8E7E2] dark:border-border text-[#1A1A18] dark:text-foreground focus:ring-[#534AB7]/30 focus:border-[#534AB7]" style={{ fontSize: 13 }}>
                 <SelectValue />
@@ -382,7 +390,7 @@ function EditInvitationDialog({
           </div>
 
           <p className="text-[#6B6B67] dark:text-muted-foreground leading-relaxed" style={{ fontSize: 11 }}>
-            * Note: When editing, the system will automatically create a new token link and invalidate the old one. A new activation email will be automatically sent to this email address.
+            {t("editNote")}
           </p>
         </div>
 
@@ -394,7 +402,7 @@ function EditInvitationDialog({
             className="h-9 rounded-[10px] border-[#E8E7E2] dark:border-border text-[#6B6B67] dark:text-muted-foreground hover:bg-[#F8F8F7] dark:hover:bg-muted"
             style={{ fontSize: 13 }}
           >
-            Hủy
+            {tCommon("cancel")}
           </Button>
           <Button
             onClick={handleSave}
@@ -402,7 +410,7 @@ function EditInvitationDialog({
             className="h-9 rounded-[10px] bg-[#534AB7] hover:bg-[#4840A0] text-white"
             style={{ fontSize: 13 }}
           >
-            {updateMutation.isPending ? "Đang lưu..." : "Lưu thay đổi"}
+            {updateMutation.isPending ? tCommon("saving") : tCommon("saveChanges")}
           </Button>
         </DialogFooter>
 

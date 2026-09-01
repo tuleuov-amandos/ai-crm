@@ -7,6 +7,7 @@ import {
   BarChart2, PieChart, Activity, Users, Lock,
 } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useAbility } from "@/hooks/useAbility";
 import { useMe } from "@/hooks/useAuth";
 
@@ -23,11 +24,11 @@ import { formatVndShort } from "@/lib/helper";
 // ── Tabs ─────────────────────────────────────────────────────────────────────
 type Tab = "overview" | "team" | "pipeline" | "activity";
 
-const TABS: { value: Tab; label: string; Icon: typeof BarChart2 }[] = [
-  { value: "overview",  label: "Sales Overview",     Icon: BarChart2  },
-  { value: "team",      label: "Team Performance",   Icon: Users      },
-  { value: "pipeline",  label: "Pipeline Analysis",  Icon: Activity   },
-  { value: "activity",  label: "Activity Report",    Icon: PieChart   },
+const TABS: { value: Tab; Icon: typeof BarChart2 }[] = [
+  { value: "overview",  Icon: BarChart2  },
+  { value: "team",      Icon: Users      },
+  { value: "pipeline",  Icon: Activity   },
+  { value: "activity",  Icon: PieChart   },
 ];
 
 // ── KPI card ─────────────────────────────────────────────────────────────────
@@ -63,6 +64,7 @@ function KpiCard({ label, value, delta, up, subtext }: KpiProps) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function ReportsPage() {
+  const t = useTranslations("reports");
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   
   // Date ranges default to entire 2026 to capture all seeded records
@@ -114,10 +116,10 @@ export default function ReportsPage() {
       >
         <div>
           <h1 className="text-[#1A1A18] dark:text-foreground tracking-tight" style={{ fontSize: 15, fontWeight: 600, lineHeight: 1 }}>
-            Reports
+            {t("title")}
           </h1>
           <p className="text-[#6B6B67] dark:text-muted-foreground mt-1" style={{ fontSize: 12 }}>
-            Phân tích &amp; Báo cáo chuyên sâu
+            {t("subtitle")}
           </p>
         </div>
 
@@ -138,7 +140,7 @@ export default function ReportsPage() {
             style={{ fontSize: 12, color: "var(--muted-foreground)" }}
           >
             <Download size={13} />
-            Xuất CSV
+            {t("exportCsv")}
           </button>
 
           {/* Export PDF */}
@@ -149,7 +151,7 @@ export default function ReportsPage() {
             onMouseLeave={e => (e.currentTarget.style.background = "#534AB7")}
           >
             <FileText size={13} />
-            Xuất PDF
+            {t("exportPdf")}
           </button>
         </div>
       </header>
@@ -176,7 +178,7 @@ export default function ReportsPage() {
               }}
             >
               <tab.Icon size={13} />
-              {tab.label}
+              {t(`tabs.${tab.value}`)}
             </button>
           );
         })}
@@ -187,7 +189,7 @@ export default function ReportsPage() {
 
         {isLoadingMe || isRedirecting ? (
           <div className="flex items-center justify-center min-h-[400px]">
-            <span className="text-[#6B6B67] text-sm">Đang tải dữ liệu...</span>
+            <span className="text-[#6B6B67] text-sm">{t("loadingData")}</span>
           </div>
         ) : !hasPermission || isForbidden ? (
           <div className="flex flex-col items-center justify-center min-h-[400px] bg-white dark:bg-card border border-[#E8E7E2] dark:border-border rounded-[12px] p-8 shadow-sm">
@@ -195,16 +197,16 @@ export default function ReportsPage() {
               <Lock size={28} />
             </div>
             <h3 className="text-[#1A1A18] dark:text-foreground font-bold text-lg mb-2">
-              Không có quyền truy cập
+              {t("forbidden.title")}
             </h3>
             <p className="text-[#6B6B67] dark:text-muted-foreground text-sm text-center max-w-sm mb-6 leading-relaxed">
-              Bạn không có quyền xem trang Báo cáo. Vui lòng liên hệ với Quản trị viên để được phân quyền truy cập.
+              {t("forbidden.description")}
             </p>
             <Link
               href="/dashboard"
               className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-white bg-[#534AB7] hover:bg-[#4840A0] transition-colors rounded-[8px] no-underline shadow-sm"
             >
-              Quay lại Trang chủ
+              {t("forbidden.backHome")}
             </Link>
           </div>
         ) : (
@@ -212,7 +214,7 @@ export default function ReportsPage() {
             {activeTab === "overview" && (
               isOverviewLoading ? (
                 <div className="flex items-center justify-center min-h-[400px]">
-                  <span className="text-[#6B6B67] text-sm">Đang tải dữ liệu báo cáo...</span>
+                  <span className="text-[#6B6B67] text-sm">{t("loadingReport")}</span>
                 </div>
               ) : (
                 overviewData && (
@@ -221,32 +223,32 @@ export default function ReportsPage() {
                     {/* Row 1: KPI cards */}
                     <div className="grid grid-cols-5 gap-4">
                       <KpiCard
-                        label="Tổng doanh thu"
+                        label={t("overview.kpi.totalRevenue")}
                         value={formatVndShort(overviewData.kpis.totalRevenue.value)}
                         delta={overviewData.kpis.totalRevenue.delta}
                         up={overviewData.kpis.totalRevenue.up}
                       />
                       <KpiCard
-                        label="Tổng deals đóng"
+                        label={t("overview.kpi.closedDeals")}
                         value={String(overviewData.kpis.closedDeals.value)}
                         delta={overviewData.kpis.closedDeals.delta}
                         up={overviewData.kpis.closedDeals.up}
                       />
                       <KpiCard
-                        label="Win rate TB"
+                        label={t("overview.kpi.winRate")}
                         value={`${overviewData.kpis.winRate.value}%`}
                         delta={overviewData.kpis.winRate.delta}
                         up={overviewData.kpis.winRate.up}
                       />
                       <KpiCard
-                        label="Avg deal size"
+                        label={t("overview.kpi.avgDealSize")}
                         value={formatVndShort(overviewData.kpis.avgDealSize.value)}
                         delta={overviewData.kpis.avgDealSize.delta}
                         up={overviewData.kpis.avgDealSize.up}
                       />
                       <KpiCard
-                        label="Avg days to close"
-                        value={`${overviewData.kpis.avgDaysToClose.value} ngày`}
+                        label={t("overview.kpi.avgDaysToClose")}
+                        value={`${overviewData.kpis.avgDaysToClose.value} ${t("units.days")}`}
                         delta={overviewData.kpis.avgDaysToClose.delta}
                         up={overviewData.kpis.avgDaysToClose.up}
                       />
@@ -265,9 +267,9 @@ export default function ReportsPage() {
                       </div>
                       <div className="bg-white dark:bg-card rounded-[10px] border border-[#E8E7E2] dark:border-border p-5 flex flex-col justify-between">
                         <div>
-                          <h4 className="text-[#1A1A18] dark:text-foreground font-bold text-xs" style={{ fontSize: 13 }}>Tỷ lệ chốt Sales</h4>
+                          <h4 className="text-[#1A1A18] dark:text-foreground font-bold text-xs" style={{ fontSize: 13 }}>{t("overview.winRateCard.title")}</h4>
                           <p className="text-[#6B6B67] dark:text-muted-foreground mt-1.5" style={{ fontSize: 11 }}>
-                            Thống kê tỷ lệ thắng (Win) và thua (Loss) của các Deal đã đóng trong kỳ.
+                            {t("overview.winRateCard.subtitle")}
                           </p>
                         </div>
                         
@@ -277,7 +279,7 @@ export default function ReportsPage() {
                             {overviewData.kpis.winRate.value}%
                           </span>
                           <span className="text-[#6B6B67] dark:text-muted-foreground mt-1" style={{ fontSize: 11 }}>
-                            Tỷ lệ thắng trung bình kỳ này
+                            {t("overview.winRateCard.avgLabel")}
                           </span>
                           <div className="flex items-center gap-1 mt-2">
                             <span 
@@ -289,12 +291,12 @@ export default function ReportsPage() {
                             >
                               {overviewData.kpis.winRate.delta}
                             </span>
-                            <span className="text-[#6B6B67] dark:text-muted-foreground text-[10px]">so với kỳ trước</span>
+                            <span className="text-[#6B6B67] dark:text-muted-foreground text-[10px]">{t("overview.winRateCard.vsPrev")}</span>
                           </div>
                         </div>
 
                         <div className="text-[#1A1A18] dark:text-foreground font-semibold text-xs border-t border-[#E8E7E2] dark:border-border pt-4" style={{ fontSize: 11 }}>
-                          Tỷ lệ thắng là tỷ trọng phần trăm số lượng Deal chốt thành công trên tổng số Deal đã kết thúc.
+                          {t("overview.winRateCard.footer")}
                         </div>
                       </div>
                     </div>

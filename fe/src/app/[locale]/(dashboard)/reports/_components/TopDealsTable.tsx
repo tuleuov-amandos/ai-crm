@@ -1,15 +1,12 @@
+"use client";
+
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials, getAvatarColors, formatVndShort, formatDate } from "@/lib/helper";
 
 type Filter = "all" | "won" | "lost";
-
-const FILTER_LABELS: Record<Filter, string> = {
-  all: "Tất cả",
-  won: "Closed Won",
-  lost: "Closed Lost",
-};
 
 export interface TopDeal {
   id: string;
@@ -29,7 +26,14 @@ interface TopDealsTableProps {
 }
 
 export function TopDealsTable({ deals = [] }: TopDealsTableProps) {
+  const t = useTranslations("reports.topDeals");
   const [filter, setFilter] = useState<Filter>("all");
+
+  const FILTER_LABELS: Record<Filter, string> = {
+    all: t("filterAll"),
+    won: "Closed Won",
+    lost: "Closed Lost",
+  };
 
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
@@ -54,10 +58,10 @@ export function TopDealsTable({ deals = [] }: TopDealsTableProps) {
       <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-[#E8E7E2] dark:border-border">
         <div>
           <h3 className="text-[#1A1A18] dark:text-foreground" style={{ fontSize: 13, fontWeight: 600 }}>
-            Top Deals đã chốt
+            {t("title")}
           </h3>
           <p className="text-[#6B6B67] dark:text-muted-foreground mt-0.5" style={{ fontSize: 11 }}>
-            Deals đóng trong kỳ được chọn
+            {t("subtitle")}
           </p>
         </div>
 
@@ -87,7 +91,7 @@ export function TopDealsTable({ deals = [] }: TopDealsTableProps) {
         <table className="w-full" style={{ borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid var(--border)" }}>
-              {["Deal", "Công ty", "Owner", "Giá trị", "Ngày chốt", "Giai đoạn"].map((col) => (
+              {[t("colDeal"), t("colCompany"), t("colOwner"), t("colValue"), t("colClosedAt"), t("colStage")].map((col) => (
                 <th
                   key={col}
                   className="text-left text-[#6B6B67] dark:text-muted-foreground px-5 py-3"
@@ -102,7 +106,7 @@ export function TopDealsTable({ deals = [] }: TopDealsTableProps) {
             {paginatedDeals.length === 0 ? (
               <tr>
                 <td colSpan={6} className="text-center py-8 text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 12 }}>
-                  Không có dữ liệu trong kỳ
+                  {t("emptyPeriod")}
                 </td>
               </tr>
             ) : (
@@ -182,12 +186,12 @@ export function TopDealsTable({ deals = [] }: TopDealsTableProps) {
       {/* Pagination */}
       <div className="flex items-center justify-between px-5 py-3 border-t border-[#E8E7E2] dark:border-border">
         <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 12 }}>
-          Hiển thị {totalItems > 0 ? startIndex + 1 : 0} - {endIndex} trong {totalItems} deals
+          {t("pagination", { from: totalItems > 0 ? startIndex + 1 : 0, to: endIndex, total: totalItems })}
         </span>
-        
+
         <div className="flex items-center gap-1">
           <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 12 }}>
-            Trang {currentPage} / {totalPages}
+            {t("page", { current: currentPage, total: totalPages })}
           </span>
           <button
             className="size-7 flex items-center justify-center rounded hover:bg-[#F1EFE8] dark:hover:bg-muted transition-colors cursor-pointer"

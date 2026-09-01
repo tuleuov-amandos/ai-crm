@@ -1,8 +1,11 @@
+"use client";
+
 import {
   ResponsiveContainer, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip,
 } from "recharts";
 import { BarChart2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ChartCard } from "./ChartCard";
 import { EmptyState } from "./EmptyState";
 
@@ -33,16 +36,17 @@ interface WinLossChartProps {
 }
 
 export function WinLossChart({ data }: WinLossChartProps) {
+  const t = useTranslations("reports.winLoss");
   const isDataEmpty = !data || data.length === 0 || data.every(d => d.win === 0 && d.loss === 0);
   const chartData = data || [];
 
   return (
-    <ChartCard title="Win/Loss theo giai đoạn" subtitle="Tỷ lệ thắng/thua">
+    <ChartCard title={t("title")} subtitle={t("subtitle")}>
       {isDataEmpty ? (
         <EmptyState
           icon={BarChart2}
-          title="Chưa có dữ liệu thắng/thua"
-          description="Hãy tạo cơ hội kinh doanh (Deals) và cập nhật trạng thái kết thúc (Won/Lost) để phân tích tỷ lệ chuyển đổi."
+          title={t("emptyTitle")}
+          description={t("emptyDescription")}
           height={213}
         />
       ) : (

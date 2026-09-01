@@ -1,7 +1,10 @@
+"use client";
+
 import {
   ResponsiveContainer, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip,
 } from "recharts";
+import { useTranslations } from "next-intl";
 import { ChartCard } from "./ChartCard";
 import { formatVndShort } from "@/lib/helper";
 
@@ -35,6 +38,7 @@ import { LineChart } from "lucide-react";
 import { EmptyState } from "./EmptyState";
 
 export function ForecastAreaChart({ data = [] }: ForecastAreaChartProps) {
+  const t = useTranslations("reports.forecast");
   const isDataEmpty = !data || data.length === 0 || data.every(d => d.cumActual === 0 && d.cumForecast === 0);
 
   const lastItem = data[data.length - 1];
@@ -43,16 +47,16 @@ export function ForecastAreaChart({ data = [] }: ForecastAreaChartProps) {
     : 0;
 
   const actionText = percentDiff >= 0
-    ? `Vượt forecast +${percentDiff.toFixed(1)}%`
-    : `Dưới forecast ${percentDiff.toFixed(1)}%`;
+    ? t("overBadge", { percent: percentDiff.toFixed(1) })
+    : t("underBadge", { percent: percentDiff.toFixed(1) });
 
   const maxVal = Math.max(...data.map(d => Math.max(d.cumActual, d.cumForecast)), 100);
   const yDomainMax = Math.ceil(maxVal * 1.2);
 
   return (
     <ChartCard
-      title="Forecast vs Thực tế"
-      subtitle="Doanh thu lũy kế"
+      title={t("title")}
+      subtitle={t("subtitle")}
       action={
         !isDataEmpty && data.length > 0 ? (
           <span
@@ -71,8 +75,8 @@ export function ForecastAreaChart({ data = [] }: ForecastAreaChartProps) {
       {isDataEmpty ? (
         <EmptyState
           icon={LineChart}
-          title="Chưa có dự báo doanh thu"
-          description="Chưa có dữ liệu tích lũy thực tế và dự báo chốt hợp đồng trong khoảng thời gian này."
+          title={t("emptyTitle")}
+          description={t("emptyDescription")}
           height={220}
         />
       ) : (
@@ -96,7 +100,7 @@ export function ForecastAreaChart({ data = [] }: ForecastAreaChartProps) {
             key="fva-forecast"
             type="monotone"
             dataKey="cumForecast"
-            name="Dự báo"
+            name={t("forecastSeries")}
             stroke="#60A5FA"
             strokeWidth={2}
             strokeDasharray="5 3"
@@ -106,7 +110,7 @@ export function ForecastAreaChart({ data = [] }: ForecastAreaChartProps) {
             key="fva-actual"
             type="monotone"
             dataKey="cumActual"
-            name="Thực tế"
+            name={t("actualSeries")}
             stroke="#534AB7"
             strokeWidth={2.5}
             fill="url(#rpt-fva-actual)"

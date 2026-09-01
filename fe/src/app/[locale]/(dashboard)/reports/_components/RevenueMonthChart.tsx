@@ -1,7 +1,10 @@
+"use client";
+
 import {
   ResponsiveContainer, ComposedChart, Bar, Line,
   XAxis, YAxis, CartesianGrid, Tooltip,
 } from "recharts";
+import { useTranslations } from "next-intl";
 import { ChartCard } from "./ChartCard";
 import { formatVndShort } from "@/lib/helper";
 
@@ -23,11 +26,6 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   );
 };
 
-const LEGEND = [
-  { color: "#534AB7", label: "Thực tế",  dash: false, bar: true  },
-  { color: "#FBBF24", label: "Target",   dash: true,  bar: false },
-];
-
 interface RevenueMonthChartProps {
   data?: {
     month: string;
@@ -40,7 +38,13 @@ import { BarChart3 } from "lucide-react";
 import { EmptyState } from "./EmptyState";
 
 export function RevenueMonthChart({ data = [] }: RevenueMonthChartProps) {
+  const t = useTranslations("reports.revenueMonth");
   const isDataEmpty = !data || data.length === 0 || data.every(d => d.actual === 0 && d.target === 0);
+
+  const LEGEND = [
+    { color: "#534AB7", label: t("actual"), bar: true  },
+    { color: "#FBBF24", label: t("target"), bar: false },
+  ];
 
   // Dynamically calculate y-axis domain max based on data
   const maxVal = Math.max(...data.map(d => Math.max(d.actual, d.target)), 100);
@@ -48,8 +52,8 @@ export function RevenueMonthChart({ data = [] }: RevenueMonthChartProps) {
 
   return (
     <ChartCard
-      title="Doanh thu theo tháng"
-      subtitle="Thực tế so với Target"
+      title={t("title")}
+      subtitle={t("subtitle")}
       action={
         !isDataEmpty && (
           <div className="flex items-center gap-3 mr-1">
@@ -72,8 +76,8 @@ export function RevenueMonthChart({ data = [] }: RevenueMonthChartProps) {
       {isDataEmpty ? (
         <EmptyState
           icon={BarChart3}
-          title="Chưa có doanh thu"
-          description="Chưa có dữ liệu doanh số thực tế và chỉ tiêu cho khoảng thời gian này."
+          title={t("emptyTitle")}
+          description={t("emptyDescription")}
           height={220}
         />
       ) : (
@@ -83,8 +87,8 @@ export function RevenueMonthChart({ data = [] }: RevenueMonthChartProps) {
             <XAxis         key="rm-xaxis" dataKey="month" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
             <YAxis         key="rm-yaxis" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={formatVndShort} width={44} domain={[0, yDomainMax]} />
             <Tooltip       key="rm-tt"    content={<CustomTooltip />} />
-            <Bar  key="rm-bar"  dataKey="actual" name="Thực tế" fill="#534AB7" radius={[4, 4, 0, 0]} maxBarSize={36} />
-            <Line key="rm-line" type="monotone" dataKey="target" name="Target" stroke="#FBBF24" strokeWidth={2} strokeDasharray="5 3" dot={false} />
+            <Bar  key="rm-bar"  dataKey="actual" name={t("actual")} fill="#534AB7" radius={[4, 4, 0, 0]} maxBarSize={36} />
+            <Line key="rm-line" type="monotone" dataKey="target" name={t("target")} stroke="#FBBF24" strokeWidth={2} strokeDasharray="5 3" dot={false} />
           </ComposedChart>
         </ResponsiveContainer>
       )}

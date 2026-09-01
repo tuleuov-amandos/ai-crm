@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   Building2, Users, Mail, User, Lock, CreditCard, FileText, Bell, Puzzle, BarChart2,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 import { WorkspaceInfo } from "./_components/WorkspaceInfo";
@@ -18,58 +19,61 @@ type SettingsTab =
   | "notifications" | "integrations";
 
 const NAV_GROUPS: {
-  label: string;
-  items: { id: SettingsTab; label: string; Icon: typeof Building2 }[];
+  labelKey: string;
+  items: { id: SettingsTab; labelKey: string; Icon: typeof Building2 }[];
 }[] = [
   {
-    label: "WORKSPACE",
+    labelKey: "groupWorkspace",
     items: [
-      { id: "workspace-info", label: "Workspace Info",  Icon: Building2 },
-      { id: "members",        label: "Members & Roles", Icon: Users      },
-      { id: "invitations",    label: "Invitations",     Icon: Mail       },
+      { id: "workspace-info", labelKey: "workspaceInfo", Icon: Building2 },
+      { id: "members",        labelKey: "members",       Icon: Users      },
+      { id: "invitations",    labelKey: "invitations",   Icon: Mail       },
     ],
   },
   {
-    label: "ACCOUNT",
+    labelKey: "groupAccount",
     items: [
-      { id: "profile",  label: "Profile của tôi", Icon: User },
-      { id: "password", label: "Đổi mật khẩu",   Icon: Lock },
+      { id: "profile",  labelKey: "profile",  Icon: User },
+      { id: "password", labelKey: "password", Icon: Lock },
     ],
   },
   {
-    label: "BILLING",
+    labelKey: "groupBilling",
     items: [
-      { id: "billing",  label: "Gói & Thanh toán",  Icon: CreditCard },
-      { id: "invoices", label: "Lịch sử hóa đơn",   Icon: FileText   },
+      { id: "billing",  labelKey: "billing",  Icon: CreditCard },
+      { id: "invoices", labelKey: "invoices", Icon: FileText   },
     ],
   },
   {
-    label: "SYSTEM",
+    labelKey: "groupSystem",
     items: [
-      { id: "notifications", label: "Thông báo",   Icon: Bell   },
-      { id: "integrations",  label: "Integrations", Icon: Puzzle },
+      { id: "notifications", labelKey: "notifications", Icon: Bell   },
+      { id: "integrations",  labelKey: "integrations",  Icon: Puzzle },
     ],
   },
 ];
 
 // ── Placeholder for unbuilt tabs ───────────────────────────────────────────────
 function ComingSoonContent({ label }: { label: string }) {
+  const t = useTranslations("settings");
   return (
     <div className="flex flex-col items-center justify-center" style={{ minHeight: 420 }}>
       <div className="size-14 rounded-full flex items-center justify-center mb-4 bg-[#EEEDFE] dark:bg-secondary">
         <BarChart2 size={24} className="text-[#534AB7] dark:text-primary" />
       </div>
       <p className="text-[#1A1A18] dark:text-foreground mb-1.5" style={{ fontSize: 15, fontWeight: 600 }}>{label}</p>
-      <p className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 13 }}>Tính năng này đang được phát triển</p>
+      <p className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 13 }}>{t("comingSoon")}</p>
     </div>
   );
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function SettingsPage() {
+  const t = useTranslations("settings");
   const [activeTab, setActiveTab] = useState<SettingsTab>("workspace-info");
 
-  const activeLabel = NAV_GROUPS.flatMap((g) => g.items).find((i) => i.id === activeTab)?.label ?? "";
+  const activeItem = NAV_GROUPS.flatMap((g) => g.items).find((i) => i.id === activeTab);
+  const activeLabel = activeItem ? t(`nav.${activeItem.labelKey}`) : "";
 
   return (
     <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
@@ -80,7 +84,7 @@ export default function SettingsPage() {
         style={{ height: 56 }}
       >
         <h1 className="text-[#1A1A18] dark:text-foreground tracking-tight" style={{ fontSize: 15, fontWeight: 600, lineHeight: 1 }}>
-          Settings
+          {t("title")}
         </h1>
       </header>
 
@@ -93,22 +97,22 @@ export default function SettingsPage() {
           style={{ width: 220 }}
         >
           <div className="p-4">
-            <p className="text-[#1A1A18] dark:text-foreground mb-4" style={{ fontSize: 16, fontWeight: 500 }}>Settings</p>
+            <p className="text-[#1A1A18] dark:text-foreground mb-4" style={{ fontSize: 16, fontWeight: 500 }}>{t("title")}</p>
 
             <div className="flex flex-col gap-5">
               {NAV_GROUPS.map((group) => (
-                <div key={group.label}>
+                <div key={group.labelKey}>
                   {/* Group label */}
                   <p
                     className="text-[#6B6B67] dark:text-muted-foreground mb-1.5 tracking-wider"
                     style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase" }}
                   >
-                    {group.label}
+                    {t(`nav.${group.labelKey}`)}
                   </p>
 
                   {/* Items */}
                   <div className="flex flex-col gap-0.5">
-                    {group.items.map(({ id, label, Icon }) => {
+                    {group.items.map(({ id, labelKey, Icon }) => {
                       const active = activeTab === id;
                       return (
                         <button
@@ -123,7 +127,7 @@ export default function SettingsPage() {
                           style={{ fontSize: 13, fontWeight: active ? 500 : 400, border: "none" }}
                         >
                           <Icon size={15} strokeWidth={active ? 2.2 : 1.8} />
-                          {label}
+                          {t(`nav.${labelKey}`)}
                         </button>
                       );
                     })}

@@ -7,11 +7,19 @@ import {
   PieChart, Pie, Cell,
 } from "recharts";
 import { Activity, CheckSquare } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ChartCard } from "./ChartCard";
 import { EmptyState } from "./EmptyState";
 import { reportsService } from "@/services/reports.service";
 
 import { CustomTooltipProps } from "@/lib/types/chart";
+
+// Backend returns Vietnamese status names; map them to localized labels for display.
+const RAW_STATUS = {
+  done: "Đã xong",
+  overdue: "Quá hạn",
+  pending: "Đang chờ",
+} as const;
 
 const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   if (!active || !payload?.length) return null;
@@ -31,17 +39,10 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   );
 };
 
-const LEGEND = [
-  { color: "#534AB7", name: "Calls" },
-  { color: "#7F77DD", name: "Emails" },
-  { color: "#AFA9EC", name: "Meetings" },
-  { color: "#1D9E75", name: "Tasks" },
-];
-
 const STATUS_COLORS: Record<string, string> = {
-  "Đã xong": "#1D9E75",
-  "Quá hạn": "#D85A30",
-  "Đang chờ": "#FBBF24",
+  [RAW_STATUS.done]: "#1D9E75",
+  [RAW_STATUS.overdue]: "#D85A30",
+  [RAW_STATUS.pending]: "#FBBF24",
 };
 
 interface ActivityReportTabProps {
@@ -50,6 +51,21 @@ interface ActivityReportTabProps {
 }
 
 export function ActivityReportTab({ startDate, endDate }: ActivityReportTabProps) {
+  const t = useTranslations("reports.activityTab");
+
+  const LEGEND = [
+    { color: "#534AB7", key: "Calls", name: t("seriesCalls") },
+    { color: "#7F77DD", key: "Emails", name: t("seriesEmails") },
+    { color: "#AFA9EC", key: "Meetings", name: t("seriesMeetings") },
+    { color: "#1D9E75", key: "Tasks", name: t("seriesTasks") },
+  ];
+
+  const statusLabel = (name: string) =>
+    name === RAW_STATUS.done ? t("statusDone")
+      : name === RAW_STATUS.overdue ? t("statusOverdue")
+        : name === RAW_STATUS.pending ? t("statusPending")
+          : name;
+
   // Query backend activities statistics
   const { data, isLoading } = useQuery({
     queryKey: ["reports", "activities", startDate, endDate],
@@ -59,7 +75,7 @@ export function ActivityReportTab({ startDate, endDate }: ActivityReportTabProps
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[350px]">
-        <span className="text-[#6B6B67] text-sm">Đang tải báo cáo hoạt động...</span>
+        <span className="text-[#6B6B67] text-sm">{t("loading")}</span>
       </div>
     );
   }
@@ -75,7 +91,7 @@ export function ActivityReportTab({ startDate, endDate }: ActivityReportTabProps
   const callMeetingRatio = totalMeetings > 0 ? (totalCalls / totalMeetings).toFixed(1) : totalCalls.toString();
 
   // Find overdue task percentage from status distribution
-  const overduePercentItem = data.statusDistribution.find(d => d.name === "Quá hạn");
+  const overduePercentItem = data.statusDistribution.find(d => d.name === RAW_STATUS.overdue);
   const overduePercent = overduePercentItem ? overduePercentItem.value : 0;
 
   const isTrendEmpty = !data.trend || data.trend.length === 0 || (totalCalls === 0 && totalMeetings === 0 && totalTasks === 0);
@@ -86,24 +102,24 @@ export function ActivityReportTab({ startDate, endDate }: ActivityReportTabProps
       {/* Row 1: KPI Cards */}
       <div className="grid grid-cols-4 gap-4">
         <div className="bg-white dark:bg-card rounded-[10px] border border-[#E8E7E2] dark:border-border p-4 flex flex-col gap-1.5 shadow-sm">
-          <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 11 }}>Tỷ lệ Gọi / Hẹn gặp</span>
+          <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 11 }}>{t("kpiCallMeetingRatio")}</span>
           <span className="text-[#1A1A18] dark:text-foreground font-bold" style={{ fontSize: 20 }}>{callMeetingRatio} : 1</span>
-          <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 10 }}>Số cuộc gọi trung bình để có 1 cuộc hẹn</span>
+          <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 10 }}>{t("kpiCallMeetingHint")}</span>
         </div>
         <div className="bg-white dark:bg-card rounded-[10px] border border-[#E8E7E2] dark:border-border p-4 flex flex-col gap-1.5 shadow-sm">
-          <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 11 }}>Tổng số cuộc hẹn</span>
+          <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 11 }}>{t("kpiTotalMeetings")}</span>
           <span className="text-[#1A1A18] dark:text-foreground font-bold" style={{ fontSize: 20 }}>{totalMeetings}</span>
-          <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 10 }}>Tổng số cuộc họp đã tổ chức trong kỳ</span>
+          <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 10 }}>{t("kpiTotalMeetingsHint")}</span>
         </div>
         <div className="bg-white dark:bg-card rounded-[10px] border border-[#E8E7E2] dark:border-border p-4 flex flex-col gap-1.5 shadow-sm">
-          <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 11 }}>Nhiệm vụ hoàn thành</span>
+          <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 11 }}>{t("kpiTasksDone")}</span>
           <span className="text-[#1A1A18] dark:text-foreground font-bold" style={{ fontSize: 20 }}>{totalTasks}</span>
-          <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 10 }}>Số lượng đầu việc hoàn thành trong kỳ</span>
+          <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 10 }}>{t("kpiTasksDoneHint")}</span>
         </div>
         <div className="bg-white dark:bg-card rounded-[10px] border border-[#E8E7E2] dark:border-border p-4 flex flex-col gap-1.5 shadow-sm">
-          <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 11 }}>Nhiệm vụ trễ hạn (Overdue)</span>
+          <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 11 }}>{t("kpiOverdue")}</span>
           <span className="text-[#D85A30] font-bold" style={{ fontSize: 20 }}>{overduePercent}%</span>
-          <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 10 }}>Cần tập trung giải quyết việc quá hạn</span>
+          <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 10 }}>{t("kpiOverdueHint")}</span>
         </div>
       </div>
 
@@ -112,13 +128,13 @@ export function ActivityReportTab({ startDate, endDate }: ActivityReportTabProps
         {/* Trend Bar Chart */}
         <div className="md:col-span-2">
           <ChartCard
-            title="Xu hướng hoạt động theo tháng"
-            subtitle="Phân bố các loại cuộc gọi, email, họp mặt và nhiệm vụ"
+            title={t("trendTitle")}
+            subtitle={t("trendSubtitle")}
             action={
               !isTrendEmpty && (
                 <div className="flex items-center gap-3 mr-1">
                   {LEGEND.map((l) => (
-                    <div key={l.name} className="flex items-center gap-1">
+                    <div key={l.key} className="flex items-center gap-1">
                       <div className="size-2.5 rounded-sm shrink-0" style={{ background: l.color }} />
                       <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 11 }}>{l.name}</span>
                     </div>
@@ -130,8 +146,8 @@ export function ActivityReportTab({ startDate, endDate }: ActivityReportTabProps
             {isTrendEmpty ? (
               <EmptyState
                 icon={Activity}
-                title="Chưa có hoạt động"
-                description="Chưa ghi nhận hoạt động (Call, Email, Meeting) nào trong khoảng thời gian này."
+                title={t("trendEmptyTitle")}
+                description={t("trendEmptyDescription")}
                 height={240}
               />
             ) : (
@@ -141,10 +157,10 @@ export function ActivityReportTab({ startDate, endDate }: ActivityReportTabProps
                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} width={30} />
                   <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="Calls" stackId="activities" name="Calls" fill="#534AB7" />
-                  <Bar dataKey="Emails" stackId="activities" name="Emails" fill="#7F77DD" />
-                  <Bar dataKey="Meetings" stackId="activities" name="Meetings" fill="#AFA9EC" />
-                  <Bar dataKey="Tasks" stackId="activities" name="Tasks" fill="#1D9E75" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Calls" stackId="activities" name={t("seriesCalls")} fill="#534AB7" />
+                  <Bar dataKey="Emails" stackId="activities" name={t("seriesEmails")} fill="#7F77DD" />
+                  <Bar dataKey="Meetings" stackId="activities" name={t("seriesMeetings")} fill="#AFA9EC" />
+                  <Bar dataKey="Tasks" stackId="activities" name={t("seriesTasks")} fill="#1D9E75" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -153,14 +169,14 @@ export function ActivityReportTab({ startDate, endDate }: ActivityReportTabProps
 
         {/* Task status Donut Chart */}
         <ChartCard
-          title="Trạng thái nhiệm vụ"
-          subtitle="Tỷ lệ hoàn thành công việc được giao"
+          title={t("statusTitle")}
+          subtitle={t("statusSubtitle")}
         >
           {isStatusEmpty ? (
             <EmptyState
               icon={CheckSquare}
-              title="Chưa có nhiệm vụ"
-              description="Không có nhiệm vụ nào được lên lịch hoặc hoàn thành trong khoảng thời gian này."
+              title={t("statusEmptyTitle")}
+              description={t("statusEmptyDescription")}
               height={240}
             />
           ) : (
@@ -180,7 +196,7 @@ export function ActivityReportTab({ startDate, endDate }: ActivityReportTabProps
                       <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name] || "#6B6B67"} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip formatter={(value, name) => [value, statusLabel(String(name))]} />
                 </PieChart>
               </ResponsiveContainer>
 
@@ -190,7 +206,7 @@ export function ActivityReportTab({ startDate, endDate }: ActivityReportTabProps
                   <div key={d.name} className="flex flex-col items-center text-center">
                     <div className="flex items-center gap-1 mb-0.5">
                       <div className="size-2 rounded-full shrink-0" style={{ background: STATUS_COLORS[d.name] || "#6B6B67" }} />
-                      <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 10 }}>{d.name}</span>
+                      <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 10 }}>{statusLabel(d.name)}</span>
                     </div>
                     <span className="text-[#1A1A18] dark:text-foreground font-bold" style={{ fontSize: 12 }}>{d.value}%</span>
                   </div>
