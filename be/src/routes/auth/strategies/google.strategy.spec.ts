@@ -24,35 +24,35 @@ describe('GoogleStrategy', () => {
     photos: [{ value: 'http://photo' }],
   } as unknown as Profile
 
-  it('rejects when the Google email is not verified', async () => {
+  it('rejects when the Google email is not verified', () => {
     const done = jest.fn()
     const profile = {
       ...baseProfile,
       emails: [{ value: 'victim@example.com', verified: false }],
     } as unknown as Profile
 
-    await strategy.validate('token', 'refresh', profile, done)
+    strategy.validate('token', 'refresh', profile, done)
 
     expect(done).toHaveBeenCalledWith(expect.any(UnauthorizedException), false)
   })
 
-  it('rejects when there is no email at all', async () => {
+  it('rejects when there is no email at all', () => {
     const done = jest.fn()
     const profile = { ...baseProfile, emails: [] } as unknown as Profile
 
-    await strategy.validate('token', 'refresh', profile, done)
+    strategy.validate('token', 'refresh', profile, done)
 
     expect(done).toHaveBeenCalledWith(expect.any(UnauthorizedException), false)
   })
 
-  it('accepts a verified email and passes it through', async () => {
+  it('accepts a verified email and passes it through', () => {
     const done = jest.fn()
     const profile = {
       ...baseProfile,
       emails: [{ value: 'user@example.com', verified: true }],
     } as unknown as Profile
 
-    await strategy.validate('token', 'refresh', profile, done)
+    strategy.validate('token', 'refresh', profile, done)
 
     expect(done).toHaveBeenCalledWith(null, expect.objectContaining({ email: 'user@example.com', emailVerified: true }))
   })

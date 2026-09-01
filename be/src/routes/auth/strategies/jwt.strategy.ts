@@ -15,7 +15,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     })
   }
 
-  async validate(payload: AccessTokenPayloadCreate) {
+  validate(payload: AccessTokenPayloadCreate) {
+    // @nestjs/passport awaits the return value, so a plain object is fine —
+    // no `async` needed since there is nothing to await.
     return { userId: payload.userId, role: payload.role, tenantId: payload.tenantId }
   }
 }

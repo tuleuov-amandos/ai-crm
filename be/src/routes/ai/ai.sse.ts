@@ -127,13 +127,20 @@ export function initAiSseBridge(): Redis {
 
   sub.on('error', (err) => log.warn('SSE bridge subscriber error', err))
 
-  sub.subscribe(SSE_BRIDGE_CHANNEL, (err) => {
-    if (err) {
-      log.error(`Failed to subscribe to ${SSE_BRIDGE_CHANNEL}`, err.stack)
-    } else {
-      log.log(`AI SSE bridge active on channel "${SSE_BRIDGE_CHANNEL}"`)
-    }
-  })
+  sub
+    .subscribe(SSE_BRIDGE_CHANNEL, (err) => {
+      if (err) {
+        log.error(`Failed to subscribe to ${SSE_BRIDGE_CHANNEL}`, err.stack)
+      } else {
+        log.log(`AI SSE bridge active on channel "${SSE_BRIDGE_CHANNEL}"`)
+      }
+    })
+    .catch((err) => {
+      // ioredis also rejects the returned promise on a subscribe failure; the
+      // callback above logs the details, this keeps the rejection from becoming
+      // an unhandled promise. The `error` listener above handles reconnects.
+      log.error(`Failed to subscribe to ${SSE_BRIDGE_CHANNEL}`, err instanceof Error ? err.stack : String(err))
+    })
 
   sub.on('message', (channel, raw) => {
     if (channel !== SSE_BRIDGE_CHANNEL) return

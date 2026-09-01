@@ -164,15 +164,17 @@ export function startAiWorker(): Worker {
         if (error.code === 'OPENAI_TIMEOUT') {
           jobLog.error({ reason: 'OPENAI_TIMEOUT', err: error.raw }, 'OpenAI timeout')
           reason = 'OPENAI_TIMEOUT'
-          try {
-            publishAiEvent(tenantId, dealId, 'ai-error', {
-              message: 'Phân tích AI mất quá nhiều thời gian. Vui lòng thử lại.',
-              jobId,
-              reason,
-            })
-          } catch (e) {
+          // Fire-and-forget: this is the remote (Redis Pub/Sub) publisher, so it
+          // returns a promise. A failed notify must not mask the original AI
+          // error we are about to rethrow — just log it. The job still fails and
+          // BullMQ will surface it.
+          publishAiEvent(tenantId, dealId, 'ai-error', {
+            message: 'Phân tích AI mất quá nhiều thời gian. Vui lòng thử lại.',
+            jobId,
+            reason,
+          }).catch((e) => {
             jobLog.error({ err: e }, 'Failed to publish SSE ai-error for timeout')
-          }
+          })
           throw new Error(reason)
         }
 
@@ -180,72 +182,67 @@ export function startAiWorker(): Worker {
           jobLog.error({ status, reason: 'OPENAI_AUTH_ERROR', message: error.message }, 'OpenAI auth error')
           Sentry.captureException(err, { tags: { area: 'ai-processor', jobId, dealId, reason: 'OPENAI_AUTH_ERROR' } })
           reason = 'OPENAI_AUTH_ERROR'
-          try {
-            publishAiEvent(tenantId, dealId, 'ai-error', {
-              message: 'Dịch vụ AI tạm thời không khả dụng. Vui lòng liên hệ admin.',
-              jobId,
-              reason,
-            })
-          } catch (e) {
+          publishAiEvent(tenantId, dealId, 'ai-error', {
+            message: 'Dịch vụ AI tạm thời không khả dụng. Vui lòng liên hệ admin.',
+            jobId,
+            reason,
+          }).catch((e) => {
             jobLog.error({ err: e }, 'Failed to publish SSE ai-error for auth')
-          }
+          })
           throw new Error(reason)
         }
 
         if (status === 429) {
           jobLog.warn({ status, reason: 'OPENAI_RATE_LIMIT' }, 'OpenAI rate limit')
           reason = 'OPENAI_RATE_LIMIT'
-          try {
-            publishAiEvent(tenantId, dealId, 'ai-error', {
-              message: 'Dịch vụ AI tạm thời không khả dụng. Vui lòng thử lại sau vài phút.',
-              jobId,
-              reason,
-            })
-          } catch (e) {
+          publishAiEvent(tenantId, dealId, 'ai-error', {
+            message: 'Dịch vụ AI tạm thời không khả dụng. Vui lòng thử lại sau vài phút.',
+            jobId,
+            reason,
+          }).catch((e) => {
             jobLog.error({ err: e }, 'Failed to publish SSE ai-error for rate limit')
-          }
+          })
           throw new Error(reason)
         }
 
         jobLog.error({ message: error.message, details: error.details }, 'OpenAI parse/response error')
         Sentry.captureException(err, { tags: { area: 'ai-processor', jobId, dealId, reason: String(reason) } })
-        try {
-          publishAiEvent(tenantId, dealId, 'ai-error', {
-            message: 'Dịch vụ AI tạm thời không khả dụng. Vui lòng thử lại.',
-            jobId,
-            reason,
-          })
-        } catch (e) {
+        publishAiEvent(tenantId, dealId, 'ai-error', {
+          message: 'Dịch vụ AI tạm thời không khả dụng. Vui lòng thử lại.',
+          jobId,
+          reason,
+        }).catch((e) => {
           jobLog.error({ err: e }, 'Failed to publish SSE ai-error for generic OpenAI error')
-        }
+        })
         throw err
       }
 
       try {
         await saveAiResultAtomic(prisma, aiResult, jobId, tenantId, dealId, meetingNote)
         await connection.incr(`cache:tenant_version:${tenantId}`)
-        // publish ai-complete to any SSE subscribers
-        try {
-          publishAiEvent(tenantId, dealId, 'ai-complete', {
-            tasks: aiResult.tasks ?? [],
-            emailDraft: aiResult.emailDraft ?? null,
-            summary: aiResult.summary ?? null,
-            jobId,
-          })
-        } catch (e) {
+        // Publish ai-complete to any SSE subscribers. The DB write already
+        // succeeded, so a failed notify is non-fatal — the client will still get
+        // the result on its next poll/refetch. Log it and let the job succeed.
+        publishAiEvent(tenantId, dealId, 'ai-complete', {
+          tasks: aiResult.tasks ?? [],
+          emailDraft: aiResult.emailDraft ?? null,
+          summary: aiResult.summary ?? null,
+          jobId,
+        }).catch((e) => {
           jobLog.error({ err: e }, 'Failed to publish SSE ai-complete')
-        }
+        })
 
         jobLog.info({ taskCount: aiResult.tasks?.length ?? 0 }, 'AI job completed')
         return { ok: true }
       } catch (err) {
         jobLog.error({ err }, 'DB transaction failed')
         Sentry.captureException(err, { tags: { area: 'ai-processor', jobId, dealId, reason: 'DB_TRANSACTION_FAILED' } })
-        try {
-          publishAiEvent(tenantId, dealId, 'ai-error', { message: 'Lưu kết quả AI thất bại. Vui lòng thử lại.', jobId })
-        } catch (e) {
+        publishAiEvent(tenantId, dealId, 'ai-error', {
+          message: 'Lưu kết quả AI thất bại. Vui lòng thử lại.',
+          jobId,
+        }).catch((e) => {
           jobLog.error({ err: e }, 'Failed to publish SSE ai-error')
-        }
+        })
         throw new Error(`DB transaction failed: ${String((err as Error).message || err)}`)
       }
     },

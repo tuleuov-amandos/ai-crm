@@ -6,7 +6,7 @@ import envConfig from '../config'
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private redis: Redis
 
-  async onModuleInit() {
+  onModuleInit() {
     const useTls = envConfig.REDIS_TLS === 'true'
     this.redis = new Redis({
       host: envConfig.REDIS_HOST,
@@ -24,8 +24,10 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     })
   }
 
-  async onModuleDestroy() {
-    await this.redis.disconnect()
+  onModuleDestroy() {
+    // ioredis `disconnect()` is synchronous (immediate socket close), so there
+    // is nothing to await here.
+    this.redis.disconnect()
   }
 
   getClient(): Redis {
