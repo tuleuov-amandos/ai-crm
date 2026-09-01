@@ -10,13 +10,17 @@ export type ContactTagType  = typeof ContactTagConst [keyof typeof ContactTagCon
 // ─────────────────────────────────────────
 // BASE SCHEMAS — Not used directly as Res/Body
 // ─────────────────────────────────────────
+// NOTE: form-facing validation messages live in the component-local
+// buildContactFormSchema(tv) factory (ContactForm). This schema is used only for
+// its inferred types, so it carries no user-facing messages. The "Tiềm năng" tag
+// value below is a backend enum literal, not translatable copy.
 const ContactBaseSchema = z.object({
   id: z.string(),
   tenantId: z.string(),
-  name: z.string().min(2, "Tên liên hệ phải có ít nhất 2 ký tự").max(100, "Tên liên hệ không được vượt quá 100 ký tự"),
+  name: z.string().min(2).max(100),
   email: z
     .string()
-    .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Email không hợp lệ.")
+    .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
     .optional()
     .nullable(),
   phone: z.string().optional().nullable(),
@@ -60,9 +64,7 @@ export type Contact = z.infer<typeof CreateContactResSchema>;
 // ─────────────────────────────────────────
 export const UpdateContactBodySchema = CreateContactBodySchema
   .partial()
-  .refine((data) => Object.keys(data).length > 0, {
-    message: "Ít nhất phải có một trường được cập nhật",
-  });
+  .refine((data) => Object.keys(data).length > 0);
 
 export const UpdateContactResSchema = CreateContactResSchema; // returns same as Create
 

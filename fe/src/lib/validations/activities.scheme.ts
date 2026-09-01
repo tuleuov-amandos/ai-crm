@@ -85,11 +85,14 @@ export const GetActivitiesParamsSchema = z.object({
 export type GetActivitiesParamsType = z.infer<typeof GetActivitiesParamsSchema>;
 
 // ─── CREATE FOR CONTACT — POST /contacts/:contactId/activities ────────────────
+// NOTE: form-facing validation messages live in the component-local
+// buildSchema(tv) factories (ActivityForm, LogActivityForm). The schemas below
+// are used only for their inferred types, so they carry no user-facing messages.
 export const CreateActivityForContactBodySchema = z
   .object({
     type: ActivityTypeEnum,
     title: z.string().nullable().optional(),
-    note: z.string().min(1, "Nội dung không được để trống"),
+    note: z.string().min(1),
     date: z.coerce.date().optional(),
   })
   .strict();
@@ -103,7 +106,7 @@ export const CreateActivityForDealBodySchema = z
   .object({
     type: ActivityTypeEnum,
     title: z.string().nullable().optional(),
-    note: z.string().min(1, "Nội dung không được để trống"),
+    note: z.string().min(1),
     date: z.coerce.date().optional(),
     contactId: z.string().optional(),
   })
@@ -119,13 +122,11 @@ export const UpdateActivityBodySchema = z
   .object({
     type: ActivityTypeEnum.optional(),
     title: z.string().nullable().optional(),
-    note: z.string().min(1, "Nội dung không được để trống").optional(),
+    note: z.string().min(1).optional(),
     date: z.coerce.date().optional(),
   })
   .strict()
-  .refine((data) => Object.keys(data).length > 0, {
-    message: "Ít nhất phải có một trường được cập nhật",
-  });
+  .refine((data) => Object.keys(data).length > 0);
 
 export type UpdateActivityBodyType = z.infer<typeof UpdateActivityBodySchema>;
 
@@ -134,7 +135,7 @@ export type UpdateActivityBodyType = z.infer<typeof UpdateActivityBodySchema>;
 export const ActivityFormSchema = z.object({
   type: ActivityTypeEnum,
   title: z.string().nullable().optional(),
-  note: z.string().min(1, "Nội dung không được để trống"),
+  note: z.string().min(1),
   date: z.date().optional(),
 });
 

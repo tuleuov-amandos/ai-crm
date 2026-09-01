@@ -325,6 +325,15 @@
       "toasts": {
         "dealUpdated": "Deal updated"
       }
+    },
+    "toasts": {
+      "createSuccess": "Deal created",
+      "createError": "Couldn't create deal",
+      "updateSuccess": "Deal updated",
+      "updateError": "Couldn't update deal",
+      "stageError": "Couldn't move deal",
+      "deleteSuccess": "Deal deleted",
+      "deleteError": "Couldn't delete deal"
     }
   },
   "contacts": {
@@ -499,6 +508,14 @@
         "row1DealNote": "Customer wants to launch as soon as possible",
         "row2Name": "Jane Doe"
       }
+    },
+    "toasts": {
+      "createSuccess": "Contact created",
+      "createError": "Couldn't create contact",
+      "updateSuccess": "Changes saved",
+      "updateError": "Couldn't save changes",
+      "deleteSuccess": "Contact deleted",
+      "deleteError": "Couldn't delete contact"
     }
   },
   "activities": {
@@ -581,6 +598,14 @@
       "validation": {
         "noteRequired": "Content cannot be empty"
       }
+    },
+    "toasts": {
+      "createSuccess": "Activity added",
+      "createError": "Couldn't add activity",
+      "updateSuccess": "Activity updated",
+      "updateError": "Couldn't update activity",
+      "deleteSuccess": "Activity deleted",
+      "deleteError": "Couldn't delete activity"
     }
   },
   "reports": {
@@ -849,7 +874,13 @@
       "emailRequired": "Please enter an email address",
       "deleteMemberTitle": "Remove member from workspace",
       "deleteMemberBody": "Are you sure you want to remove this member from the workspace? All their access will be revoked immediately.",
-      "confirmDelete": "Confirm deletion"
+      "confirmDelete": "Confirm deletion",
+      "toasts": {
+        "updateSuccess": "Member updated",
+        "updateError": "Couldn't update the member.",
+        "deleteSuccess": "Member removed from the workspace",
+        "deleteError": "Couldn't remove the member."
+      }
     },
     "invitations": {
       "copyToast": "Invitation link copied",
@@ -880,7 +911,15 @@
       "emailPlaceholder": "name@company.com",
       "editRoleLabel": "Role",
       "editNote": "* Note: editing generates a new token link and invalidates the old one. A new activation email is sent to this address automatically.",
-      "emailRequired": "Please enter an email address"
+      "emailRequired": "Please enter an email address",
+      "toasts": {
+        "sendSuccess": "Invitation sent",
+        "sendError": "Couldn't send the invitation. Please try again.",
+        "revokeSuccess": "Invitation revoked",
+        "revokeError": "Couldn't revoke the invitation.",
+        "updateSuccess": "Invitation updated and email resent",
+        "updateError": "Couldn't update the invitation."
+      }
     }
   },
   "auditLogs": {
