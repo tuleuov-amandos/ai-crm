@@ -3,7 +3,6 @@ import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -96,16 +95,19 @@ export function EditDealSheet({ deal, open, onOpenChange }: Props) {
   const onSubmit = (values: FormValues) => {
     if (!deal) return;
     
-    updateDeal.mutate({
-      title:   values.title,
-      ownerId: values.ownerId,
-      value:   values.value,
-      closeDate: values.closeDate ? new Date(values.closeDate) : undefined,
-      note:    values.note,
-    });
-
-    toast.success(t("toasts.dealUpdated"));
-    onOpenChange(false);
+    updateDeal.mutate(
+      {
+        title:   values.title,
+        ownerId: values.ownerId,
+        value:   values.value,
+        closeDate: values.closeDate ? new Date(values.closeDate) : undefined,
+        note:    values.note,
+      },
+      {
+        // Success toast is owned by useUpdateDeal's onSuccess; only close on success
+        onSuccess: () => onOpenChange(false),
+      },
+    );
   };
 
 

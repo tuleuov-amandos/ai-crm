@@ -322,9 +322,6 @@
         "ownerRequired": "Выберите ответственного",
         "valueNonNegative": "Стоимость не может быть отрицательной",
         "stageRequired": "Выберите этап"
-      },
-      "toasts": {
-        "dealUpdated": "Сделка обновлена"
       }
     },
     "toasts": {

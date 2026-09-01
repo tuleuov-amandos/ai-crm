@@ -322,9 +322,6 @@
         "ownerRequired": "Please select an owner",
         "valueNonNegative": "Value cannot be negative",
         "stageRequired": "Please select a stage"
-      },
-      "toasts": {
-        "dealUpdated": "Deal updated"
       }
     },
     "toasts": {
