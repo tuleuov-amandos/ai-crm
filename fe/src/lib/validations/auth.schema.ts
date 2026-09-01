@@ -1,13 +1,16 @@
 import z from "zod";
 
+// Сообщения валидации хранятся как ключи i18n (namespace `auth.validation`).
+// Готовый текст резолвится на стороне компонента: `t(errors.<field>.message)`.
+// Тот же паттерн, что и getPasswordStrength в register/page.tsx.
 export const UserSchema = z.object({
   id: z.string(),
   tenantId: z.string(),
-  email: z.string().regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Email không hợp lệ."), 
-  name: z.string().min(2, "Tên phải có ít nhất 2 ký tự.").max(80, "Tên không được vượt quá 80 ký tự."),
+  email: z.string().regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "emailInvalid"),
+  name: z.string().min(2, "nameMin").max(80, "nameMax"),
   role: z.enum(["ADMIN", "MANAGER", "SALES_REP"]),
-  password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự.").regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/,
-    "Phải có chữ hoa, chữ thường, số và ký tự đặc biệt"
+  password: z.string().min(8, "passwordMin").regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/,
+    "passwordComplexity"
   ),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
@@ -23,13 +26,13 @@ export const RegisterBodySchema = UserSchema.pick({
   password: true,
   name: true,
 }).extend({
-  confirmPassword: z.string().min(8, "Mật khẩu xác nhận phải có ít nhất 8 ký tự."),
-  companyName: z.string().min(2, "Tên công ty phải có ít nhất 2 ký tự.").max(100, "Tên công ty không được vượt quá 100 ký tự."),
+  confirmPassword: z.string().min(8, "confirmPasswordMin"),
+  companyName: z.string().min(2, "companyNameMin").max(100, "companyNameMax"),
 }).strict().superRefine(({ password, confirmPassword }, ctx) => {
   if (password !== confirmPassword) {
     ctx.addIssue({
       code: 'custom',
-      message: 'Mật khẩu xác nhận không khớp.',
+      message: 'passwordMismatch',
       path: ["confirmPassword"],
     })
   }

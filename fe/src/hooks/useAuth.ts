@@ -3,11 +3,13 @@ import { LoginBodyType, RegisterBodyType } from "@/lib/validations/auth.schema";
 import { authService } from "@/services/auth.service";
 import { ApiError } from "@/types/error.type";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 export const useLogin = () => {
   const router = useRouter();
+  const t = useTranslations("auth.toasts");
 
   return useMutation({
     mutationFn: (data: LoginBodyType) => {
@@ -15,12 +17,12 @@ export const useLogin = () => {
     },
 
     onSuccess: () => {
-      toast.success("Đăng nhập thành công");
+      toast.success(t("loginSuccess"));
       router.push("/dashboard");
     },
 
     onError: (error: ApiError) => {
-      const message = error.response?.data.message || "Đăng nhập thất bại";
+      const message = error.response?.data.message || t("loginError");
       // let message = "Login failed";
 
       // if (typeof data?.message === "string") {
@@ -36,13 +38,14 @@ export const useLogin = () => {
 
 export const useLogout = () => {
   const router = useRouter();
+  const t = useTranslations("auth.toasts");
 
   return useMutation({
     mutationFn: () => {
       return authService.logout();
     },
     onSuccess: () => {
-      toast.success("Đăng xuất thành công");
+      toast.success(t("logoutSuccess"));
       router.push("/login");
     },
   });
@@ -50,16 +53,17 @@ export const useLogout = () => {
 
 export const useRegister = () => {
   const router = useRouter();
+  const t = useTranslations("auth.toasts");
   return useMutation({
     mutationFn: (data: RegisterBodyType) => {
       return authService.register(data);
     },
     onSuccess: () => {
-      toast.success("Đăng ký thành công. Vui lòng đăng nhập.");
+      toast.success(t("registerSuccess"));
       router.push("/login");
     },
     onError: (error: ApiError) => {
-      const message = error?.response?.data?.message || "Đăng ký thất bại";
+      const message = error?.response?.data?.message || t("registerError");
       toast.error(message);
     },
   });

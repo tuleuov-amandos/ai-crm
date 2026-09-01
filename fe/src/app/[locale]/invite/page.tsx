@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2, AlertCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { toast } from "sonner";
 import { SalesFlowLogo } from "@/components/SalesFlowLogo";
 
 function InviteContent() {
+  const t = useTranslations("auth.invite");
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -35,7 +37,7 @@ function InviteContent() {
 
   useEffect(() => {
     if (!token) {
-      setVerifyError("Link mời không hợp lệ. Vui lòng kiểm tra lại token.");
+      setVerifyError(t("errorNoToken"));
       setVerifying(false);
       return;
     }
@@ -46,7 +48,7 @@ function InviteContent() {
         setInviteData(data);
       } catch (err) {
         const error = err as { response?: { data?: { message?: string } } };
-        const msg = error.response?.data?.message || "Lời mời không hợp lệ hoặc đã hết hạn.";
+        const msg = error.response?.data?.message || t("errorInvalidOrExpired");
         setVerifyError(msg);
       } finally {
         setVerifying(false);
@@ -54,24 +56,24 @@ function InviteContent() {
     };
 
     checkToken();
-  }, [token]);
+  }, [token, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
     if (!form.name.trim()) {
-      setFormError("Vui lòng nhập họ và tên của bạn.");
+      setFormError(t("errorNameRequired"));
       return;
     }
 
     if (form.password.length < 6) {
-      setFormError("Mật khẩu phải chứa ít nhất 6 ký tự.");
+      setFormError(t("errorPasswordTooShort"));
       return;
     }
 
     if (form.password !== form.confirmPassword) {
-      setFormError("Mật khẩu xác nhận không trùng khớp.");
+      setFormError(t("errorPasswordMismatch"));
       return;
     }
 
@@ -85,11 +87,11 @@ function InviteContent() {
         confirmPassword: form.confirmPassword,
       });
 
-      toast.success("Kích hoạt tài khoản thành công! Đang chuyển hướng...");
+      toast.success(t("successActivated"));
       router.push("/");
     } catch (err) {
       const error = err as { response?: { data?: { message?: string } } };
-      const msg = error.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại.";
+      const msg = error.response?.data?.message || t("errorRegisterFailed");
       setFormError(msg);
       setSubmitting(false);
     }
@@ -105,8 +107,8 @@ function InviteContent() {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center" style={{ minHeight: 320 }}>
         <Loader2 size={32} className="animate-spin text-[#534AB7] mb-4" />
-        <p className="text-[#1A1A18] font-medium" style={{ fontSize: 15 }}>Đang xác thực liên kết mời...</p>
-        <p className="text-[#6B6B67] mt-1" style={{ fontSize: 13 }}>Vui lòng đợi trong giây lát</p>
+        <p className="text-[#1A1A18] font-medium" style={{ fontSize: 15 }}>{t("verifying")}</p>
+        <p className="text-[#6B6B67] mt-1" style={{ fontSize: 13 }}>{t("verifyingHint")}</p>
       </div>
     );
   }
@@ -117,16 +119,16 @@ function InviteContent() {
         <div className="size-12 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: "#FEE2E2" }}>
           <AlertCircle size={22} className="text-[#DC2626]" />
         </div>
-        <h2 className="text-[#1A1A18] mb-2" style={{ fontSize: 16, fontWeight: 600 }}>Liên kết không khả dụng</h2>
+        <h2 className="text-[#1A1A18] mb-2" style={{ fontSize: 16, fontWeight: 600 }}>{t("errorTitle")}</h2>
         <p className="text-[#6B6B67] mb-6 max-w-[320px] mx-auto" style={{ fontSize: 13, lineHeight: 1.5 }}>
-          {verifyError || "Lời mời đã bị thu hồi hoặc đã hết hiệu lực kích hoạt."}
+          {verifyError || t("errorDefault")}
         </p>
         <Button
           onClick={() => router.push("/login")}
           className="w-full h-10 rounded-[10px] bg-[#534AB7] hover:bg-[#4840A0] text-white"
           style={{ fontSize: 13 }}
         >
-          Quay lại trang Đăng nhập
+          {t("backToLogin")}
         </Button>
       </div>
     );
@@ -138,13 +140,16 @@ function InviteContent() {
       <div className="p-6 pb-4 border-b border-[#E8E7E2]" style={{ background: "linear-gradient(180deg, #F9F8FD 0%, #FFFFFF 100%)" }}>
         <div className="flex items-center gap-1.5 px-3 py-1 rounded-full mb-3 w-fit" style={{ background: "#EEEDFE", border: "1px solid #D1CFED" }}>
           <Sparkles size={11} className="text-[#534AB7]" />
-          <span className="text-[#534AB7] font-semibold" style={{ fontSize: 10 }}>THAM GIA WORKSPACE</span>
+          <span className="text-[#534AB7] font-semibold" style={{ fontSize: 10 }}>{t("badge")}</span>
         </div>
         <h2 className="text-[#1A1A18] tracking-tight" style={{ fontSize: 18, fontWeight: 600 }}>
-          Gia nhập {inviteData.companyName}
+          {t("title", { companyName: inviteData.companyName })}
         </h2>
         <p className="text-[#6B6B67] mt-1" style={{ fontSize: 13, lineHeight: 1.4 }}>
-          Bạn được mời làm <span className="font-semibold text-[#534AB7]">{getRoleLabel(inviteData.role)}</span>. Thiết lập mật khẩu để tham gia.
+          {t.rich("invitedAs", {
+            roleName: getRoleLabel(inviteData.role),
+            role: (chunks) => <span className="font-semibold text-[#534AB7]">{chunks}</span>,
+          })}
         </p>
       </div>
 
@@ -158,7 +163,7 @@ function InviteContent() {
 
         {/* Email - Prefilled & Disabled */}
         <div className="space-y-1.5">
-          <Label className="text-[#6B6B67]" style={{ fontSize: 12, fontWeight: 500 }}>Địa chỉ Email của bạn</Label>
+          <Label className="text-[#6B6B67]" style={{ fontSize: 12, fontWeight: 500 }}>{t("emailLabel")}</Label>
           <Input
             type="email"
             value={inviteData.email}
@@ -170,11 +175,11 @@ function InviteContent() {
 
         {/* Name */}
         <div className="space-y-1.5">
-          <Label htmlFor="name" className="text-[#6B6B67]" style={{ fontSize: 12, fontWeight: 500 }}>Họ và tên</Label>
+          <Label htmlFor="name" className="text-[#6B6B67]" style={{ fontSize: 12, fontWeight: 500 }}>{t("fullNameLabel")}</Label>
           <Input
             id="name"
             type="text"
-            placeholder="Nguyễn Văn A"
+            placeholder={t("fullNamePlaceholder")}
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             className="h-10 rounded-[10px] border-[#E8E7E2] text-[#1A1A18] focus-visible:ring-[#534AB7]/30 focus-visible:border-[#534AB7]"
@@ -185,12 +190,12 @@ function InviteContent() {
 
         {/* Password */}
         <div className="space-y-1.5">
-          <Label htmlFor="password" className="text-[#6B6B67]" style={{ fontSize: 12, fontWeight: 500 }}>Mật khẩu mới</Label>
+          <Label htmlFor="password" className="text-[#6B6B67]" style={{ fontSize: 12, fontWeight: 500 }}>{t("newPasswordLabel")}</Label>
           <div className="relative flex items-center">
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
-              placeholder="Tối thiểu 6 ký tự"
+              placeholder={t("newPasswordPlaceholder")}
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               className="h-10 pr-10 rounded-[10px] border-[#E8E7E2] text-[#1A1A18] focus-visible:ring-[#534AB7]/30 focus-visible:border-[#534AB7]"
@@ -209,11 +214,11 @@ function InviteContent() {
 
         {/* Confirm Password */}
         <div className="space-y-1.5">
-          <Label htmlFor="confirmPassword" className="text-[#6B6B67]" style={{ fontSize: 12, fontWeight: 500 }}>Nhập lại mật khẩu</Label>
+          <Label htmlFor="confirmPassword" className="text-[#6B6B67]" style={{ fontSize: 12, fontWeight: 500 }}>{t("confirmPasswordLabel")}</Label>
           <Input
             id="confirmPassword"
             type="password"
-            placeholder="Nhập lại mật khẩu mới"
+            placeholder={t("confirmPasswordPlaceholder")}
             value={form.confirmPassword}
             onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
             className="h-10 rounded-[10px] border-[#E8E7E2] text-[#1A1A18] focus-visible:ring-[#534AB7]/30 focus-visible:border-[#534AB7]"
@@ -232,10 +237,10 @@ function InviteContent() {
           {submitting ? (
             <>
               <Loader2 size={14} className="animate-spin mr-2" />
-              Đang thiết lập...
+              {t("submitting")}
             </>
           ) : (
-            "Kích hoạt tài khoản & Đăng nhập"
+            t("submit")
           )}
         </Button>
       </form>
@@ -244,6 +249,8 @@ function InviteContent() {
 }
 
 export default function InvitePage() {
+  const t = useTranslations("auth.invite");
+  const tc = useTranslations("auth.shared");
   return (
     <div
       className="min-h-svh flex flex-col items-center justify-center px-4 py-16 bg-[#F8F8F7]"
@@ -266,7 +273,7 @@ export default function InvitePage() {
             fallback={
               <div className="flex flex-col items-center justify-center p-8 text-center" style={{ minHeight: 320 }}>
                 <Loader2 size={32} className="animate-spin text-[#534AB7] mb-4" />
-                <p style={{ fontSize: 14, color: "#6B6B67" }}>Đang tải...</p>
+                <p style={{ fontSize: 14, color: "#6B6B67" }}>{t("loading")}</p>
               </div>
             }
           >
@@ -276,7 +283,7 @@ export default function InvitePage() {
       </div>
 
       <p className="mt-12 text-[#9B9B96]" style={{ fontSize: 12 }}>
-        © 2025 SalesFlow · All rights reserved.
+        {tc("copyright", { year: "2026" })}
       </p>
     </div>
   );

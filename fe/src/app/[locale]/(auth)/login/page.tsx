@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,6 +17,9 @@ import { toast } from "sonner";
 import { SalesFlowLogo } from "@/components/SalesFlowLogo";
 
 const LoginPage = () => {
+  const t = useTranslations("auth.login");
+  const tc = useTranslations("auth.shared");
+  const tv = useTranslations("auth.validation");
   const { mutate: login, isPending } = useLogin();
   const [showPassword, setShowPassword] = useState(false);
   const [ssoStep, setSsoStep] = useState<"none" | "email" | "loading">("none");
@@ -41,24 +45,20 @@ const LoginPage = () => {
   const handleSsoSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!ssoEmail) {
-      setSsoError("Vui lòng nhập địa chỉ email doanh nghiệp.");
+      setSsoError(t("errorEmailRequired"));
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ssoEmail)) {
-      setSsoError("Địa chỉ email không hợp lệ.");
+      setSsoError(t("errorEmailInvalid"));
       return;
     }
     setSsoError("");
     setSsoStep("loading");
 
     setTimeout(() => {
-      toast.info(
-        `[Mock SSO] Phát hiện tên miền "${
-          ssoEmail.split("@")[1]
-        }". Đang kết nối tới Okta...`
-      );
+      toast.info(t("mockSsoConnecting", { domain: ssoEmail.split("@")[1] }));
       setTimeout(() => {
-        toast.success("Đăng nhập SSO thành công! (Đây là luồng giao diện mẫu)");
+        toast.success(t("mockSsoSuccess"));
         setSsoStep("none");
         setSsoEmail("");
       }, 2000);
@@ -82,14 +82,14 @@ const LoginPage = () => {
               className="tracking-[-0.03em] text-foreground"
               style={{ fontSize: 22, fontWeight: 600, lineHeight: 1.3 }}
             >
-              {ssoStep === "none" ? "Đăng nhập vào workspace" : "Đăng nhập với SSO"}
+              {ssoStep === "none" ? t("titleDefault") : t("titleSso")}
             </h1>
             <p className="text-muted-foreground" style={{ fontSize: 14 }}>
               {ssoStep === "none"
-                ? "Chào mừng bạn trở lại SalesFlow"
+                ? t("subtitleDefault")
                 : ssoStep === "email"
-                ? "Sử dụng tài khoản Identity Provider (IdP) của công ty"
-                : "Đang xác thực thông tin cấu hình SSO..."}
+                ? t("subtitleSsoEmail")
+                : t("subtitleSsoLoading")}
             </p>
           </div>
         </div>
@@ -113,21 +113,21 @@ const LoginPage = () => {
                     className="text-muted-foreground"
                     style={{ fontSize: 12, fontWeight: 500 }}
                   >
-                    Email
+                    {tc("emailLabel")}
                   </Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="ten@congty.vn"
+                    placeholder={tc("emailPlaceholder")}
                     autoComplete="email"
                     autoFocus
                     className="h-9"
                     aria-invalid={!!errors.email}
                     {...register("email")}
                   />
-                  {errors.email && (
+                  {errors.email?.message && (
                     <p className="text-destructive" style={{ fontSize: 12 }}>
-                      {errors.email.message}
+                      {tv(errors.email.message)}
                     </p>
                   )}
                 </div>
@@ -140,14 +140,14 @@ const LoginPage = () => {
                       className="text-muted-foreground"
                       style={{ fontSize: 12, fontWeight: 500 }}
                     >
-                      Mật khẩu
+                      {tc("passwordLabel")}
                     </Label>
                     <button
                       type="button"
                       className="text-primary hover:underline underline-offset-2 transition-colors"
                       style={{ fontSize: 12, fontWeight: 400 }}
                     >
-                      Quên mật khẩu?
+                      {t("forgotPassword")}
                     </button>
                   </div>
                   <div className="relative">
@@ -172,9 +172,9 @@ const LoginPage = () => {
                       )}
                     </button>
                   </div>
-                  {errors.password && (
+                  {errors.password?.message && (
                     <p className="text-destructive" style={{ fontSize: 12 }}>
-                      {errors.password.message}
+                      {tv(errors.password.message)}
                     </p>
                   )}
                 </div>
@@ -185,7 +185,7 @@ const LoginPage = () => {
                   disabled={isPending}
                 >
                   {isPending && <Loader2 className="size-4 animate-spin" />}
-                  {isPending ? "Đang đăng nhập..." : "Đăng nhập"}
+                  {isPending ? t("submitting") : t("submit")}
                 </Button>
               </form>
 
@@ -197,7 +197,7 @@ const LoginPage = () => {
                     className="bg-card px-3 text-muted-foreground"
                     style={{ fontSize: 12 }}
                   >
-                    hoặc
+                    {tc("or")}
                   </span>
                 </div>
               </div>
@@ -228,20 +228,20 @@ const LoginPage = () => {
                       d="M12 24c3.24 0 5.97-1.075 7.96-2.925l-3.68-2.855c-1.025.688-2.337 1.1-4.28 1.1-3.275 0-6.046-2.212-7.034-5.182L.95 17.275C2.918 21.32 7.127 24 12 24z"
                     />
                   </svg>
-                  <span>Tiếp tục với Google</span>
+                  <span>{t("continueWithGoogle")}</span>
                 </Button>
               </div>
 
               {/* Sign-up link */}
               <div className="px-6 py-5 text-center">
                 <p className="text-muted-foreground" style={{ fontSize: 13 }}>
-                  Chưa có tài khoản?{" "}
+                  {t("noAccountQuestion")}{" "}
                   <Link
                     href="/register"
                     className="text-primary hover:underline underline-offset-2 transition-colors"
                     style={{ fontWeight: 500 }}
                   >
-                    Tạo workspace mới
+                    {t("createWorkspace")}
                   </Link>
                 </p>
               </div>
@@ -256,12 +256,12 @@ const LoginPage = () => {
                   className="text-muted-foreground"
                   style={{ fontSize: 12, fontWeight: 500 }}
                 >
-                  Email công ty
+                  {t("ssoEmailLabel")}
                 </Label>
                 <Input
                   id="sso-email"
                   type="email"
-                  placeholder="nhanvien@samsung.com"
+                  placeholder={t("ssoEmailPlaceholder")}
                   value={ssoEmail}
                   onChange={(e) => setSsoEmail(e.target.value)}
                   autoFocus
@@ -279,7 +279,7 @@ const LoginPage = () => {
                 type="submit"
                 className="w-full h-9 hover:bg-primary/90 transition-colors cursor-pointer"
               >
-                Tiếp tục với SSO
+                {t("ssoContinue")}
               </Button>
 
               <button
@@ -291,7 +291,7 @@ const LoginPage = () => {
                   setSsoError("");
                 }}
               >
-                Quay lại đăng nhập thường
+                {t("ssoBack")}
               </button>
             </form>
           )}
@@ -301,10 +301,10 @@ const LoginPage = () => {
               <Loader2 className="size-8 animate-spin text-primary" />
               <div className="text-center space-y-1">
                 <p className="font-medium text-foreground text-sm">
-                  Đang kiểm tra miền doanh nghiệp...
+                  {t("ssoCheckingDomain")}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Domain: {ssoEmail.split("@")[1]}
+                  {t("ssoDomain", { domain: ssoEmail.split("@")[1] })}
                 </p>
               </div>
             </div>
@@ -313,14 +313,14 @@ const LoginPage = () => {
 
         {ssoStep === "none" && (
           <p className="mt-4 text-center text-muted-foreground" style={{ fontSize: 12 }}>
-            Tổ chức của bạn dùng SSO?{" "}
+            {tc("ssoOrgQuestion")}{" "}
             <button
               type="button"
               className="text-primary hover:underline underline-offset-2 transition-colors cursor-pointer"
               style={{ fontWeight: 400 }}
               onClick={() => setSsoStep("email")}
             >
-              Đăng nhập với SSO
+              {tc("signInWithSso")}
             </button>
           </p>
         )}
@@ -328,7 +328,7 @@ const LoginPage = () => {
 
       {/* Footer */}
       <p className="mt-12 text-muted-foreground" style={{ fontSize: 12 }}>
-        © 2026 SalesFlow · All rights reserved.
+        {tc("copyright", { year: "2026" })}
       </p>
     </div>
   );

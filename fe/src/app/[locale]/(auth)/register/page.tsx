@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslations } from "next-intl";
 import { Eye, EyeOff, Loader2, Building2, Check } from "lucide-react";
 import Link from "next/link";
 
@@ -22,24 +23,24 @@ type StrengthLevel = 0 | 1 | 2 | 3;
 
 interface StrengthResult {
   level: StrengthLevel;
-  label: string;
+  labelKey: string;
   colorClass: string;
   bgClass: string;
-  criteria: { label: string; met: boolean }[];
+  criteria: { key: string; met: boolean }[];
 }
 
 function getPasswordStrength(pw: string): StrengthResult {
   const criteria = [
-    { label: "Ít nhất 8 ký tự", met: pw.length >= 8 },
-    { label: "Chứa chữ số",     met: /\d/.test(pw) },
-    { label: "Chứa chữ hoa",    met: /[A-Z]/.test(pw) },
+    { key: "min8",      met: pw.length >= 8 },
+    { key: "digit",     met: /\d/.test(pw) },
+    { key: "uppercase", met: /[A-Z]/.test(pw) },
   ];
   const metCount = criteria.filter((c) => c.met).length as 0 | 1 | 2 | 3;
-  const levels: { label: string; colorClass: string; bgClass: string }[] = [
-    { label: "",          colorClass: "text-muted-foreground", bgClass: "bg-muted" },
-    { label: "Yếu",       colorClass: "text-red-500 dark:text-red-400", bgClass: "bg-red-500 dark:bg-red-400" },
-    { label: "Trung bình", colorClass: "text-amber-500 dark:text-amber-400", bgClass: "bg-amber-500 dark:bg-amber-400" },
-    { label: "Mạnh",      colorClass: "text-green-600 dark:text-green-400", bgClass: "bg-green-600 dark:bg-green-400" },
+  const levels: { labelKey: string; colorClass: string; bgClass: string }[] = [
+    { labelKey: "",       colorClass: "text-muted-foreground", bgClass: "bg-muted" },
+    { labelKey: "weak",   colorClass: "text-red-500 dark:text-red-400", bgClass: "bg-red-500 dark:bg-red-400" },
+    { labelKey: "medium", colorClass: "text-amber-500 dark:text-amber-400", bgClass: "bg-amber-500 dark:bg-amber-400" },
+    { labelKey: "strong", colorClass: "text-green-600 dark:text-green-400", bgClass: "bg-green-600 dark:bg-green-400" },
   ];
   return { level: metCount, ...levels[metCount], criteria };
 }
@@ -50,6 +51,7 @@ function getPasswordStrength(pw: string): StrengthResult {
 
 const PasswordInput = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, ...props }, ref) => {
+    const t = useTranslations("auth.register");
     const [show, setShow] = useState(false);
     return (
       <div className="relative">
@@ -64,7 +66,7 @@ const PasswordInput = React.forwardRef<HTMLInputElement, React.ComponentProps<"i
           tabIndex={-1}
           onClick={() => setShow((v) => !v)}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors bg-transparent border-0 cursor-pointer"
-          aria-label={show ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+          aria-label={show ? t("passwordHide") : t("passwordShow")}
         >
           {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
         </button>
@@ -77,8 +79,10 @@ PasswordInput.displayName = "PasswordInput";
 // ─── Strength Meter ───────────────────────────────────────────────────────────
 
 function PasswordStrengthMeter({ password }: { password: string }) {
+  const t = useTranslations("auth.register.strength");
   if (!password) return null;
-  const { level, label, colorClass, bgClass, criteria } = getPasswordStrength(password);
+  const { level, labelKey, colorClass, bgClass, criteria } = getPasswordStrength(password);
+  const label = labelKey ? t(labelKey) : "";
   return (
     <div className="space-y-2 pt-0.5">
       {/* Bar */}
@@ -99,7 +103,7 @@ function PasswordStrengthMeter({ password }: { password: string }) {
           <div className="flex gap-3">
             {criteria.map((c) => (
               <span
-                key={c.label}
+                key={c.key}
                 className={cn(
                   "flex items-center gap-1 text-[11px]",
                   c.met ? "text-green-600 dark:text-green-400" : "text-muted-foreground"
@@ -109,7 +113,7 @@ function PasswordStrengthMeter({ password }: { password: string }) {
                   className={cn("size-3 transition-opacity", c.met ? "opacity-100" : "opacity-30")}
                   strokeWidth={2.5}
                 />
-                {c.label}
+                {t(c.key)}
               </span>
             ))}
           </div>
@@ -124,6 +128,9 @@ function PasswordStrengthMeter({ password }: { password: string }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function RegisterPage() {
+  const t = useTranslations("auth.register");
+  const tc = useTranslations("auth.shared");
+  const tv = useTranslations("auth.validation");
   const { mutate: authRegister, isPending, } = useRegister();
   const {
     register,
@@ -152,10 +159,10 @@ export default function RegisterPage() {
               className="text-foreground tracking-tight"
               style={{ fontSize: 22, fontWeight: 600, lineHeight: 1.3 }}
             >
-              Tạo workspace của bạn
+              {t("title")}
             </h1>
             <p className="text-muted-foreground" style={{ fontSize: 14 }}>
-              Dùng thử miễn phí 14 ngày · Không cần thẻ tín dụng
+              {t("subtitle")}
             </p>
           </div>
         </div>
@@ -166,14 +173,14 @@ export default function RegisterPage() {
             {/* Company name */}
             <div className="space-y-1.5">
               <Label htmlFor="companyName" className="text-muted-foreground" style={{ fontSize: 12, fontWeight: 500 }}>
-                Tên công ty
+                {t("companyNameLabel")}
               </Label>
               <div className="relative">
                 <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none size-3.5" />
                 <Input
                   id="companyName"
                   type="text"
-                  placeholder="Công ty ABC"
+                  placeholder={t("companyNamePlaceholder")}
                   autoComplete="organization"
                   autoFocus
                   className={cn("h-9 pl-9", errors.companyName && "border-destructive focus-visible:ring-destructive/20")}
@@ -181,22 +188,22 @@ export default function RegisterPage() {
                   {...register("companyName")}
                 />
               </div>
-              {errors.companyName && (
-                <p className="text-destructive" style={{ fontSize: 12 }}>{errors.companyName.message}</p>
+              {errors.companyName?.message && (
+                <p className="text-destructive" style={{ fontSize: 12 }}>{tv(errors.companyName.message)}</p>
               )}
             </div>
 
             {/* Name */}
             <div className="space-y-1.5">
               <Label htmlFor="name" className="text-muted-foreground" style={{ fontSize: 12, fontWeight: 500 }}>
-                Họ và tên
+                {t("fullNameLabel")}
               </Label>
               <div className="relative">
                 <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none size-3.5" />
                 <Input
                   id="name"
                   type="text"
-                  placeholder="Họ và tên"
+                  placeholder={t("fullNamePlaceholder")}
                   autoComplete="name"
                   autoFocus
                   className={cn("h-9 pl-9", errors.name && "border-destructive focus-visible:ring-destructive/20")}
@@ -204,82 +211,86 @@ export default function RegisterPage() {
                   {...register("name")}
                 />
               </div>
-              {errors.name && (
-                <p className="text-destructive" style={{ fontSize: 12 }}>{errors.name.message}</p>
+              {errors.name?.message && (
+                <p className="text-destructive" style={{ fontSize: 12 }}>{tv(errors.name.message)}</p>
               )}
             </div>
 
             {/* Email */}
             <div className="space-y-1.5">
               <Label htmlFor="email" className="text-muted-foreground" style={{ fontSize: 12, fontWeight: 500 }}>
-                Email công việc
+                {t("emailLabel")}
               </Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="ten@congty.vn"
+                placeholder={tc("emailPlaceholder")}
                 autoComplete="email"
                 className={cn("h-9", errors.email && "border-destructive focus-visible:ring-destructive/20")}
                 aria-invalid={!!errors.email}
                 {...register("email")}
               />
-              {errors.email && (
-                <p className="text-destructive" style={{ fontSize: 12 }}>{errors.email.message}</p>
+              {errors.email?.message && (
+                <p className="text-destructive" style={{ fontSize: 12 }}>{tv(errors.email.message)}</p>
               )}
             </div>
 
             {/* Password */}
             <div className="space-y-1.5">
               <Label htmlFor="password" className="text-muted-foreground" style={{ fontSize: 12, fontWeight: 500 }}>
-                Mật khẩu
+                {tc("passwordLabel")}
               </Label>
               <PasswordInput
                 id="password"
                 {...register("password")}
-                placeholder="Tối thiểu 8 ký tự"
+                placeholder={t("passwordPlaceholder")}
                 autoComplete="new-password"
                 className={cn("h-9", errors.password && "border-destructive focus-visible:ring-destructive/20")}
                 aria-invalid={!!errors.password}
               />
               <PasswordStrengthMeter password={passwordValue} />
-              {errors.password && (
-                <p className="text-destructive" style={{ fontSize: 12 }}>{errors.password.message}</p>
+              {errors.password?.message && (
+                <p className="text-destructive" style={{ fontSize: 12 }}>{tv(errors.password.message)}</p>
               )}
             </div>
 
             {/* Confirm password */}
             <div className="space-y-1.5">
               <Label htmlFor="confirmPassword" className="text-muted-foreground" style={{ fontSize: 12, fontWeight: 500 }}>
-                Xác nhận mật khẩu
+                {t("confirmPasswordLabel")}
               </Label>
               <PasswordInput
                 id="confirmPassword"
                 {...register("confirmPassword")}
-                placeholder="Nhập lại mật khẩu"
+                placeholder={t("confirmPasswordPlaceholder")}
                 autoComplete="new-password"
                 className={cn("h-9", errors.confirmPassword && "border-destructive focus-visible:ring-destructive/20")}
                 aria-invalid={!!errors.confirmPassword}
               />
-              {errors.confirmPassword && (
-                <p className="text-destructive" style={{ fontSize: 12 }}>{errors.confirmPassword.message}</p>
+              {errors.confirmPassword?.message && (
+                <p className="text-destructive" style={{ fontSize: 12 }}>{tv(errors.confirmPassword.message)}</p>
               )}
             </div>
 
             {/* Terms hint */}
             <p className="text-muted-foreground pt-0.5" style={{ fontSize: 12 }}>
-              Bằng cách tạo tài khoản, bạn đồng ý với{" "}
-              <button type="button" className="text-primary hover:underline underline-offset-2 bg-transparent border-0 cursor-pointer" style={{ fontWeight: 500 }}>
-                Điều khoản dịch vụ
-              </button>{" "}
-              và{" "}
-              <button type="button" className="text-primary hover:underline underline-offset-2 bg-transparent border-0 cursor-pointer" style={{ fontWeight: 500 }}>
-                Chính sách bảo mật
-              </button>.
+              {t.rich("termsAgreement", {
+                terms: (chunks) => (
+                  <button type="button" className="text-primary hover:underline underline-offset-2 bg-transparent border-0 cursor-pointer" style={{ fontWeight: 500 }}>
+                    {chunks}
+                  </button>
+                ),
+                privacy: (chunks) => (
+                  <button type="button" className="text-primary hover:underline underline-offset-2 bg-transparent border-0 cursor-pointer" style={{ fontWeight: 500 }}>
+                    {chunks}
+                  </button>
+                ),
+              })}
             </p>
 
             <Button type="submit" className="w-full h-9 mt-1" disabled={isPending}>
               {isPending && <Loader2 className="size-4 animate-spin" />}
-              {isPending ? "Đang tạo tài khoản..." : "Tạo tài khoản"}
+              {isPending ? t("submitting") : t("submit")}
             </Button>
           </form>
 
@@ -288,7 +299,7 @@ export default function RegisterPage() {
             <Separator />
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="bg-card px-3 text-muted-foreground" style={{ fontSize: 12 }}>
-                hoặc
+                {tc("or")}
               </span>
             </div>
           </div>
@@ -296,13 +307,13 @@ export default function RegisterPage() {
           {/* Sign-in link */}
           <div className="px-6 py-5 text-center">
             <p className="text-muted-foreground" style={{ fontSize: 13 }}>
-              Đã có tài khoản?{" "}
+              {t("haveAccountQuestion")}{" "}
               <Link
                 href="/login"
                 className="text-primary hover:underline underline-offset-2 transition-colors"
                 style={{ fontWeight: 500, textDecoration: "none" }}
               >
-                Đăng nhập
+                {tc("signIn")}
               </Link>
             </p>
           </div>
@@ -310,18 +321,18 @@ export default function RegisterPage() {
 
         {/* SSO hint */}
         <p className="mt-4 text-center text-muted-foreground" style={{ fontSize: 12 }}>
-          Tổ chức của bạn dùng SSO?{" "}
+          {tc("ssoOrgQuestion")}{" "}
           <button
             type="button"
             className="text-primary hover:underline underline-offset-2 transition-colors bg-transparent border-0 cursor-pointer"
           >
-            Đăng ký với SSO
+            {t("signUpWithSso")}
           </button>
         </p>
       </div>
 
       <p className="mt-12 text-muted-foreground" style={{ fontSize: 12 }}>
-        © 2026 SalesFlow · All rights reserved.
+        {tc("copyright", { year: "2026" })}
       </p>
     </div>
   );
