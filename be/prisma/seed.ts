@@ -267,7 +267,7 @@ async function main() {
   const contactFirstNames = ['Nam', 'Lan', 'Hương', 'Quang', 'Minh', 'Thu', 'Tuấn', 'Hùng']
   const contactLastNames = ['Nguyễn', 'Trần', 'Lê', 'Phạm', 'Vũ']
   const positions = ['CEO', 'CTO', 'Giám đốc IT', 'Trưởng phòng Mua hàng']
-  const contactTagsList = ['Enterprise', 'Vip', 'Tiềm năng']
+  const contactTagsList = ['Enterprise', 'Vip', 'Potential']
 
   const contacts: any[] = []
   for (let i = 1; i <= 30; i++) {

@@ -2,7 +2,7 @@ import z from "zod";
 export const ContactTagConst  = {
   Enterprise: "Enterprise",
   Vip: "Vip",
-  Potential: "Tiềm năng"
+  Potential: "Potential"
 } as const;
 
 export type ContactTagType  = typeof ContactTagConst [keyof typeof ContactTagConst ];
@@ -12,8 +12,7 @@ export type ContactTagType  = typeof ContactTagConst [keyof typeof ContactTagCon
 // ─────────────────────────────────────────
 // NOTE: form-facing validation messages live in the component-local
 // buildContactFormSchema(tv) factory (ContactForm). This schema is used only for
-// its inferred types, so it carries no user-facing messages. The "Tiềm năng" tag
-// value below is a backend enum literal, not translatable copy.
+// its inferred types, so it carries no user-facing messages.
 const ContactBaseSchema = z.object({
   id: z.string(),
   tenantId: z.string(),

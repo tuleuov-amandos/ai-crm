@@ -98,7 +98,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
         [H.phone]: "0987654321",
         [H.company]: t("template.row1Company"),
         [H.position]: t("template.row1Position"),
-        [H.tags]: "Vip, Tiềm năng",
+        [H.tags]: "Vip, Potential",
         [H.ownerEmail]: "sales_member@example.com",
         [H.dealTitle]: t("template.row1DealTitle"),
         [H.dealValue]: 15000000,
@@ -249,7 +249,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
   // Function to parse row data based on selected column mapping
   const parseExcelRows = (rawJson: Record<string, unknown>[], mappings: Record<string, string>) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const allowedTags = ["Enterprise", "Vip", "Tiềm năng"];
+    const allowedTags = ["Enterprise", "Vip", "Potential"];
 
     const parsedRows: ParsedRow[] = rawJson.map((row, index) => {
       const rowNum = index + 2;

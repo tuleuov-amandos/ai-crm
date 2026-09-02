@@ -513,7 +513,7 @@
         "headerPhone": "Телефон",
         "headerCompany": "Компания",
         "headerPosition": "Должность",
-        "headerTags": "Теги (допустимо: Vip, Tiềm năng, Enterprise — через запятую)",
+        "headerTags": "Теги (допустимо: Vip, Potential, Enterprise — через запятую)",
         "headerOwnerEmail": "Email ответственного",
         "headerDealTitle": "Название связанной сделки",
         "headerDealValue": "Сумма сделки (VND)",
