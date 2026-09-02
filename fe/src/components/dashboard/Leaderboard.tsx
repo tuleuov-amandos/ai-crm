@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRight, Users } from "lucide-react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
   Card,
@@ -164,9 +165,12 @@ export function Leaderboard({ reps = [], isLoading = false }: LeaderboardProps) 
           variant="ghost"
           size="sm"
           className="h-7 gap-1 text-primary hover:text-primary hover:bg-secondary/60 text-xs"
+          asChild
         >
-          {t("viewFullReport")}
-          <ArrowRight className="size-3" />
+          <Link href="/reports">
+            {t("viewFullReport")}
+            <ArrowRight className="size-3" />
+          </Link>
         </Button>
       </CardFooter>
     </Card>

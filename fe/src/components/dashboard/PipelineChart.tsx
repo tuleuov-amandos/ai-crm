@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
   Card,
@@ -59,9 +60,12 @@ export function PipelineChart({
             variant="ghost"
             size="sm"
             className="h-7 gap-1 text-primary hover:text-primary hover:bg-secondary/60 text-xs px-2"
+            asChild
           >
-            {t("viewPipeline")}
-            <ArrowRight className="size-3" />
+            <Link href="/pipeline">
+              {t("viewPipeline")}
+              <ArrowRight className="size-3" />
+            </Link>
           </Button>
         </CardAction>
       </CardHeader>
