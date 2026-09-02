@@ -9,7 +9,7 @@ import { saveAiResultAtomic } from './ai.service'
 // so events are pushed to the HTTP process over Redis Pub/Sub.
 import { publishAiEventRemote as publishAiEvent } from './ai.sse'
 import { z } from 'zod'
-import { openai, AI_MODEL } from './ai.client'
+import { aiClient } from './ai.client'
 
 const log = rootLogger.child({ context: 'AiProcessor' })
 const OPENAI_TIMEOUT_MS = 30_000
@@ -45,8 +45,6 @@ function withTimeout<T>(promise: Promise<T>, ms = OPENAI_TIMEOUT_MS) {
   return Promise.race([promise, new Promise<T>((_, rej) => setTimeout(() => rej(new Error('OpenAI timeout')), ms))])
 }
 
-const MODEL = AI_MODEL
-
 async function callOpenAiAndParse(meetingNote: string): Promise<AiResponseType> {
   const prompt = `
     You are an assistant that extracts actionable items from a meeting note.
@@ -60,13 +58,7 @@ async function callOpenAiAndParse(meetingNote: string): Promise<AiResponseType> 
   "summary": "<string>"\n}\nNote: You MUST write a detailed follow-up email draft in Vietnamese under "emailDraft", and a brief summary in Vietnamese under "summary". Do not set them to null.\nMeeting Note:\n"""${meetingNote}"""\n`
 
   const doCall = async () => {
-    const resp = await openai.chat.completions.create({
-      model: MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.0,
-      max_tokens: 800,
-    })
-    const content = resp.choices?.[0]?.message?.content
+    const content = await aiClient.complete(prompt, { temperature: 0.0, maxTokens: 800 })
     if (!content) throw new Error('No content from OpenAI')
     return String(content)
   }
@@ -105,15 +97,7 @@ async function callOpenAiAndParse(meetingNote: string): Promise<AiResponseType> 
       }. 
       All texts must be written in Vietnamese. Meeting note:\n"""${meetingNote}"""
       `
-      const retryResp = await withTimeout(
-        openai.chat.completions.create({
-          model: MODEL,
-          messages: [{ role: 'user', content: retryPrompt }],
-          temperature: 0.0,
-          max_tokens: 800,
-        }),
-      )
-      const retryText = String(retryResp.choices?.[0]?.message?.content || '')
+      const retryText = String(await withTimeout(aiClient.complete(retryPrompt, { temperature: 0.0, maxTokens: 800 })))
       const parsed2 = extractJson(retryText)
       const validated2 = AiResponseSchema.parse(parsed2)
       return validated2
