@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { isAxiosError } from "axios";
 import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { Clock, ShieldAlert, RefreshCw, LogOut } from "lucide-react";
@@ -14,13 +15,21 @@ import { useMe, useLogout } from "@/hooks/useAuth";
  * client-side screen so the user sees an explanation instead of a wall of 403s.
  */
 export function TenantStatusGate({ children }: { children: ReactNode }) {
-  const { data: me, isLoading, isError } = useMe();
+  const { data: me, isLoading, isError, error } = useMe();
 
   // While we don't know yet, render nothing rather than flashing the dashboard.
   if (isLoading) return <FullScreenSpinner />;
 
-  // An error here is almost always 401 — the axios layer already redirects to
-  // /login in that case, so just fall through to the children.
+  // 401 → the axios layer is already doing window.location.href = "/login".
+  // Hold the spinner while that navigation is in flight instead of briefly
+  // flashing the dashboard markup.
+  if (isError && isAxiosError(error) && error.response?.status === 401) {
+    return <FullScreenSpinner />;
+  }
+
+  // Any other error (500 / network / backend down) falls through to the
+  // children so the user sees a real error and can retry, rather than being
+  // stuck on an infinite spinner thinking the site hung.
   if (!isError && me?.tenantStatus === "PENDING") return <PendingScreen />;
   if (!isError && me?.tenantStatus === "SUSPENDED") return <SuspendedScreen />;
 

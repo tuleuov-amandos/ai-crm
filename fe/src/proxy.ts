@@ -1,37 +1,20 @@
-import { NextRequest, NextResponse } from "next/server";
 import createMiddleware from "next-intl/middleware";
 import { routing } from "./i18n/routing";
-import { stripLocale } from "./i18n/pathname";
 
-const intlMiddleware = createMiddleware(routing);
-
-const protectedRoutes = ['/dashboard', '/pipeline', '/contacts', '/deals', '/activities', '/users', '/roles', '/audit-logs', '/settings'];
-const authRoutes = ['/login', '/register'];
-
-export function proxy(request: NextRequest) {
-  // 1. next-intl: определение локали (cookie -> Accept-Language -> defaultLocale),
-  //    редирект / -> /ru, простановка NEXT_LOCALE cookie.
-  const response = intlMiddleware(request);
-
-  // 2. Auth-gating поверх уже локализованного пути.
-  const { locale, pathname } = stripLocale(request.nextUrl.pathname);
-  const accessToken = request.cookies.get('accessToken')?.value;
-  const refreshToken = request.cookies.get('refreshToken')?.value;
-
-  if (authRoutes.includes(pathname) && accessToken) {
-    return NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url));
-  }
-
-  const isProtectedRoute = protectedRoutes.some((route) => {
-    return pathname === route || pathname.startsWith(route + '/');
-  });
-
-  if (isProtectedRoute && !accessToken && !refreshToken) {
-    return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
-  }
-
-  return response;
-}
+// Proxy (ex-middleware) отвечает ТОЛЬКО за locale-routing.
+//
+// Server-side auth-gating убран намеренно: auth-куки (accessToken/refreshToken)
+// ставит Railway-backend на своём домене (cross-origin, SameSite=None), поэтому
+// Vercel-edge их не видит — любая проверка request.cookies здесь ложно-отрицательна
+// и редиректила бы на /login даже реально залогиненных пользователей.
+//
+// Защита /dashboard/* теперь целиком клиентская:
+//   - axiosInstance (withCredentials) шлёт GET /auth/me на backend;
+//   - на 401 после неудачного refresh интерцептор делает
+//     window.location.href = "/login" (src/lib/api.ts);
+//   - TenantStatusGate в (dashboard)/layout.tsx держит спиннер до ответа
+//     и не пускает PENDING/SUSPENDED дальше.
+export default createMiddleware(routing);
 
 export const config = {
   // Пропускаем API-проксирование, служебные пути Next/Vercel и файлы с расширением.
