@@ -75,6 +75,12 @@ export class ActivitiesRepository {
       ...(query.type && { type: query.type }),
       ...(query.contactId && { contactId: query.contactId }),
       ...(query.dealId && { dealId: query.dealId }),
+      ...((query.dateFrom || query.dateTo) && {
+        date: {
+          ...(query.dateFrom && { gte: new Date(query.dateFrom) }),
+          ...(query.dateTo && { lte: new Date(query.dateTo) }),
+        },
+      }),
       ...(query.search && {
         OR: [
           { title: { contains: query.search, mode: 'insensitive' as const } },

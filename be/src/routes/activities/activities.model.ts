@@ -96,7 +96,7 @@ export const UpdateActivityBodySchema = z
 export type UpdateActivityBodyType = z.infer<typeof UpdateActivityBodySchema>
 
 // ─── GET ACTIVITIES QUERY ─────────────────────────────────────────────────────
-// GET /activities?page=1&limit=20&type=CALL&search=...&contactId=...&dealId=...
+// GET /activities?page=1&limit=20&type=CALL&search=...&contactId=...&dealId=...&userId=...&dateFrom=...&dateTo=...
 export const GetActivitiesQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
@@ -104,6 +104,9 @@ export const GetActivitiesQuerySchema = z.object({
   search: z.string().optional(),
   contactId: z.string().optional(),
   dealId: z.string().optional(),
+  userId: z.string().optional(),
+  dateFrom: z.string().optional(), // ISO date string, e.g. "2026-01-01"
+  dateTo: z.string().optional(), // ISO date string
 })
 
 export type GetActivitiesQueryType = z.infer<typeof GetActivitiesQuerySchema>

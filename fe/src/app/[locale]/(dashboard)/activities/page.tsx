@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { isToday, isYesterday } from "date-fns";
+import { format as formatDate, isToday, isYesterday } from "date-fns";
+import type { DateRange } from "react-day-picker";
 import { useTranslations, useFormatter } from "next-intl";
 import { Loader2 } from "lucide-react";
 
@@ -27,6 +28,7 @@ import type {
   ActivityGroup,
   ActivityType,
 } from "./_components/types";
+import type { GetActivitiesParamsType } from "@/lib/validations/activities.scheme";
 
 import { ActivitiesFilters } from "./_components/ActivitiesFilters";
 import { ActivitiesHeader } from "./_components/ActivitiesHeader";
@@ -118,6 +120,13 @@ export default function Activities() {
   // ── Filter state ─────────────────────────────────────────────────────────
   const [activeFilter, setActiveFilter] = useState<"all" | ActivityType>("all");
   const [showEmpty, setShowEmpty] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | undefined>(
+    undefined,
+  );
+  const [selectedContact, setSelectedContact] = useState<
+    { id: string; name: string } | undefined
+  >(undefined);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
   // ── ActivityForm state ────────────────────────────────────────────────────
   const [formOpen, setFormOpen] = useState(false);
@@ -133,10 +142,16 @@ export default function Activities() {
   );
 
   // ── Data fetching — infinite scroll  ───────────────────────
-  const infiniteParams = useMemo(
-    () => (activeFilter !== "all" ? { type: activeFilter } : undefined),
-    [activeFilter],
-  );
+  const infiniteParams = useMemo(() => {
+    const params: GetActivitiesParamsType = {};
+    if (activeFilter !== "all") params.type = activeFilter;
+    if (selectedUserId) params.userId = selectedUserId;
+    if (selectedContact?.id) params.contactId = selectedContact.id;
+    if (dateRange?.from)
+      params.dateFrom = formatDate(dateRange.from, "yyyy-MM-dd");
+    if (dateRange?.to) params.dateTo = formatDate(dateRange.to, "yyyy-MM-dd");
+    return Object.keys(params).length > 0 ? params : undefined;
+  }, [activeFilter, selectedUserId, selectedContact, dateRange]);
 
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } =
     useActivitiesInfinite(infiniteParams);
@@ -179,7 +194,8 @@ export default function Activities() {
   return (
     <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
       <ActivitiesHeader
-        dateRangeLabel={t("dateRangeAll")}
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
         onNewActivity={handleOpenCreate}
       />
 
@@ -188,6 +204,13 @@ export default function Activities() {
         onFilterChange={setActiveFilter}
         showEmpty={showEmpty}
         onToggleEmpty={() => setShowEmpty((v) => !v)}
+        selectedUserId={selectedUserId}
+        onUserChange={setSelectedUserId}
+        selectedContactId={selectedContact?.id}
+        selectedContactName={selectedContact?.name}
+        onContactChange={(id, name) =>
+          setSelectedContact(id ? { id, name: name ?? "" } : undefined)
+        }
       />
 
       <div className="flex-1 overflow-y-auto bg-[#F8F8F7] dark:bg-background">
