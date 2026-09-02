@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import Link from "next/link";
 import {
   FileText,
   Mail,
@@ -184,13 +185,13 @@ export function ActivityCard({
           {/* Contact + company */}
           {activity.contact && (
             <p className="mb-1" style={{ fontSize: 12 }}>
-              <a
-                href="#"
+              <Link
+                href={`/contacts/${activity.contact.id}`}
                 className={cn("text-primary hover:underline")}
                 style={{ fontWeight: 500, textDecoration: "none" }}
               >
                 {activity.contact.name}
-              </a>
+              </Link>
               {activity.contact.company && (
                 <span className="text-muted-foreground">
                   {" "}

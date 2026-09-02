@@ -7,9 +7,13 @@ import {
   BarChart2, PieChart, Activity, Users, Lock,
 } from "lucide-react";
 import Link from "next/link";
+import { format } from "date-fns";
+import type { DateRange } from "react-day-picker";
 import { useTranslations } from "next-intl";
 import { useAbility } from "@/hooks/useAbility";
 import { useMe } from "@/hooks/useAuth";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 
 import { RevenueMonthChart } from "./_components/RevenueMonthChart";
 import { ForecastAreaChart }  from "./_components/ForecastAreaChart";
@@ -69,8 +73,25 @@ export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   
   // Date ranges default to entire 2026 to capture all seeded records
-  const [startDate] = useState("2026-01-01");
-  const [endDate] = useState("2026-12-31");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: new Date(2026, 0, 1),
+    to: new Date(2026, 11, 31),
+  });
+
+  // Derived YYYY-MM-DD strings consumed by useQuery + tab props (signatures unchanged)
+  const startDate = dateRange?.from
+    ? format(dateRange.from, "yyyy-MM-dd")
+    : "2026-01-01";
+  const endDate = dateRange?.to
+    ? format(dateRange.to, "yyyy-MM-dd")
+    : "2026-12-31";
+
+  const rangeLabel =
+    dateRange?.from && dateRange?.to
+      ? `${format(dateRange.from, "dd/MM/yyyy")} – ${format(dateRange.to, "dd/MM/yyyy")}`
+      : dateRange?.from
+        ? format(dateRange.from, "dd/MM/yyyy")
+        : "—";
 
   const { isLoading: isLoadingMe } = useMe();
   const { can } = useAbility();
@@ -126,14 +147,27 @@ export default function ReportsPage() {
 
         <div className="flex items-center gap-2 shrink-0">
           {/* Date range pill */}
-          <button
-            className="flex items-center gap-2 h-8 px-3 rounded-lg border border-[#E8E7E2] dark:border-border bg-white dark:bg-card hover:bg-[#F8F8F7] dark:hover:bg-muted transition-colors cursor-pointer"
-            style={{ fontSize: 12, color: "var(--foreground)" }}
-          >
-            <Calendar size={13} className="text-[#6B6B67] dark:text-muted-foreground" />
-            <span>01/01/2026 – 31/12/2026</span>
-            <ChevronDown size={12} className="text-[#6B6B67] dark:text-muted-foreground" />
-          </button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                className="flex items-center gap-2 h-8 px-3 rounded-lg border border-[#E8E7E2] dark:border-border bg-white dark:bg-card hover:bg-[#F8F8F7] dark:hover:bg-muted transition-colors cursor-pointer"
+                style={{ fontSize: 12, color: "var(--foreground)" }}
+              >
+                <Calendar size={13} className="text-[#6B6B67] dark:text-muted-foreground" />
+                <span>{rangeLabel}</span>
+                <ChevronDown size={12} className="text-[#6B6B67] dark:text-muted-foreground" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-auto p-0">
+              <CalendarPicker
+                mode="range"
+                selected={dateRange}
+                onSelect={setDateRange}
+                numberOfMonths={2}
+                defaultMonth={dateRange?.from}
+              />
+            </PopoverContent>
+          </Popover>
 
           {/* Export CSV */}
           <button
