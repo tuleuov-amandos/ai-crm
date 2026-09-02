@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 
 import { LoginBodySchema, LoginBodyType } from "@/lib/validations/auth.schema";
 import { useLogin } from "@/hooks/useAuth";
+import { API_BASE_URL } from "@/lib/api";
 import { toast } from "sonner";
 import { SalesFlowLogo } from "@/components/SalesFlowLogo";
 
@@ -39,7 +40,7 @@ const LoginPage = () => {
     login(values);
   }
   const handleGoogleLogin = () => {
-    window.location.href = "/api/auth/google";
+    window.location.href = `${API_BASE_URL}/auth/google`;
   };
 
   const handleSsoSubmit = (e: React.FormEvent) => {

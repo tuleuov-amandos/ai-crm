@@ -101,16 +101,34 @@ GitHub → Settings → Secrets and variables → Actions:
 
 ## Frontend (Vercel)
 
-- [ ] `NEXT_PUBLIC_API_URL` — публичный адрес backend на Railway (без слэша).
-      Fallback в коде — `http://localhost:3001` (только dev).
+- [ ] `NEXT_PUBLIC_API_URL` — публичный адрес backend на Railway (без слэша, без `/api`).
+      Fallback в коде — `http://localhost:3001` (только dev). Браузер ходит на этот
+      адрес напрямую cross-origin (axios `baseURL`, OAuth-редирект, SSE) — rewrite
+      `/api/*` из `next.config.ts` **убран** (ломал cookie-флоу: кука привязывалась
+      к домену Railway и не долетала обратно). Работает за счёт `sameSite=none;secure`
+      кук в проде + `credentials: true` в `app.enableCors` на бэкенде.
 - [ ] `NEXT_PUBLIC_APP_URL` — адрес самого Vercel-деплоя (для metadata / OpenGraph).
       Fallback — `http://localhost:3000`.
 - [ ] `NEXT_PUBLIC_SITE_LOCALE` — опционально, дефолт `ru_RU` (OpenGraph `locale`).
 
 ### Проверка после смены домена
-- [ ] Логин через Google проходит, кука `accessToken` ставится на нужный домен.
-- [ ] Запросы с FE к `/api/*` доходят до backend (rewrite в `fe/next.config.ts`).
+- [ ] Логин через Google проходит, кука `accessToken` ставится на домен backend
+      (Railway), последующий `GET /auth/me` авторизован.
+- [ ] Запросы с FE идут напрямую на `NEXT_PUBLIC_API_URL` (cross-origin), в DevTools
+      видно `Access-Control-Allow-Origin` = домен фронта и `...-Allow-Credentials: true`.
 - [ ] В ответах backend нет CORS-ошибок (совпадение `FRONTEND_URL` ↔ реальный origin).
+
+### Preview-деплои Vercel и CORS
+
+`app.enableCors` на бэкенде разрешает **ровно один** origin — `FRONTEND_URL`
+(production-домен). Preview-деплои Vercel (`*-git-<branch>-*.vercel.app` и
+`*.vercel.app` для отдельных сборок) получат **CORS-ошибку** на любой
+auth/api-запрос: их origin не совпадает с `FRONTEND_URL`, куки не отправятся.
+
+Прод это не затрагивает. Если понадобится тестировать auth на preview-ветках —
+расширить CORS до списка origin'ов или regex по `*.vercel.app`
+(`app.enableCors({ origin: [FRONTEND_URL, /\.vercel\.app$/], credentials: true })`).
+Это **отдельная задача** — оценить риск открытия CORS на все preview-поддомены.
 
 - npm warn allow-scripts: msw/sharp/unrs-resolver install-скрипты не одобрены явно.
   Проверить, не влияет ли на рантайм (особенно sharp — обработка изображений).
