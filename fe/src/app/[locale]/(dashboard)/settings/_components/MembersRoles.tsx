@@ -27,6 +27,7 @@ import { useQuery } from "@tanstack/react-query";
 import { usersService, RoleDto } from "@/services/users.service";
 
 import { cn } from "@/lib/utils";
+import { resolveRoleDescription } from "@/lib/roles";
 
 // ── Types & data ──────────────────────────────────────────────────────────────
 type MemberRole   = string;
@@ -166,7 +167,12 @@ function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) 
                         </p>
                       </div>
                       <p className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 12 }}>
-                        {r.description || t("roleDescFallback", { name: r.name })}
+                        {resolveRoleDescription(
+                          r.name,
+                          r.description,
+                          tCommon,
+                          (name) => t("roleDescFallback", { name }),
+                        )}
                       </p>
                     </div>
                   </label>

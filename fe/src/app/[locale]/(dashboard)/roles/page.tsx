@@ -7,6 +7,7 @@ import { useMe } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { useApiError } from "@/hooks/useApiError";
+import { isSystemRole, resolveRoleDescription } from "@/lib/roles";
 import {
   Dialog,
   DialogContent,
@@ -260,7 +261,7 @@ export default function RolesPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-7xl mx-auto">
           {roles.map((item: RoleDto) => {
             const { icon: Icon, color, bgColor } = getRoleIcon(item.name);
-            const isSystemRole = ["ADMIN", "MANAGER", "SALES_REP"].includes(item.name);
+            const systemRole = isSystemRole(item.name);
             const summarizedPermissions = getGroupedPermissionsText(t, item.permissions);
 
             return (
@@ -277,14 +278,19 @@ export default function RolesPage() {
                       <div>
                         <h3 className="font-semibold text-base text-[#1A1A18] dark:text-foreground flex items-center gap-1.5">
                           {item.name}
-                          {isSystemRole && (
+                          {systemRole && (
                             <span className="text-[10px] font-normal px-1.5 py-0.5 rounded bg-muted text-muted-foreground border">
                               {t("badgeSystem")}
                             </span>
                           )}
                         </h3>
                         <p className="text-xs text-muted-foreground">
-                          {item.description || t("roleDescFallback", { name: item.name })}
+                          {resolveRoleDescription(
+                            item.name,
+                            item.description,
+                            tCommon,
+                            (name) => t("roleDescFallback", { name }),
+                          )}
                         </p>
                       </div>
                     </div>
@@ -331,7 +337,7 @@ export default function RolesPage() {
                       {t("editPerms")}
                     </Button>
 
-                    {!isSystemRole && (
+                    {!systemRole && (
                       <>
                         <Button
                           variant="outline"

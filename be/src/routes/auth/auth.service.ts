@@ -313,15 +313,18 @@ export class AuthService {
             status: 'PENDING',
           },
         })
-        // Seed 3 default Roles for new Tenant
+        // Seed 3 default Roles for new Tenant.
+        // No `description` — built-in role descriptions are non-editable and
+        // rendered from fe translations (common.systemRoleDescription.<name>),
+        // not stored per-language in the DB. See shared-user.repo.ts.
         const adminRole = await tx.role.create({
-          data: { tenantId: tenant.id, name: 'ADMIN', description: 'Quản trị viên' },
+          data: { tenantId: tenant.id, name: 'ADMIN' },
         })
         const managerRole = await tx.role.create({
-          data: { tenantId: tenant.id, name: 'MANAGER', description: 'Quản lý' },
+          data: { tenantId: tenant.id, name: 'MANAGER' },
         })
         const salesRepRole = await tx.role.create({
-          data: { tenantId: tenant.id, name: 'SALES_REP', description: 'Nhân viên kinh doanh' },
+          data: { tenantId: tenant.id, name: 'SALES_REP' },
         })
         // Load the seeded permission catalog — fail loudly if it is absent.
         // A tenant whose ADMIN role has zero permissions is unusable and the
