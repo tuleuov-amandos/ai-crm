@@ -4,6 +4,8 @@ export interface Workspace {
   id: string;
   name: string;
   slug: string;
+  /** Billing tier — read-only, `"free"` until billing ships. Shown in the sidebar. */
+  plan: string;
   createdAt: string;
   website: string | null;
   address: string | null;

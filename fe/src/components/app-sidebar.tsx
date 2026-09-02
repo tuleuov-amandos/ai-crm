@@ -26,7 +26,10 @@ import logoImg from "@/app/favicon.ico";
 import { cn } from "@/lib/utils";
 import { Badge } from "./ui/badge";
 import { useLogout, useMe } from "@/hooks/useAuth";
+import { useWorkspace } from "@/hooks/useWorkspace";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+
+const capitalize = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
 function getInitials(name?: string): string {
   if (!name) return "";
@@ -79,6 +82,7 @@ const navGroups = [
 export function AppSidebar() {
   const { mutate: logout } = useLogout();
   const { data: me } = useMe();
+  const { data: workspace } = useWorkspace();
   const pathName = usePathname();
   const t = useTranslations("sidebar");
 
@@ -119,16 +123,16 @@ export function AppSidebar() {
                 NSTORE
               </span>
             </Link>
-            <div className="flex items-center gap-1.5">
-              <span className="text-muted-foreground" style={{ fontSize: 12 }}>
-                {t("companyName")}
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-muted-foreground truncate min-w-0" style={{ fontSize: 12 }}>
+                {workspace?.name || t("companyName")}
               </span>
               <Badge
                 variant="secondary"
-                className="h-[18px] px-1.5 text-primary bg-secondary rounded-full border-0"
+                className="h-[18px] px-1.5 text-primary bg-secondary rounded-full border-0 shrink-0"
                 style={{ fontSize: 10 }}
               >
-                {t("planFree")}
+                {workspace?.plan ? capitalize(workspace.plan) : t("planFree")}
               </Badge>
             </div>
           </div>
@@ -163,6 +167,10 @@ export function AppSidebar() {
             // Case 2: Group is a header with indented children
             return (
               <div key={gIdx} className="space-y-1">
+                {/* At --sidebar-width:200px "АДМИНИСТРИРОВАНИЕ" fits on one line
+                    (~156px box vs ~145px text). `break-words` stays as a safety
+                    net: on wider system fonts (Windows/Linux) or with a visible
+                    scrollbar it wraps instead of clipping. */}
                 <span className="text-[11px] font-semibold text-[#868E96] uppercase tracking-wide px-3 block break-words leading-tight">
                   {t(`nav.${group.key}`)}
                 </span>

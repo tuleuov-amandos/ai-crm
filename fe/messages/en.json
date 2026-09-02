@@ -1094,7 +1094,7 @@
     "toastDeleteFail": "Couldn't delete this role."
   },
   "sidebar": {
-    "companyName": "ABC Company",
+    "companyName": "Workspace",
     "planFree": "Free",
     "defaultUserName": "Nguyen Minh",
     "defaultRole": "Manager",

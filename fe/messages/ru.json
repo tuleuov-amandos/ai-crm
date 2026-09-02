@@ -1094,7 +1094,7 @@
     "toastDeleteFail": "Не удалось удалить эту роль."
   },
   "sidebar": {
-    "companyName": "Компания ABC",
+    "companyName": "Рабочее пространство",
     "planFree": "Free",
     "defaultUserName": "Нгуен Минь",
     "defaultRole": "Manager",
