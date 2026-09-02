@@ -5,6 +5,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip,
 } from "recharts";
 import { useTranslations } from "next-intl";
+import * as XLSX from "xlsx";
 import { ChartCard } from "./ChartCard";
 import { useShortValue } from "@/lib/format";
 
@@ -55,10 +56,17 @@ export function ForecastAreaChart({ data = [] }: ForecastAreaChartProps) {
   const maxVal = Math.max(...data.map(d => Math.max(d.cumActual, d.cumForecast)), 100);
   const yDomainMax = Math.ceil(maxVal * 1.2);
 
+  function handleDownload() {
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(data), "Forecast");
+    XLSX.writeFile(workbook, "revenue-forecast.xlsx");
+  }
+
   return (
     <ChartCard
       title={t("title")}
       subtitle={t("subtitle")}
+      onDownload={isDataEmpty ? undefined : handleDownload}
       action={
         !isDataEmpty && data.length > 0 ? (
           <span

@@ -6,6 +6,7 @@ import {
 } from "recharts";
 import { BarChart2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import * as XLSX from "xlsx";
 import { ChartCard } from "./ChartCard";
 import { EmptyState } from "./EmptyState";
 
@@ -40,8 +41,18 @@ export function WinLossChart({ data }: WinLossChartProps) {
   const isDataEmpty = !data || data.length === 0 || data.every(d => d.win === 0 && d.loss === 0);
   const chartData = data || [];
 
+  function handleDownload() {
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(chartData), "Win vs Loss");
+    XLSX.writeFile(workbook, "win-loss-by-stage.xlsx");
+  }
+
   return (
-    <ChartCard title={t("title")} subtitle={t("subtitle")}>
+    <ChartCard
+      title={t("title")}
+      subtitle={t("subtitle")}
+      onDownload={isDataEmpty ? undefined : handleDownload}
+    >
       {isDataEmpty ? (
         <EmptyState
           icon={BarChart2}
