@@ -513,7 +513,7 @@
         "headerPhone": "Phone",
         "headerCompany": "Company",
         "headerPosition": "Position",
-        "headerTags": "Tags (allowed: Vip, Tiềm năng, Enterprise — comma-separated)",
+        "headerTags": "Tags (allowed: Vip, Potential, Enterprise — comma-separated)",
         "headerOwnerEmail": "Owner email",
         "headerDealTitle": "Linked deal title",
         "headerDealValue": "Deal value (VND)",

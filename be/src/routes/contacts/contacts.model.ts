@@ -5,7 +5,7 @@ import { ValidationErrorCode } from 'src/common/errors'
 export const ContactTagConst = {
   Enterprise: 'Enterprise',
   Vip: 'Vip',
-  Potential: 'Tiềm năng',
+  Potential: 'Potential',
 } as const
 
 export type ContactTagType = (typeof ContactTagConst)[keyof typeof ContactTagConst]
