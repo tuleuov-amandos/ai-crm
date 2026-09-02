@@ -103,6 +103,9 @@ GitHub → Settings → Secrets and variables → Actions:
 - [ ] `GOOGLE_CALLBACK_URL` — `https://<backend>/auth/google/callback`,
       и этот же URL добавить в Authorized redirect URIs в Google Cloud Console.
 - [ ] `AI_PROVIDER` (`openai` | `groq`) + соответствующий ключ (`OPENAI_API_KEY` / `GROQ_API_KEY`).
+- [ ] `CLOUDINARY_URL` (опционально) — `cloudinary://<key>:<secret>@<cloud>` из дашборда
+      Cloudinary. Нужен для загрузки аватаров (Settings → Мой профиль). Без него
+      `PATCH/DELETE /users/me/avatar` отвечают 503, остальное работает.
 - [ ] `NODE_ENV=production`. `PORT` Railway прокидывает сам.
 
 ### После деплоя

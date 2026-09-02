@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { AppException, AuthErrorCode } from 'src/common/errors'
 import { PrismaService } from 'src/common/services/prisma.service'
 import { HashingService } from 'src/common/services/hashing.service'
-import { LoginBodyType, RegisterBodyType } from './auth.model'
+import { ChangePasswordBodyType, LoginBodyType, RegisterBodyType } from './auth.model'
 import slugify from 'slugify'
 import { ROLE } from 'src/common/constants/role.constanst'
 import { SharedUserRepository } from 'src/common/repositories/shared-user.repo'
@@ -207,14 +207,63 @@ export class AuthService {
       id: user.id,
       email: user.email,
       name: user.name,
+      avatarUrl: user.avatarUrl,
       role: user.role.name, // Map string
       tenantId: user.tenantId,
+      // Lets the frontend hide the "change password" form for accounts that
+      // only have a Google identity (no local password to verify against).
+      hasPassword: user.password !== null,
       // Lets the frontend show the "awaiting approval" / "suspended" screen
       // instead of the dashboard. GET /auth/me stays reachable for non-ACTIVE
       // tenants (no TenantStatusGuard) precisely so this field can be read.
       tenantStatus: user.tenant.status,
       permissions, // Attach permissions array
     }
+  }
+
+  async changePassword(userId: string, body: ChangePasswordBodyType) {
+    const user = await this.prismaService.user.findUnique({ where: { id: userId } })
+    if (!user) {
+      log.warn({ event: 'password.change', userId, reason: 'user_not_found' })
+      throw AppException.unauthorized(AuthErrorCode.INVALID_CREDENTIALS, 'User not found')
+    }
+
+    // Google-only accounts have no local password to verify against. Setting one
+    // from here would need its own "create password" flow — out of scope.
+    if (user.password === null) {
+      log.warn({ event: 'password.change', userId, reason: 'oauth_no_password' })
+      throw AppException.badRequest(
+        AuthErrorCode.OAUTH_NO_PASSWORD,
+        'This account signs in with Google and has no password to change',
+      )
+    }
+
+    const currentValid = await this.hashingService.compare(body.currentPassword, user.password)
+    if (!currentValid) {
+      log.warn({ event: 'password.change', userId, reason: 'wrong_current_password' })
+      throw AppException.unprocessable(AuthErrorCode.WRONG_PASSWORD, 'Current password is incorrect', {
+        path: 'currentPassword',
+      })
+    }
+
+    if (await this.hashingService.compare(body.newPassword, user.password)) {
+      throw AppException.badRequest(AuthErrorCode.PASSWORD_SAME, 'New password must differ from the current one', {
+        path: 'newPassword',
+      })
+    }
+
+    const hashedPassword = await this.hashingService.hash(body.newPassword)
+    await this.prismaService.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    })
+
+    // NOTE: existing access/refresh tokens stay valid after a password change.
+    // A "sign out everywhere" step (revoking this user's Redis refresh tokens)
+    // is a follow-up — refresh tokens are keyed by token value, not userId, so
+    // it needs a userId->tokens index first.
+    log.info({ event: 'password.change', userId, outcome: 'success' })
+    return { message: 'Password changed successfully' }
   }
 
   async validateGoogleUser(profile: {

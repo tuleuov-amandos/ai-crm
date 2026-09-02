@@ -2,14 +2,84 @@ import { Injectable } from '@nestjs/common'
 import { AppException, RoleErrorCode, UserErrorCode } from 'src/common/errors'
 import { PrismaService } from 'src/common/services/prisma.service'
 import { RedisService } from 'src/common/services/redis.service'
-import { UpdateUserType } from './users.dto'
+import { AVATAR_ALLOWED_MIME, AVATAR_MAX_BYTES, CloudinaryService } from 'src/common/services/cloudinary.service'
+import { UpdateUserType, UpdateMeType } from './users.dto'
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly redisService: RedisService,
+    private readonly cloudinary: CloudinaryService,
   ) {}
+
+  private toProfile(user: {
+    id: string
+    email: string
+    name: string
+    avatarUrl: string | null
+    role: { name: string }
+  }) {
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      avatarUrl: user.avatarUrl,
+      role: user.role.name,
+    }
+  }
+
+  // ── Self-service profile (PATCH /users/me, avatar endpoints) ────────────────
+
+  async getMe(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { role: true },
+    })
+    if (!user) {
+      throw AppException.notFound(UserErrorCode.MEMBER_NOT_FOUND, 'Member not found')
+    }
+    return this.toProfile(user)
+  }
+
+  async updateMe(userId: string, body: UpdateMeType) {
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: { name: body.name },
+      include: { role: true },
+    })
+    return this.toProfile(updated)
+  }
+
+  async updateMyAvatar(userId: string, file?: Express.Multer.File) {
+    if (!file || !file.buffer?.length) {
+      throw AppException.badRequest(UserErrorCode.AVATAR_FILE_MISSING, 'No avatar file was uploaded')
+    }
+    if (!AVATAR_ALLOWED_MIME.includes(file.mimetype as (typeof AVATAR_ALLOWED_MIME)[number])) {
+      throw AppException.unprocessable(UserErrorCode.AVATAR_INVALID_TYPE, 'Avatar must be a JPEG, PNG or WebP image')
+    }
+    if (file.size > AVATAR_MAX_BYTES) {
+      throw AppException.unprocessable(UserErrorCode.AVATAR_TOO_LARGE, 'Avatar file is too large')
+    }
+
+    const avatarUrl = await this.cloudinary.uploadAvatar(file.buffer, userId)
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: { avatarUrl },
+      include: { role: true },
+    })
+    return this.toProfile(updated)
+  }
+
+  async removeMyAvatar(userId: string) {
+    await this.cloudinary.deleteAvatar(userId)
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: { avatarUrl: null },
+      include: { role: true },
+    })
+    return this.toProfile(updated)
+  }
 
   async getUsersByTenant(tenantId: string) {
     const users = await this.prisma.user.findMany({

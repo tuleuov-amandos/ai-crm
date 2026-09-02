@@ -7,6 +7,7 @@ import { SharedUserRepository } from './repositories/shared-user.repo'
 import { JwtModule } from '@nestjs/jwt'
 import { RedisService } from './services/redis.service'
 import { MailService } from './services/mail.service'
+import { CloudinaryService } from './services/cloudinary.service'
 import { ClsModule } from 'nestjs-cls'
 import { CaslAbilityFactory } from './casl/casl-ability.factory'
 
@@ -18,6 +19,7 @@ const sharedProviders = [
   SharedUserRepository,
   RedisService,
   MailService,
+  CloudinaryService,
   CaslAbilityFactory, // Register CaslAbilityFactory here
 ]
 @Global()

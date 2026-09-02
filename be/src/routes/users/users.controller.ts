@@ -1,5 +1,18 @@
-import { Controller, Get, Patch, Delete, Put, Post, Body, Param, UseGuards } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
+import {
+  Controller,
+  Get,
+  Patch,
+  Delete,
+  Put,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  UseInterceptors,
+  UploadedFile,
+} from '@nestjs/common'
+import { FileInterceptor } from '@nestjs/platform-express'
+import { ApiTags, ApiConsumes } from '@nestjs/swagger'
 import { CurrentUser } from 'src/common/decorators/current-user.decorator'
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard'
 import { TenantStatusGuard } from 'src/common/guards/tenant-status.guard'
@@ -7,8 +20,9 @@ import { RolesGuard } from 'src/common/guards/roles.guard'
 import { Roles } from 'src/common/decorators/roles.decorator'
 import { ROLE } from 'src/common/constants/role.constanst'
 import { AccessTokenPayload } from 'src/common/types/jwt.type'
+import { AVATAR_MAX_BYTES } from 'src/common/services/cloudinary.service'
 import { UsersService } from './users.service'
-import { UpdateUserDto } from './users.dto'
+import { UpdateUserDto, UpdateMeDto } from './users.dto'
 
 @UseGuards(JwtAuthGuard, TenantStatusGuard)
 @ApiTags('Users')
@@ -29,6 +43,37 @@ export class UsersController {
   @Get('permissions')
   getPermissions() {
     return this.usersService.getAllPermissions()
+  }
+
+  // ── Self-service profile ─────────────────────────────────────────────────────
+  // Declared before the `:id` routes below so "me" is never captured as an id.
+
+  @Get('me')
+  getMe(@CurrentUser() user: AccessTokenPayload) {
+    return this.usersService.getMe(user.userId)
+  }
+
+  @Patch('me')
+  updateMe(@Body() body: UpdateMeDto, @CurrentUser() user: AccessTokenPayload) {
+    return this.usersService.updateMe(user.userId, body)
+  }
+
+  @Patch('me/avatar')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      // Hard cap so an oversized body is dropped before buffering the whole
+      // file in memory; the service re-checks and returns a localizable error.
+      limits: { fileSize: AVATAR_MAX_BYTES },
+    }),
+  )
+  updateMyAvatar(@UploadedFile() file: Express.Multer.File, @CurrentUser() user: AccessTokenPayload) {
+    return this.usersService.updateMyAvatar(user.userId, file)
+  }
+
+  @Delete('me/avatar')
+  removeMyAvatar(@CurrentUser() user: AccessTokenPayload) {
+    return this.usersService.removeMyAvatar(user.userId)
   }
 
   @UseGuards(RolesGuard)

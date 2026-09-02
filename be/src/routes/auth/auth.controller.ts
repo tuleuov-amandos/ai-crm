@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Post, UseGuards, Req, Res } from '@nestjs/common'
+import { Body, Controller, Get, Patch, Post, UseGuards, Req, Res } from '@nestjs/common'
 import { ApiTags, ApiOkResponse } from '@nestjs/swagger'
 import { Response, Request } from 'express'
 import { ZodSerializerDto } from 'nestjs-zod'
-import { LoginBodyDto, RegisterBodyDto, RegisterResDto } from './auth.dto'
+import { ChangePasswordBodyDto, LoginBodyDto, RegisterBodyDto, RegisterResDto } from './auth.dto'
 import { AuthService } from './auth.service'
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard'
 import { CurrentUser } from 'src/common/decorators/current-user.decorator'
@@ -95,6 +95,15 @@ export class AuthController {
   @Get('me')
   getProfile(@CurrentUser() user: AccessTokenPayload) {
     return this.authService.getProfile(user.userId)
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('password')
+  @Throttle(BRUTE_FORCE_GUARD_THROTTLE)
+  @ApiOkResponse({ type: MessageDto })
+  @ZodSerializerDto(MessageDto)
+  changePassword(@Body() body: ChangePasswordBodyDto, @CurrentUser() user: AccessTokenPayload) {
+    return this.authService.changePassword(user.userId, body)
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

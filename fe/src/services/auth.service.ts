@@ -19,9 +19,12 @@ export const authService = {
     id: string;
     email: string;
     name: string;
+    avatarUrl: string | null;
     role: string;
     tenantId: string;
     tenantStatus: "PENDING" | "ACTIVE" | "SUSPENDED";
+    /** `false` for Google-only accounts — hide the "change password" form. */
+    hasPassword: boolean;
     permissions: { action: string; subject: string; conditions?: Record<string, unknown> | null }[];
   }> => {
     const response = await axiosInstance.get("auth/me");
