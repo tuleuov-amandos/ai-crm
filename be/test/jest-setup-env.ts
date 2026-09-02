@@ -29,6 +29,8 @@ const testEnv: Record<string, string> = {
 
   AI_PROVIDER: 'openai',
   OPENAI_API_KEY: 'test-openai-key',
+
+  INTERNAL_ADMIN_TOKEN: 'test-internal-admin-token',
 }
 
 for (const [key, value] of Object.entries(testEnv)) {

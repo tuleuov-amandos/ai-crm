@@ -169,7 +169,7 @@ export class AuthService {
   async getProfile(userId: string) {
     const user = await this.prismaService.user.findUnique({
       where: { id: userId },
-      include: { role: true },
+      include: { role: true, tenant: { select: { status: true } } },
     })
     if (!user) {
       log.warn({ event: 'profile.fetch', userId, reason: 'not_found' })
@@ -208,6 +208,10 @@ export class AuthService {
       name: user.name,
       role: user.role.name, // Map string
       tenantId: user.tenantId,
+      // Lets the frontend show the "awaiting approval" / "suspended" screen
+      // instead of the dashboard. GET /auth/me stays reachable for non-ACTIVE
+      // tenants (no TenantStatusGuard) precisely so this field can be read.
+      tenantStatus: user.tenant.status,
       permissions, // Attach permissions array
     }
   }

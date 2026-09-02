@@ -21,6 +21,7 @@ import { AiModule } from './routes/ai/ai.module'
 import { TenantInterceptor } from './common/interceptors/tenant.interceptor'
 import { AuditLogsModule } from './routes/audit-logs/audit-logs.module'
 import { HealthModule } from './routes/health/health.module'
+import { InternalModule } from './routes/internal/internal.module'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
     AiModule,
     AuditLogsModule,
     HealthModule,
+    InternalModule,
     ThrottlerModule.forRoot({
       throttlers: [
         {

@@ -12,6 +12,7 @@ model Tenant {
   name        String
   slug        String       @unique
   plan        String       @default("free")
+  status      TenantStatus @default(PENDING)
   createdAt   DateTime     @default(now())
   roles       Role[]
   activities  Activity[]
@@ -283,4 +284,10 @@ enum InvitationStatus {
   ACCEPTED
   EXPIRED
   REVOKED
+}
+
+enum TenantStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
 }

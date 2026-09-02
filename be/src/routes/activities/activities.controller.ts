@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } f
 import { ApiTags, ApiOkResponse } from '@nestjs/swagger'
 import { ZodSerializerDto } from 'nestjs-zod'
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard'
+import { TenantStatusGuard } from 'src/common/guards/tenant-status.guard'
 import { CurrentUser } from 'src/common/decorators/current-user.decorator'
 import { AccessTokenPayload } from 'src/common/types/jwt.type'
 import { MessageDto } from 'src/common/dto/message.dto'
@@ -19,7 +20,7 @@ import {
 // ─── 1. CONTACT ACTIVITIES ────────────────────────────────────────────────────
 @ApiTags('Activities - Contact')
 @Controller('contacts/:contactId/activities')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, TenantStatusGuard)
 export class ContactActivitiesController {
   constructor(private readonly activitiesService: ActivitiesService) {}
 
@@ -47,7 +48,7 @@ export class ContactActivitiesController {
 // ─── 2. DEAL ACTIVITIES ───────────────────────────────────────────────────────
 @ApiTags('Activities - Deal')
 @Controller('deals/:dealId/activities')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, TenantStatusGuard)
 export class DealActivitiesController {
   constructor(private readonly activitiesService: ActivitiesService) {}
 
@@ -75,7 +76,7 @@ export class DealActivitiesController {
 // ─── 3. GLOBAL ACTIVITIES ─────────────────────────────────────────────────────
 @ApiTags('Activities')
 @Controller('activities')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, TenantStatusGuard)
 export class ActivitiesController {
   constructor(private readonly activitiesService: ActivitiesService) {}
 

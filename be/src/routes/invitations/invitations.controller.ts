@@ -5,6 +5,7 @@ import { Throttle } from '@nestjs/throttler'
 import { InvitationsService } from './invitations.service'
 import { CreateInvitationDto, AcceptInvitationDto, UpdateInvitationDto } from './invitations.dto'
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard'
+import { TenantStatusGuard } from 'src/common/guards/tenant-status.guard'
 import { RolesGuard } from 'src/common/guards/roles.guard'
 import { Roles } from 'src/common/decorators/roles.decorator'
 import { ROLE } from 'src/common/constants/role.constanst'
@@ -19,28 +20,28 @@ const BRUTE_FORCE_GUARD_THROTTLE = { default: { limit: 5, ttl: 60000 } }
 export class InvitationsController {
   constructor(private readonly invitationsService: InvitationsService) {}
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, TenantStatusGuard, RolesGuard)
   @Roles(ROLE.ADMIN, ROLE.MANAGER)
   @Post()
   createInvitation(@Body() body: CreateInvitationDto, @CurrentUser() user: AccessTokenPayload) {
     return this.invitationsService.createInvitation(body, user.tenantId, user)
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, TenantStatusGuard, RolesGuard)
   @Roles(ROLE.ADMIN, ROLE.MANAGER)
   @Get()
   getInvitations(@CurrentUser() user: AccessTokenPayload) {
     return this.invitationsService.getInvitationsByTenant(user.tenantId)
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, TenantStatusGuard, RolesGuard)
   @Roles(ROLE.ADMIN, ROLE.MANAGER)
   @Delete(':id')
   revokeInvitation(@Param('id') id: string, @CurrentUser() user: AccessTokenPayload) {
     return this.invitationsService.revokeInvitation(id, user.tenantId)
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, TenantStatusGuard, RolesGuard)
   @Roles(ROLE.ADMIN, ROLE.MANAGER)
   @Patch(':id')
   updateInvitation(

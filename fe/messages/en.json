@@ -1246,6 +1246,19 @@
       "copyright": "© {year} SalesFlow. Built for SMEs. All rights reserved."
     }
   },
+  "tenantPending": {
+    "pending": {
+      "title": "Your workspace is awaiting approval",
+      "description": "Thanks for signing up. A team member is reviewing your workspace and will activate it shortly. You'll get access to the dashboard as soon as it's approved.",
+      "refresh": "Check status",
+      "logout": "Sign out"
+    },
+    "suspended": {
+      "title": "Access suspended",
+      "description": "This workspace has been suspended. Please contact support to restore access.",
+      "logout": "Sign out"
+    }
+  },
   "errors": {
     "unknown": "Something went wrong. Please try again.",
     "AUTH_COMPANY_NAME_TAKEN": "This company name is already taken. Please choose another.",
@@ -1297,6 +1310,8 @@
     "INVITATION_EMAIL_TAKEN": "This email is already registered.",
     "INVITATION_DUPLICATE": "An invitation already exists for this email.",
     "WORKSPACE_NOT_FOUND": "Workspace not found.",
+    "TENANT_PENDING": "Your workspace is awaiting approval.",
+    "TENANT_SUSPENDED": "This workspace has been suspended. Please contact support.",
     "AI_RATE_LIMIT_EXCEEDED": "AI request limit reached ({max} per {windowSeconds}s). Please try again shortly.",
     "OPENAI_TIMEOUT": "AI analysis took too long. Please try again.",
     "OPENAI_AUTH_ERROR": "The AI service is temporarily unavailable. Please contact an admin.",

@@ -18,6 +18,7 @@ import { ZodSerializerDto } from 'nestjs-zod'
 import { CreateDealResDto, GetDealResDto, GetDealsPipelineResDto, UpdateDealResDto } from './deal.dto'
 import { CreateTaskBodyDto, CreateTasksBulkBodyDto, UpdateTaskBodyDto, TaskResDto } from './task.dto'
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard'
+import { TenantStatusGuard } from 'src/common/guards/tenant-status.guard'
 import { CurrentUser } from 'src/common/decorators/current-user.decorator'
 import { AccessTokenPayload } from 'src/common/types/jwt.type'
 import { MessageDto } from 'src/common/dto/message.dto'
@@ -28,7 +29,7 @@ import { Res } from '@nestjs/common'
 import { Response } from 'express'
 import { SkipThrottle } from '@nestjs/throttler'
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, TenantStatusGuard)
 @ApiTags('Deals')
 @Controller('deals')
 export class DealController {

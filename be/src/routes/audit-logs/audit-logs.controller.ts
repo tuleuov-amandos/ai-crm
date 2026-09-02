@@ -3,6 +3,7 @@ import { ApiTags } from '@nestjs/swagger'
 import { ROLE } from 'src/common/constants/role.constanst'
 import { Roles } from 'src/common/decorators/roles.decorator'
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard'
+import { TenantStatusGuard } from 'src/common/guards/tenant-status.guard'
 import { RolesGuard } from 'src/common/guards/roles.guard'
 import { AuditLogsService } from './audit-logs.service'
 import { CurrentUser } from 'src/common/decorators/current-user.decorator'
@@ -11,7 +12,7 @@ import { AccessTokenPayload } from 'src/common/types/jwt.type'
 
 @ApiTags('Audit Logs')
 @Controller('audit-logs')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, TenantStatusGuard, RolesGuard)
 @Roles(ROLE.ADMIN, ROLE.MANAGER)
 export class AuditLogsController {
   constructor(private readonly auditLogsService: AuditLogsService) {}

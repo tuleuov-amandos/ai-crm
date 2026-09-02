@@ -50,6 +50,12 @@ const ConfigSchema = z
     GOOGLE_CLIENT_SECRET: z.string(),
     GOOGLE_CALLBACK_URL: z.string(),
 
+    // TODO: replace with a proper admin panel + PLATFORM_ADMIN role.
+    // Temporary shared secret for the manual tenant-approval endpoint
+    // (PATCH /internal/tenants/:id/status), checked by InternalAdminGuard
+    // against the X-Internal-Admin-Token header.
+    INTERNAL_ADMIN_TOKEN: z.string(),
+
     DATABASE_SSL_CA_PATH: z.string().optional(),
   })
   .superRefine((data, ctx) => {
