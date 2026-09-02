@@ -121,15 +121,17 @@ async function main() {
     })
   }
 
-  // 3. Create default Roles for the Tenant
+  // 3. Create default Roles for the Tenant.
+  // No `description` — see shared-user.repo.ts: built-in role descriptions are
+  // rendered from fe translations, not stored per-language in the DB.
   const adminRole = await prisma.role.create({
-    data: { tenantId: tenant.id, name: 'ADMIN', description: 'Quản trị viên' }
+    data: { tenantId: tenant.id, name: 'ADMIN' }
   })
   const managerRole = await prisma.role.create({
-    data: { tenantId: tenant.id, name: 'MANAGER', description: 'Quản lý bán hàng' }
+    data: { tenantId: tenant.id, name: 'MANAGER' }
   })
   const salesRepRole = await prisma.role.create({
-    data: { tenantId: tenant.id, name: 'SALES_REP', description: 'Nhân viên bán hàng' }
+    data: { tenantId: tenant.id, name: 'SALES_REP' }
   })
 
   // 4. Associate permissions for ADMIN (manage:all)

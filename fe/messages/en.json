@@ -23,7 +23,12 @@
     },
     "today": "Today",
     "yesterday": "Yesterday",
-    "tomorrow": "Tomorrow"
+    "tomorrow": "Tomorrow",
+    "systemRoleDescription": {
+      "ADMIN": "Administrator",
+      "MANAGER": "Manager",
+      "SALES_REP": "Sales Representative"
+    }
   },
   "auth": {
     "validation": {

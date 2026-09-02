@@ -53,15 +53,19 @@ export class SharedUserRepository {
         },
       })
 
-      // 2. Create 3 default Roles
+      // 2. Create 3 default Roles.
+      // No `description`: for these built-in roles it is non-editable and the
+      // UI renders a localized label from `common.systemRoleDescription.<name>`
+      // (see fe `lib/roles.ts`). Storing prose here would only ever be one
+      // language and would shadow that translation.
       const adminRole = await tx.role.create({
-        data: { tenantId: tenant.id, name: 'ADMIN', description: 'Quản trị viên doanh nghiệp' },
+        data: { tenantId: tenant.id, name: 'ADMIN' },
       })
       const managerRole = await tx.role.create({
-        data: { tenantId: tenant.id, name: 'MANAGER', description: 'Quản lý đội ngũ' },
+        data: { tenantId: tenant.id, name: 'MANAGER' },
       })
       const salesRepRole = await tx.role.create({
-        data: { tenantId: tenant.id, name: 'SALES_REP', description: 'Nhân viên kinh doanh' },
+        data: { tenantId: tenant.id, name: 'SALES_REP' },
       })
 
       // 3. Load the seeded permission catalog — fail loudly if it is absent.
