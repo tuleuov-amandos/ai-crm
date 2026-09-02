@@ -7,12 +7,13 @@ import { AccessTokenPayload } from 'src/common/types/jwt.type'
 import { UpdateTenantType } from './tenants.dto'
 
 // Columns exposed by GET/PATCH /tenants/me and the logo endpoints. `id` / `slug`
-// / `createdAt` are read-only context for the Settings screen; everything else
-// is ADMIN-editable.
+// / `plan` / `createdAt` are read-only context (the sidebar shows `name` + `plan`,
+// the Settings screen shows the rest); everything else is ADMIN-editable.
 const WORKSPACE_SELECT = {
   id: true,
   name: true,
   slug: true,
+  plan: true,
   createdAt: true,
   website: true,
   address: true,
