@@ -810,7 +810,6 @@
     "workspace": {
       "heading": "Workspace",
       "subtitle": "Manage company information and general settings",
-      "savedToast": "Changes saved",
       "copy": "Copy",
       "section1Title": "Workspace information",
       "uploadLogo": "Upload logo",
@@ -823,7 +822,6 @@
       "language": "Language",
       "address": "Address",
       "addressPlaceholder": "Company address",
-      "defaultCompanyName": "ABC Company",
       "industryOptions": {
         "it": "Information Technology",
         "finance": "Finance",
@@ -845,8 +843,26 @@
       },
       "section2Title": "Workspace ID & API",
       "createdAtLabel": "Created",
-      "createdAtValue": "January 12, 2026",
-      "idWarning": "The Workspace ID is used for API integration. It can't be changed after creation."
+      "idWarning": "The Workspace ID is used for API integration. It can't be changed after creation.",
+      "notSet": "Not set",
+      "adminOnly": "Only a workspace administrator can change these settings.",
+      "removeLogo": "Remove logo",
+      "toasts": {
+        "saved": "Workspace updated",
+        "error": "Could not save the workspace",
+        "logoSaved": "Logo updated",
+        "logoRemoved": "Logo removed",
+        "logoError": "Could not upload the logo"
+      },
+      "validation": {
+        "nameRequired": "Enter a company name.",
+        "nameMax": "Name must be at most 120 characters.",
+        "websiteMax": "Website must be at most 200 characters.",
+        "websiteInvalid": "Enter a valid URL starting with http:// or https://.",
+        "addressMax": "Address must be at most 500 characters.",
+        "logoInvalidType": "Only JPG, PNG or WebP images are allowed.",
+        "logoTooLarge": "The logo file is too large (2 MB max)."
+      }
     },
     "members": {
       "heading": "Members & Roles",
@@ -1406,6 +1422,11 @@
     "USER_AVATAR_INVALID_TYPE": "Only JPG, PNG or WebP images are allowed.",
     "USER_AVATAR_TOO_LARGE": "The avatar file is too large (2 MB max).",
     "USER_AVATAR_FILE_MISSING": "No file was selected.",
-    "USER_AVATAR_STORAGE_UNAVAILABLE": "Avatar storage is not configured. Contact your administrator."
+    "USER_AVATAR_STORAGE_UNAVAILABLE": "Avatar storage is not configured. Contact your administrator.",
+    "TENANT_NOT_FOUND": "Workspace not found.",
+    "TENANT_FORBIDDEN": "Only a workspace administrator can change these settings.",
+    "TENANT_LOGO_INVALID_TYPE": "Only JPG, PNG or WebP images are allowed.",
+    "TENANT_LOGO_TOO_LARGE": "The logo file is too large (2 MB max).",
+    "TENANT_LOGO_FILE_MISSING": "No file was selected."
   }
 }
