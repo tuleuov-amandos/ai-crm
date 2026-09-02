@@ -78,43 +78,29 @@ export class PipelineReportService {
       }
     })
 
-    const bottlenecks: { type: 'warning' | 'success'; title: string; description: string }[] = []
+    const bottlenecks: {
+      type: 'warning' | 'success'
+      code: 'leadContactedLow' | 'leadContactedGood' | 'contactedProposalLow' | 'proposalWonHigh'
+      rate: number
+    }[] = []
 
     const totalProspects = leadCount + contactedCount + proposalCount + wonCount
     const totalQualified = contactedCount + proposalCount + wonCount
     const qualRate = totalProspects > 0 ? (totalQualified / totalProspects) * 100 : 0
     if (qualRate < 50 && totalProspects > 0) {
-      bottlenecks.push({
-        type: 'warning',
-        title: `Tỷ lệ Lead -> Contacted thấp (${Math.round(qualRate)}%)`,
-        description:
-          'Tỷ lệ chuyển đổi khách hàng tiềm năng sang liên hệ thấp. Cần tăng cường hoạt động gọi điện/email tiếp cận.',
-      })
+      bottlenecks.push({ type: 'warning', code: 'leadContactedLow', rate: Math.round(qualRate) })
     } else if (qualRate >= 50 && totalProspects > 0) {
-      bottlenecks.push({
-        type: 'success',
-        title: `Chuyển đổi Lead tốt (${Math.round(qualRate)}%)`,
-        description: 'Đội ngũ Sales đang làm tốt việc tiếp cận và xác nhận nhu cầu từ các khách hàng mới.',
-      })
+      bottlenecks.push({ type: 'success', code: 'leadContactedGood', rate: Math.round(qualRate) })
     }
 
     const propRate = totalQualified > 0 ? ((proposalCount + wonCount) / totalQualified) * 100 : 0
     if (propRate < 40 && totalQualified > 0) {
-      bottlenecks.push({
-        type: 'warning',
-        title: `Tỷ lệ Contacted -> Proposal giảm mạnh (${Math.round(propRate)}%)`,
-        description:
-          'Nhiều khách hàng đã liên hệ nhưng không nhận được/chưa đồng ý đề xuất giải pháp. Cần xem xét lại báo giá.',
-      })
+      bottlenecks.push({ type: 'warning', code: 'contactedProposalLow', rate: Math.round(propRate) })
     }
 
     const winRateVal = proposalCount + wonCount > 0 ? (wonCount / (proposalCount + wonCount)) * 100 : 0
     if (winRateVal >= 50 && wonCount > 0) {
-      bottlenecks.push({
-        type: 'success',
-        title: `Tỷ lệ Proposal -> Won cao (${Math.round(winRateVal)}%)`,
-        description: 'Khi đã đề xuất giải pháp thành công, khả năng chốt deal của team rất ấn tượng.',
-      })
+      bottlenecks.push({ type: 'success', code: 'proposalWonHigh', rate: Math.round(winRateVal) })
     }
 
     const totalClosed = wonCount + lostCount

@@ -71,8 +71,8 @@ export interface PipelineAnalysisRes {
   conversionFunnel: FunnelStage[];
   bottlenecks: {
     type: "warning" | "success";
-    title: string;
-    description: string;
+    code: "leadContactedLow" | "leadContactedGood" | "contactedProposalLow" | "proposalWonHigh";
+    rate: number;
   }[];
   averageWinVelocity: string;
   weightedForecast: {
