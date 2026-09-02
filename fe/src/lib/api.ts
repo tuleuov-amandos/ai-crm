@@ -1,9 +1,16 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { isLocaleRoot } from "@/i18n/pathname";
 
-// Use Next.js proxy (/api/*) instead of calling directly cross-origin
-// Helps sameSite: 'lax' cookie work since FE and proxy share the same origin
-const baseUrl = "/api/";
+// Call the backend directly (cross-origin) rather than through a Next.js
+// rewrite. The rewrite made the browser see requests as same-origin (to
+// Vercel), so the auth cookies the backend sets in its response were bound
+// to the backend's own domain and never sent back on later /auth/me calls.
+// Going direct + sameSite:'none';secure cookies (prod) + credentials CORS
+// makes the cross-site cookie flow work end to end.
+export const API_BASE_URL = (
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
+).replace(/\/$/, "");
+const baseUrl = `${API_BASE_URL}/`;
 
 type RetryConfig = InternalAxiosRequestConfig & {
   _retry?: boolean;
@@ -18,7 +25,7 @@ export const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-// refreshClient uses same proxy baseURL, no need for long timeout
+// refreshClient uses the same baseURL, no need for long timeout
 const refreshClient = axios.create({
   baseURL: baseUrl,
   withCredentials: true,

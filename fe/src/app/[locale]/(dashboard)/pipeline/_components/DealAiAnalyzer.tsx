@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { dealsService } from "@/services/deals.service";
+import { API_BASE_URL } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { dealKeys } from "@/hooks/useDeals";
 import { toast } from "sonner";
@@ -115,7 +116,7 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
       await dealsService.analyze(dealId, note);
 
       // 2. Establish EventSource connection to stream results
-      const eventSource = new EventSource(`/api/deals/${dealId}/ai-stream`, {
+      const eventSource = new EventSource(`${API_BASE_URL}/deals/${dealId}/ai-stream`, {
         withCredentials: true,
       });
 
