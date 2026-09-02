@@ -102,7 +102,7 @@ export function AppSidebar() {
             >
               <Image
                 src={logoImg}
-                alt="salesFlow"
+                alt="NSTORE"
                 width={24}
                 height={24}
                 unoptimized
@@ -116,7 +116,7 @@ export function AppSidebar() {
                   letterSpacing: "-0.01em",
                 }}
               >
-                SalesFlow
+                NSTORE
               </span>
             </Link>
             <div className="flex items-center gap-1.5">
@@ -163,7 +163,7 @@ export function AppSidebar() {
             // Case 2: Group is a header with indented children
             return (
               <div key={gIdx} className="space-y-1">
-                <span className="text-xs font-semibold text-[#868E96] uppercase tracking-wider px-4 block">
+                <span className="text-[11px] font-semibold text-[#868E96] uppercase tracking-wide px-3 block break-words leading-tight">
                   {t(`nav.${group.key}`)}
                 </span>
                 <div className="space-y-0.5 pl-3">

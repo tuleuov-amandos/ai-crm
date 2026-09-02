@@ -19,14 +19,14 @@ export class MailService {
     const apiKey = envConfig.RESEND_API_KEY
     const fromEmail = envConfig.RESEND_FROM_EMAIL
 
-    const subject = `Lời mời tham gia workspace ${companyName} - SalesFlow CRM`
+    const subject = `Lời mời tham gia workspace ${companyName} - NSTORE CRM`
     const htmlContent = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F8F7; padding: 40px 20px; text-align: center;">
         <div style="max-width: 500px; margin: 0 auto; bg-color: #ffffff; background: #ffffff; border: 1px solid #E8E7E2; border-radius: 12px; padding: 32px; text-align: left; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
           
           <!-- Header/Logo -->
           <div style="margin-bottom: 24px;">
-            <span style="font-size: 18px; font-weight: 700; color: #534AB7; tracking-tight: -0.02em;">SalesFlow <span style="color: #1A1A18; font-weight: 500;">CRM</span></span>
+            <span style="font-size: 18px; font-weight: 700; color: #534AB7; tracking-tight: -0.02em;">NSTORE <span style="color: #1A1A18; font-weight: 500;">CRM</span></span>
           </div>
 
           <!-- Main content -->

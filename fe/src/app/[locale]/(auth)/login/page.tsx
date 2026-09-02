@@ -15,7 +15,7 @@ import { LoginBodySchema, LoginBodyType } from "@/lib/validations/auth.schema";
 import { useLogin } from "@/hooks/useAuth";
 import { API_BASE_URL } from "@/lib/api";
 import { toast } from "sonner";
-import { SalesFlowLogo } from "@/components/SalesFlowLogo";
+import { NstoreLogo } from "@/components/NstoreLogo";
 
 const LoginPage = () => {
   const t = useTranslations("auth.login");
@@ -77,7 +77,7 @@ const LoginPage = () => {
       <div className="w-full" style={{ maxWidth: 400 }}>
         {/* Brand header — outside card, like Linear / Attio */}
         <div className="flex flex-col items-center gap-5 mb-8 text-center">
-          <SalesFlowLogo />
+          <NstoreLogo />
           <div className="space-y-1">
             <h1
               className="tracking-[-0.03em] text-foreground"

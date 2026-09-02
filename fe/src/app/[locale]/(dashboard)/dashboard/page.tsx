@@ -156,7 +156,7 @@ export default function DashboardPage() {
           dashboardData && (
             <div className="grid grid-cols-4 gap-4">
               <MetricCard
-                label={dashboardData.metrics.totalDealValue.label}
+                label={t("metrics.totalDealValue.label")}
                 value={shortValue(dashboardData.metrics.totalDealValue.value)}
                 trend={
                   dashboardData.metrics.totalDealValue.trend
@@ -166,11 +166,11 @@ export default function DashboardPage() {
                       }
                     : undefined
                 }
-                subtext={dashboardData.metrics.totalDealValue.subtext}
+                subtext={t("metrics.totalDealValue.subtext")}
                 icon={Wallet}
               />
               <MetricCard
-                label={dashboardData.metrics.openDeals.label}
+                label={t("metrics.openDeals.label")}
                 value={String(dashboardData.metrics.openDeals.value)}
                 trend={
                   dashboardData.metrics.openDeals.trend
@@ -180,11 +180,11 @@ export default function DashboardPage() {
                       }
                     : undefined
                 }
-                subtext={dashboardData.metrics.openDeals.subtext}
+                subtext={t("metrics.openDeals.subtext")}
                 icon={GitBranch}
               />
               <MetricCard
-                label={dashboardData.metrics.winRate.label}
+                label={t("metrics.winRate.label")}
                 value={`${dashboardData.metrics.winRate.value}%`}
                 trend={
                   dashboardData.metrics.winRate.trend
@@ -194,13 +194,13 @@ export default function DashboardPage() {
                       }
                     : undefined
                 }
-                subtext={dashboardData.metrics.winRate.subtext}
+                subtext={t("metrics.winRate.subtext")}
                 icon={Target}
                 iconBg="#FEE2E2"
                 iconColor="#A32D2D"
               />
               <MetricCard
-                label={dashboardData.metrics.monthlyRevenue.label}
+                label={t("metrics.monthlyRevenue.label")}
                 value={shortValue(dashboardData.metrics.monthlyRevenue.value)}
                 icon={TrendingUp}
                 progress={dashboardData.metrics.monthlyRevenue.progress}

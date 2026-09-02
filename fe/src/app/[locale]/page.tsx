@@ -496,14 +496,14 @@ export default function LandingPage() {
           <Link href="/" className="flex items-center gap-2.5 group">
             <Image
               src={logoImg}
-              alt="salesFlow"
+              alt="NSTORE"
               width={32}
               height={32}
               unoptimized
               className="rounded-lg shadow-md group-hover:scale-105 transition-transform duration-300 shrink-0"
             />
             <span className="text-lg font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground via-foreground to-primary/80 pr-1.5">
-              SalesFlow
+              NSTORE
             </span>
           </Link>
 
@@ -830,7 +830,7 @@ export default function LandingPage() {
                     <span className="size-2.5 rounded-full bg-green-400/80" />
                   </div>
                   <div className="text-[10px] text-muted-foreground font-mono bg-background border border-border rounded-md px-4 py-0.5">
-                    salesflow.io/pipeline
+                    nstore.io/pipeline
                   </div>
                   <div className="text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 rounded-md px-2.5 py-0.5 flex items-center gap-1 font-mono">
                     <span>MRR:</span>
@@ -1685,13 +1685,13 @@ export default function LandingPage() {
               <div className="flex items-center gap-2 text-primary font-bold">
                 <Image
                   src={logoImg}
-                  alt="salesFlow"
+                  alt="NSTORE"
                   width={20}
                   height={20}
                   unoptimized
                   className="rounded shrink-0"
                 />
-                <span className="text-foreground font-extrabold tracking-tight">SalesFlow CRM</span>
+                <span className="text-foreground font-extrabold tracking-tight">NSTORE CRM</span>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
                 {t("footer.desc")}
@@ -1717,8 +1717,8 @@ export default function LandingPage() {
               </p>
               <div className="pt-1">
                 <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">{t("footer.contactEmail")}</span>
-                <a href="mailto:nguyenthuan05.work@gmail.com" className="cursor-target text-xs font-bold text-primary hover:underline mt-0.5 block break-all">
-                  nguyenthuan05.work@gmail.com
+                <a href="mailto:sales.nstore@gmail.com" className="cursor-target text-xs font-bold text-primary hover:underline mt-0.5 block break-all">
+                  sales.nstore@gmail.com
                 </a>
               </div>
             </div>

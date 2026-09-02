@@ -2,12 +2,12 @@ import React from "react";
 import Image from "next/image";
 import logoImg from "@/app/favicon.ico";
 
-export function SalesFlowLogo() {
+export function NstoreLogo() {
   return (
     <div className="flex items-center gap-2">
       <Image
         src={logoImg}
-        alt="salesFlow"
+        alt="NSTORE"
         width={28}
         height={28}
         unoptimized
@@ -17,7 +17,7 @@ export function SalesFlowLogo() {
         className="tracking-[-0.025em] text-foreground"
         style={{ fontSize: 17, fontWeight: 700 }}
       >
-        salesFlow
+        NSTORE
       </span>
     </div>
   );

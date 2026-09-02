@@ -240,7 +240,7 @@ export class DashboardService {
       return {
         id: act.id,
         type: act.type,
-        title: act.title || 'Hoạt động crm',
+        title: act.title || 'CRM activity',
         contact: act.contact?.name || 'N/A',
         company: act.contact?.company || 'N/A',
         time: act.date.toISOString(),
@@ -251,34 +251,34 @@ export class DashboardService {
     const result = {
       metrics: {
         totalDealValue: {
-          label: 'Tổng deal value',
+          label: 'Total deal value',
           value: currentTotalValue,
           trend: {
             value: totalValueTrend,
             positive: totalValueTrend >= 0,
           },
-          subtext: 'So với kỳ trước',
+          subtext: 'vs. previous period',
         },
         openDeals: {
-          label: 'Deals đang mở',
+          label: 'Open deals',
           value: currentOpenDeals.length,
           trend: {
             value: openDealsDiff,
             positive: openDealsDiff >= 0,
           },
-          subtext: 'Đang trong pipeline',
+          subtext: 'In pipeline',
         },
         winRate: {
-          label: 'Tỷ lệ chốt',
+          label: 'Win rate',
           value: currentWinRate,
           trend: {
             value: winRateDiff,
             positive: winRateDiff >= 0,
           },
-          subtext: 'So với kỳ trước',
+          subtext: 'vs. previous period',
         },
         monthlyRevenue: {
-          label: 'Doanh thu tháng',
+          label: 'Monthly revenue',
           value: actualRevenue,
           progress: {
             current: actualRevenue,

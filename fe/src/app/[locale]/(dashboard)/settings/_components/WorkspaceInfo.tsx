@@ -204,7 +204,7 @@ export function WorkspaceInfo() {
       {/* Section 2 */}
       <SectionCard title={t("section2Title")}>
         <CopyRow label="Workspace ID" value="ws_abc123xyz789" />
-        <CopyRow label="Subdomain"    value="company.salesflow.app" />
+        <CopyRow label="Subdomain"    value="company.nstore.app" />
         <div className="flex items-center justify-between gap-4 py-3 border-b border-[#E8E7E2] dark:border-border">
           <span className="text-[#6B6B67] dark:text-muted-foreground shrink-0" style={{ fontSize: 13, width: 120 }}>{t("createdAtLabel")}</span>
           <span className="flex-1 text-[#1A1A18] dark:text-foreground" style={{ fontSize: 13 }}>{t("createdAtValue")}</span>

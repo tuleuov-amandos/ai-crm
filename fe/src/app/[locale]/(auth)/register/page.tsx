@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { RegisterBodyType } from "@/lib/validations/auth.schema";
 import { RegisterBodySchema } from '@/lib/validations/auth.schema';
 import { zodResolver } from "@hookform/resolvers/zod";
-import { SalesFlowLogo } from "@/components/SalesFlowLogo";
+import { NstoreLogo } from "@/components/NstoreLogo";
 import { useRegister } from "@/hooks/useAuth";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -153,7 +153,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-[420px]">
         {/* Brand header */}
         <div className="flex flex-col items-center gap-5 mb-8 text-center">
-          <SalesFlowLogo />
+          <NstoreLogo />
           <div className="space-y-1">
             <h1
               className="text-foreground tracking-tight"
