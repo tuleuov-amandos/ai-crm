@@ -35,7 +35,9 @@ const ConfigSchema = z
     OPENAI_MODEL: z.string().default('gpt-4o-mini'),
     GROQ_API_KEY: z.string().optional(),
     GROQ_MODEL: z.string().default('llama-3.3-70b-versatile'),
-    AI_PROVIDER: z.enum(['openai', 'groq']).default('openai'),
+    ANTHROPIC_API_KEY: z.string().optional(),
+    ANTHROPIC_MODEL: z.string().default('claude-haiku-4-5'),
+    AI_PROVIDER: z.enum(['openai', 'groq', 'anthropic']).default('openai'),
 
     REDIS_HOST: z.string().min(1),
     REDIS_PORT: z.coerce.number().int().positive(),
@@ -63,6 +65,13 @@ const ConfigSchema = z
         code: z.ZodIssueCode.custom,
         message: 'GROQ_API_KEY is required when AI_PROVIDER is groq',
         path: ['GROQ_API_KEY'],
+      })
+    }
+    if (data.AI_PROVIDER === 'anthropic' && !data.ANTHROPIC_API_KEY) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'ANTHROPIC_API_KEY is required when AI_PROVIDER is anthropic',
+        path: ['ANTHROPIC_API_KEY'],
       })
     }
   })

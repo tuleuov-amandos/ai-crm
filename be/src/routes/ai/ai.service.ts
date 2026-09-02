@@ -2,7 +2,7 @@ import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common'
 import { aiQueue } from './ai.queue'
 import { v4 as uuidv4 } from 'uuid'
 import { PrismaService } from '../../common/services/prisma.service'
-import { openai, AI_MODEL } from './ai.client'
+import { aiClient } from './ai.client'
 
 export interface EnqueueOpts {
   dealId: string
@@ -18,12 +18,7 @@ export class AiService {
   constructor(private readonly prisma: PrismaService) {}
 
   async callModel(prompt: string, options?: { temperature?: number }) {
-    const response = await openai.chat.completions.create({
-      model: AI_MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      temperature: options?.temperature ?? 0.1,
-    })
-    return response.choices[0]?.message?.content || ''
+    return aiClient.complete(prompt, { temperature: options?.temperature ?? 0.1 })
   }
 
   async enqueueAnalysis(opts: EnqueueOpts) {
