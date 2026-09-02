@@ -2,6 +2,7 @@
 
 import { Phone, Mail, Users, FileText, Plus, ArrowRight, CalendarCheck } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslations, useFormatter } from "next-intl";
 import {
   Card,
@@ -46,6 +47,7 @@ export function UpcomingActivities({ activities = [], isLoading = false }: Upcom
   const t = useTranslations("dashboard.upcomingActivities");
   const tCommon = useTranslations("common");
   const format = useFormatter();
+  const router = useRouter();
 
   const describeTime = (iso: string) => {
     const date = new Date(iso);
@@ -118,6 +120,7 @@ export function UpcomingActivities({ activities = [], isLoading = false }: Upcom
             return (
               <div
                 key={act.id}
+                onClick={() => router.push("/activities")}
                 className={cn(
                   "flex items-start gap-3 px-5 py-3 cursor-pointer transition-colors hover:bg-muted/30",
                   i < activities.length - 1 && "border-b border-b-muted/60"
@@ -170,9 +173,12 @@ export function UpcomingActivities({ activities = [], isLoading = false }: Upcom
           size="sm"
           variant="secondary"
           className="h-8 gap-1.5 text-xs text-primary hover:text-primary"
+          asChild
         >
-          <Plus className="size-3.5" />
-          {t("addActivity")}
+          <Link href="/activities">
+            <Plus className="size-3.5" />
+            {t("addActivity")}
+          </Link>
         </Button>
       </CardFooter>
     </Card>

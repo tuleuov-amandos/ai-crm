@@ -2,6 +2,7 @@
 
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslations, useFormatter } from "next-intl";
 import {
   Card,
@@ -46,6 +47,7 @@ export function RecentDeals({ deals = [], isLoading = false }: RecentDealsProps)
   const tCommon = useTranslations("common");
   const format = useFormatter();
   const shortValue = useShortValue();
+  const router = useRouter();
 
   const timeLabel = (daysAgo: number) => {
     if (daysAgo <= 0) return tCommon("today");
@@ -133,6 +135,7 @@ export function RecentDeals({ deals = [], isLoading = false }: RecentDealsProps)
               deals.map((deal) => (
                 <TableRow
                   key={deal.id}
+                  onClick={() => router.push(`/pipeline/${deal.id}`)}
                   className="cursor-pointer border-b border-b-muted/60 hover:bg-muted/30"
                 >
                   {/* Deal + company */}

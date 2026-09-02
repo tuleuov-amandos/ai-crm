@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { useQuery } from "@tanstack/react-query";
-import { Download, Plus, Wallet, GitBranch, Target, TrendingUp, Lock } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus, Wallet, GitBranch, Target, TrendingUp, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { CreateDealSheet } from "@/app/[locale]/(dashboard)/pipeline/_components/CreateDealSheet";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { PipelineChart } from "@/components/dashboard/PipelineChart";
 import { Leaderboard } from "@/components/dashboard/Leaderboard";
@@ -24,8 +25,18 @@ export default function DashboardPage() {
   const locale = useLocale();
   const shortValue = useShortValue();
   const [period, setPeriod] = useState<DashboardPeriod>("quarter");
+  const [createDealOpen, setCreateDealOpen] = useState(false);
   const { data: me } = useMe();
   const { can } = useAbility();
+  const queryClient = useQueryClient();
+
+  const handleCreateDealOpenChange = (open: boolean) => {
+    setCreateDealOpen(open);
+    // Refresh dashboard widgets once the sheet closes (e.g. after a deal is created)
+    if (!open) {
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    }
+  };
 
   const { data: dashboardData, isLoading, isError, error } = useQuery({
     queryKey: ["dashboard", period],
@@ -36,7 +47,6 @@ export default function DashboardPage() {
   const isForbidden = isError && (error as any)?.response?.status === 403;
 
   const canCreateDeal = can("create", "Deal");
-  const canReadReport = can("read", "Report");
   const canViewLeaderboard = can("read", "Report", { view: "team" });
   const canReadActivity = can("read", "Activity");
 
@@ -96,21 +106,14 @@ export default function DashboardPage() {
             </TabsList>
           </Tabs>
 
-          {(canReadReport || canCreateDeal) && <Separator orientation="vertical" className="h-5 mx-0.5" />}
-
-          {canReadReport && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs"
-            >
-              <Download className="size-3.5" />
-              {t("exportReport")}
-            </Button>
-          )}
+          {canCreateDeal && <Separator orientation="vertical" className="h-5 mx-0.5" />}
 
           {canCreateDeal && (
-            <Button size="sm" className="h-8 gap-1.5 text-xs">
+            <Button
+              size="sm"
+              className="h-8 gap-1.5 text-xs"
+              onClick={() => setCreateDealOpen(true)}
+            >
               <Plus className="size-3.5" />
               {t("addDeal")}
             </Button>
@@ -231,6 +234,10 @@ export default function DashboardPage() {
         </div>
 
       </main>
+
+      {canCreateDeal && (
+        <CreateDealSheet open={createDealOpen} onOpenChange={handleCreateDealOpenChange} />
+      )}
     </div>
   );
 }
