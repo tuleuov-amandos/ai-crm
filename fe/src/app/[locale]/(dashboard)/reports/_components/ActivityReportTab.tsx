@@ -8,6 +8,7 @@ import {
 } from "recharts";
 import { Activity, CheckSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
+import * as XLSX from "xlsx";
 import { ChartCard } from "./ChartCard";
 import { EmptyState } from "./EmptyState";
 import { reportsService } from "@/services/reports.service";
@@ -97,6 +98,18 @@ export function ActivityReportTab({ startDate, endDate }: ActivityReportTabProps
   const isTrendEmpty = !data.trend || data.trend.length === 0 || (totalCalls === 0 && totalMeetings === 0 && totalTasks === 0);
   const isStatusEmpty = !data.statusDistribution || data.statusDistribution.length === 0 || data.statusDistribution.every(d => d.value === 0);
 
+  function handleDownloadTrend() {
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(data!.trend), "Activity Trend");
+    XLSX.writeFile(workbook, "activity-trend.xlsx");
+  }
+
+  function handleDownloadStatus() {
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(data!.statusDistribution), "Task Status");
+    XLSX.writeFile(workbook, "task-status.xlsx");
+  }
+
   return (
     <div className="flex flex-col gap-5">
       {/* Row 1: KPI Cards */}
@@ -130,6 +143,7 @@ export function ActivityReportTab({ startDate, endDate }: ActivityReportTabProps
           <ChartCard
             title={t("trendTitle")}
             subtitle={t("trendSubtitle")}
+            onDownload={isTrendEmpty ? undefined : handleDownloadTrend}
             action={
               !isTrendEmpty && (
                 <div className="flex items-center gap-3 mr-1">
@@ -171,6 +185,7 @@ export function ActivityReportTab({ startDate, endDate }: ActivityReportTabProps
         <ChartCard
           title={t("statusTitle")}
           subtitle={t("statusSubtitle")}
+          onDownload={isStatusEmpty ? undefined : handleDownloadStatus}
         >
           {isStatusEmpty ? (
             <EmptyState

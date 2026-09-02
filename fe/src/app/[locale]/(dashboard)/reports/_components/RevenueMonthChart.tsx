@@ -5,6 +5,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip,
 } from "recharts";
 import { useTranslations } from "next-intl";
+import * as XLSX from "xlsx";
 import { ChartCard } from "./ChartCard";
 import { useShortValue } from "@/lib/format";
 
@@ -52,10 +53,17 @@ export function RevenueMonthChart({ data = [] }: RevenueMonthChartProps) {
   const maxVal = Math.max(...data.map(d => Math.max(d.actual, d.target)), 100);
   const yDomainMax = Math.ceil(maxVal * 1.2);
 
+  function handleDownload() {
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(data), "Revenue by Month");
+    XLSX.writeFile(workbook, "revenue-by-month.xlsx");
+  }
+
   return (
     <ChartCard
       title={t("title")}
       subtitle={t("subtitle")}
+      onDownload={isDataEmpty ? undefined : handleDownload}
       action={
         !isDataEmpty && (
           <div className="flex items-center gap-3 mr-1">

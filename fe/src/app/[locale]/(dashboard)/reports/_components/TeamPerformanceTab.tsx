@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import * as XLSX from "xlsx";
 import { useApiError } from "@/hooks/useApiError";
 import { Edit2, Users } from "lucide-react";
 import {
@@ -131,12 +132,19 @@ export function TeamPerformanceTab({ startDate, endDate }: TeamPerformanceTabPro
 
   const isDataEmpty = teamData.length === 0;
 
+  function handleDownload() {
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(teamData), "Team Performance");
+    XLSX.writeFile(workbook, "team-performance.xlsx");
+  }
+
   return (
     <div className="flex flex-col gap-5">
       {/* Chart Row */}
       <ChartCard
         title={t("chartTitle")}
         subtitle={t("chartSubtitle")}
+        onDownload={isDataEmpty ? undefined : handleDownload}
         action={
           !isDataEmpty && (
             <div className="flex items-center gap-3 mr-1">

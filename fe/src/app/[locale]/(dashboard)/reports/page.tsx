@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
+import * as XLSX from "xlsx";
 import type { DateRange } from "react-day-picker";
 import { useTranslations } from "next-intl";
 import { useAbility } from "@/hooks/useAbility";
@@ -128,6 +129,37 @@ export default function ReportsPage() {
 
   const isForbidden = isOverviewError && (overviewError as any)?.response?.status === 403;
 
+  const isExportDisabled = isOverviewLoading || !overviewData;
+
+  function handleExportCsv() {
+    if (!overviewData) return;
+
+    const kpiRows = Object.entries(overviewData.kpis).map(([name, kpi]) => ({
+      name,
+      value: kpi.value,
+      delta: kpi.delta,
+      up: kpi.up,
+    }));
+
+    const topDealsRows = overviewData.topDeals.map((deal) => ({
+      id: deal.id,
+      name: deal.name,
+      company: deal.company,
+      owner: deal.owner.name,
+      value: deal.value,
+      closedAt: deal.closedAt,
+      stage: deal.stage,
+    }));
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(kpiRows), "KPI");
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(overviewData.revenueByMonth), "Revenue by Month");
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(overviewData.winLossData), "Win vs Loss");
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(topDealsRows), "Top Deals");
+
+    XLSX.writeFile(workbook, `report-overview-${startDate}_${endDate}.xlsx`);
+  }
+
   return (
     <div className="flex flex-col flex-1 min-w-0 overflow-hidden bg-[#F8F8F7] dark:bg-background">
 
@@ -145,7 +177,7 @@ export default function ReportsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 print:hidden">
           {/* Date range pill */}
           <Popover>
             <PopoverTrigger asChild>
@@ -171,7 +203,11 @@ export default function ReportsPage() {
 
           {/* Export CSV */}
           <button
-            className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-[#E8E7E2] dark:border-border bg-white dark:bg-card hover:bg-[#F8F8F7] dark:hover:bg-muted transition-colors cursor-pointer"
+            onClick={handleExportCsv}
+            disabled={isExportDisabled}
+            className={`flex items-center gap-1.5 h-8 px-3 rounded-lg border border-[#E8E7E2] dark:border-border bg-white dark:bg-card hover:bg-[#F8F8F7] dark:hover:bg-muted transition-colors ${
+              isExportDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+            }`}
             style={{ fontSize: 12, color: "var(--muted-foreground)" }}
           >
             <Download size={13} />
@@ -180,6 +216,7 @@ export default function ReportsPage() {
 
           {/* Export PDF */}
           <button
+            onClick={() => window.print()}
             className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-white transition-colors cursor-pointer"
             style={{ fontSize: 12, background: "#534AB7", border: "none" }}
             onMouseEnter={e => (e.currentTarget.style.background = "#4840A0")}
@@ -193,7 +230,7 @@ export default function ReportsPage() {
 
       {/* ── Tab bar ─────────────────────────────────────────────────────────── */}
       <div
-        className="shrink-0 bg-white dark:bg-card border-b border-[#E8E7E2] dark:border-border flex items-end px-6 gap-0"
+        className="shrink-0 bg-white dark:bg-card border-b border-[#E8E7E2] dark:border-border flex items-end px-6 gap-0 print:hidden"
         style={{ height: 44 }}
       >
         {visibleTabs.map((tab) => {
@@ -220,7 +257,7 @@ export default function ReportsPage() {
       </div>
 
       {/* ── Body ─────────────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto" style={{ padding: 24 }}>
+      <div className="flex-1 overflow-y-auto print:overflow-visible print:h-auto print:max-h-none" style={{ padding: 24 }}>
 
         {isLoadingMe || isRedirecting ? (
           <div className="flex items-center justify-center min-h-[400px]">

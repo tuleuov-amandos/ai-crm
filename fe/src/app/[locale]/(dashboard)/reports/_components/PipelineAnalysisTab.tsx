@@ -8,6 +8,7 @@ import {
 } from "recharts";
 import { Activity, TrendingUp } from "lucide-react";
 import { useTranslations } from "next-intl";
+import * as XLSX from "xlsx";
 import { ChartCard } from "./ChartCard";
 import { EmptyState } from "./EmptyState";
 import { STAGE_COLORS } from "@/lib/helper";
@@ -92,6 +93,18 @@ export function PipelineAnalysisTab() {
   const isFunnelEmpty = !data.conversionFunnel || data.conversionFunnel.length === 0 || data.conversionFunnel.every(d => d.count === 0);
   const isForecastEmpty = !data.weightedForecast || data.weightedForecast.length === 0 || data.weightedForecast.every(d => !d.actual && !d.forecast && !d.target);
 
+  function handleDownloadFunnel() {
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(data!.conversionFunnel), "Conversion Funnel");
+    XLSX.writeFile(workbook, "pipeline-conversion-funnel.xlsx");
+  }
+
+  function handleDownloadForecast() {
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(data!.weightedForecast), "Weighted Forecast");
+    XLSX.writeFile(workbook, "pipeline-weighted-forecast.xlsx");
+  }
+
   return (
     <div className="flex flex-col gap-5">
       {/* Row 1: Funnel & KPI summary */}
@@ -100,6 +113,7 @@ export function PipelineAnalysisTab() {
         <ChartCard
           title={t("funnelTitle")}
           subtitle={t("funnelSubtitle")}
+          onDownload={isFunnelEmpty ? undefined : handleDownloadFunnel}
         >
           {isFunnelEmpty ? (
             <EmptyState
@@ -200,6 +214,7 @@ export function PipelineAnalysisTab() {
       <ChartCard
         title={t("forecastTitle")}
         subtitle={t("forecastSubtitle")}
+        onDownload={isForecastEmpty ? undefined : handleDownloadForecast}
         action={
           !isForecastEmpty && (
             <div className="flex items-center gap-3 mr-1">

@@ -9,9 +9,10 @@ interface Props {
   className?: string;
   action?: ReactNode;
   noPad?: boolean;
+  onDownload?: () => void;
 }
 
-export function ChartCard({ title, subtitle, children, className, action, noPad }: Props) {
+export function ChartCard({ title, subtitle, children, className, action, noPad, onDownload }: Props) {
   return (
     <div className={cn("bg-white dark:bg-card rounded-[10px] border border-[#E8E7E2] dark:border-border", className)}>
       <div className="flex items-center justify-between px-4 pt-4 pb-3">
@@ -29,12 +30,25 @@ export function ChartCard({ title, subtitle, children, className, action, noPad 
           >
             <Info size={12} />
           </button>
-          <button className="size-6 flex items-center justify-center rounded transition-colors" style={{ color: "var(--muted-foreground)", opacity: 0.4 }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
-            onMouseLeave={e => (e.currentTarget.style.opacity = "0.4")}
-          >
-            <Download size={12} />
-          </button>
+          {onDownload ? (
+            <button
+              className="size-6 flex items-center justify-center rounded transition-colors cursor-pointer"
+              style={{ color: "var(--muted-foreground)", opacity: 0.4 }}
+              onClick={onDownload}
+              onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
+              onMouseLeave={e => (e.currentTarget.style.opacity = "0.4")}
+            >
+              <Download size={12} />
+            </button>
+          ) : (
+            <button
+              className="size-6 flex items-center justify-center rounded transition-colors cursor-not-allowed"
+              style={{ color: "var(--muted-foreground)", opacity: 0.3 }}
+              disabled
+            >
+              <Download size={12} />
+            </button>
+          )}
         </div>
       </div>
       <div className={cn(!noPad && "px-4 pb-4")}>
