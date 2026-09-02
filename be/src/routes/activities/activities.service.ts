@@ -125,7 +125,9 @@ export class ActivitiesService {
     }
 
     if (ability.cannot('read', subject('Activity', { userId: 'other' } as any))) {
-      filters.userId = user.userId
+      filters.userId = user.userId // hard-locked to own userId, query.userId is ignored
+    } else if (query.userId) {
+      filters.userId = query.userId // filter by chosen employee, only when the user has the rights
     }
 
     const { data, total } = await this.activitiesRepo.findAll(query, filters)

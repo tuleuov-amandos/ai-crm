@@ -80,6 +80,9 @@ export const GetActivitiesParamsSchema = z.object({
   search: z.string().optional(),
   contactId: z.string().optional(),
   dealId: z.string().optional(),
+  userId: z.string().optional(),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
 });
 
 export type GetActivitiesParamsType = z.infer<typeof GetActivitiesParamsSchema>;
