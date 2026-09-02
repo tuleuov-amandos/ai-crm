@@ -13,6 +13,7 @@ import { Response as ExpressResponse } from 'express'
 import { COOKIE_OPTIONS } from './auth.constants'
 import { RedisService } from 'src/common/services/redis.service'
 import { rootLogger } from 'src/common/logger/root-logger'
+import { EXPECTED_DOMAIN_PERMISSION_COUNT, PERMISSION_CATALOG_NOT_SEEDED } from 'src/common/casl/permission-catalog'
 
 // Module-level logger. During an HTTP request the pino `mixin` pulls the
 // per-request `requestId` from CLS automatically, so every line here is
@@ -322,15 +323,28 @@ export class AuthService {
         const salesRepRole = await tx.role.create({
           data: { tenantId: tenant.id, name: 'SALES_REP', description: 'Nhân viên kinh doanh' },
         })
-        // Assign permissions for ADMIN
+        // Load the seeded permission catalog — fail loudly if it is absent.
+        // A tenant whose ADMIN role has zero permissions is unusable and the
+        // failure only surfaces later as a 403 for the end user, so never let
+        // provisioning proceed silently past an empty catalog.
         const systemManageAll = await tx.permission.findFirst({ where: { action: 'manage', subject: 'all' } })
-        if (systemManageAll) {
-          await tx.rolePermission.create({ data: { roleId: adminRole.id, permissionId: systemManageAll.id } })
-        }
-        // Assign permissions for other roles
         const allDomainPerms = await tx.permission.findMany({
           where: { subject: { in: ['Contact', 'Deal', 'Task', 'Activity'] } },
         })
+
+        if (!systemManageAll || allDomainPerms.length < EXPECTED_DOMAIN_PERMISSION_COUNT) {
+          log.error({
+            event: 'google.login.permission_catalog_not_seeded',
+            email,
+            hasManageAll: Boolean(systemManageAll),
+            domainPermCount: allDomainPerms.length,
+          })
+          throw new Error(PERMISSION_CATALOG_NOT_SEEDED)
+        }
+
+        // Assign permissions for ADMIN
+        await tx.rolePermission.create({ data: { roleId: adminRole.id, permissionId: systemManageAll.id } })
+        // Assign permissions for other roles
         for (const perm of allDomainPerms) {
           await tx.rolePermission.create({ data: { roleId: managerRole.id, permissionId: perm.id } })
           const isSubjectRestricted = ['Contact', 'Deal', 'Activity'].includes(perm.subject)

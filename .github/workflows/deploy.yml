@@ -117,6 +117,18 @@ jobs:
       - name: Apply migrations
         run: npx prisma migrate deploy
 
+      # Drop the 1h role-permission cache so tenants that registered while the
+      # Permission catalog was empty pick up the backfilled rules immediately
+      # instead of staying 403'd until the cache expires. Non-fatal: the DB is
+      # already correct and the cache self-heals via TTL.
+      # Needs REDIS_URL as an Environment secret (public proxy URL, same pattern
+      # as DATABASE_URL for backup/migrate).
+      - name: Invalidate role-permission cache
+        continue-on-error: true
+        env:
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+        run: npm run cache:invalidate-permissions
+
   # ─── 4. Деплой на Railway: API + BullMQ worker ───────────────────────────────
   # Миграции уже применены job'ом migrate — Railway только катит новый образ.
   deploy:
