@@ -14,6 +14,7 @@ import { ContactsModule } from './routes/contacts/contacts.module'
 import { ActivitiesModule } from './routes/activities/activities.module'
 import { DealModule } from './routes/deal/deal.module'
 import { UsersModule } from './routes/users/users.module'
+import { TenantsModule } from './routes/tenants/tenants.module'
 import { InvitationsModule } from './routes/invitations/invitations.module'
 import { DashboardModule } from './routes/dashboard/dashboard.module'
 import { ReportsModule } from './routes/reports/reports.module'
@@ -32,6 +33,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
     ActivitiesModule,
     DealModule,
     UsersModule,
+    TenantsModule,
     InvitationsModule,
     DashboardModule,
     ReportsModule,

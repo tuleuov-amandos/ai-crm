@@ -99,6 +99,16 @@ export enum TenantErrorCode {
   TENANT_PENDING = 'TENANT_PENDING',
   /** Workspace access has been revoked by an operator. */
   TENANT_SUSPENDED = 'TENANT_SUSPENDED',
+  /** The current user's workspace row could not be found. */
+  NOT_FOUND = 'TENANT_NOT_FOUND',
+  /** Non-ADMIN tried to change workspace settings. */
+  FORBIDDEN = 'TENANT_FORBIDDEN',
+  /** Uploaded logo file is not an accepted image type. */
+  LOGO_INVALID_TYPE = 'TENANT_LOGO_INVALID_TYPE',
+  /** Uploaded logo file exceeds the size limit. */
+  LOGO_TOO_LARGE = 'TENANT_LOGO_TOO_LARGE',
+  /** No file was sent with the logo upload request. */
+  LOGO_FILE_MISSING = 'TENANT_LOGO_FILE_MISSING',
 }
 
 export enum AiErrorCode {

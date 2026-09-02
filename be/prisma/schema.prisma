@@ -14,6 +14,21 @@ model Tenant {
   plan        String       @default("free")
   status      TenantStatus @default(PENDING)
   createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now()) @updatedAt
+
+  // ── Workspace profile (Settings → Workspace Info) ─────────────────────────
+  // All optional; a fresh workspace has only `name` (set at sign-up). Editable
+  // by ADMIN via PATCH /tenants/me. `industry` / `companySize` hold stable
+  // keys ("it", "md", …) that the frontend maps to localized labels; `logoUrl`
+  // is the Cloudinary secure URL (see CloudinaryService.uploadTenantLogo).
+  website       String?
+  address       String?
+  companySize   String?
+  industry      String?
+  timezone      String?
+  defaultLocale String?
+  logoUrl       String?
+
   roles       Role[]
   activities  Activity[]
   contacts    Contact[]
