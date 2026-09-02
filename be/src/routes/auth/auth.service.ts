@@ -303,7 +303,14 @@ export class AuthService {
       const slug = slugify(name + '-' + Math.floor(Math.random() * 1000))
       return this.prismaService.$transaction(async (tx) => {
         const tenant = await tx.tenant.create({
-          data: { name: `${name}'s Company`, slug },
+          data: {
+            name: `${name}'s Company`,
+            slug,
+            // Explicit for clarity even though PENDING is the schema default:
+            // a fresh self-service workspace stays gated until an operator
+            // approves it via PATCH /internal/tenants/:id/status.
+            status: 'PENDING',
+          },
         })
         // Seed 3 default Roles for new Tenant
         const adminRole = await tx.role.create({
