@@ -162,13 +162,6 @@ export function ActivityCard({
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
-
-              {/* Fallback button when there is no callback (view-only) */}
-              {!onEdit && !onDelete && (
-                <button className="text-muted-foreground hover:text-foreground transition-colors p-0.5 bg-transparent border-0 cursor-pointer">
-                  <MoreHorizontal size={13} />
-                </button>
-              )}
             </div>
           </div>
 
@@ -245,12 +238,13 @@ export function ActivityCard({
                   {t("aiHint")}
                 </p>
               </div>
-              <button
+              <Link
+                href={`/pipeline/${activity.dealId}`}
                 className="shrink-0 text-primary bg-transparent border-0 cursor-pointer whitespace-nowrap"
-                style={{ fontSize: 11, fontWeight: 500 }}
+                style={{ fontSize: 11, fontWeight: 500, textDecoration: "none" }}
               >
                 {t("view")}
-              </button>
+              </Link>
             </div>
           )}
 
