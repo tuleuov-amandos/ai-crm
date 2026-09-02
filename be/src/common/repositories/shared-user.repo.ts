@@ -2,6 +2,10 @@ import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/common/services/prisma.service'
 import { UserType } from 'src/routes/auth/auth.model'
 import { RoleType } from '../constants/role.constanst'
+import { rootLogger } from 'src/common/logger/root-logger'
+import { EXPECTED_DOMAIN_PERMISSION_COUNT, PERMISSION_CATALOG_NOT_SEEDED } from '../casl/permission-catalog'
+
+const log = rootLogger.child({ context: 'SharedUserRepository' })
 
 @Injectable()
 export class SharedUserRepository {
@@ -60,20 +64,33 @@ export class SharedUserRepository {
         data: { tenantId: tenant.id, name: 'SALES_REP', description: 'Nhân viên kinh doanh' },
       })
 
-      // 3. Assign manage:all permission to ADMIN
+      // 3. Load the seeded permission catalog — fail loudly if it is absent.
+      // A tenant whose ADMIN role has zero permissions is unusable and the
+      // failure only surfaces later as a 403 for the end user, so never let
+      // provisioning proceed silently past an empty catalog.
       const systemManageAll = await tx.permission.findFirst({
         where: { action: 'manage', subject: 'all' },
       })
-      if (systemManageAll) {
-        await tx.rolePermission.create({
-          data: { roleId: adminRole.id, permissionId: systemManageAll.id },
-        })
-      }
-
-      // 4. Assign permissions for MANAGER & SALES_REP
       const allDomainPerms = await tx.permission.findMany({
         where: { subject: { in: ['Contact', 'Deal', 'Task', 'Activity'] } },
       })
+
+      if (!systemManageAll || allDomainPerms.length < EXPECTED_DOMAIN_PERMISSION_COUNT) {
+        log.error({
+          event: 'register.permission_catalog_not_seeded',
+          slug: payload.slug,
+          hasManageAll: Boolean(systemManageAll),
+          domainPermCount: allDomainPerms.length,
+        })
+        throw new Error(PERMISSION_CATALOG_NOT_SEEDED)
+      }
+
+      // 3a. Assign manage:all permission to ADMIN
+      await tx.rolePermission.create({
+        data: { roleId: adminRole.id, permissionId: systemManageAll.id },
+      })
+
+      // 4. Assign permissions for MANAGER & SALES_REP
       for (const perm of allDomainPerms) {
         // MANAGER
         await tx.rolePermission.create({

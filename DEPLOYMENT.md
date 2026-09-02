@@ -28,6 +28,13 @@ Backend → **Railway**, Frontend → **Vercel**. Часть шагов дела
   строго между бэкапом и `railway up`. Не в build stage Dockerfile и больше не в
   `be/railway.json` `preDeployCommand` — миграции применяются один раз за реальный
   деплой, а не на каждой сборке образа.
+- **Инвалидация кеша прав** (`migrate` job, шаг после миграций): `npm run
+  cache:invalidate-permissions` сбрасывает Redis-ключи `tenant:*:role:*:permissions`
+  (CASL-правила кешируются на 1 час). Нужно после бэкофилл-миграции
+  `20260902130000_seed_permission_catalog_and_backfill_roles`, иначе тенанты,
+  зарегистрированные при пустом каталоге прав, ещё до часа получают 403 на
+  `/dashboard`. Шаг `continue-on-error` — БД уже корректна, кеш и так протухнет по
+  TTL. Требует secret `REDIS_URL` (см. «Что настроить руками»).
 - **Нативные snapshot'ы Railway** — независимый второй уровень: Railway → сервис
   Postgres → **Backups** → включить scheduled backups (глубина retention зависит от
   тарифа). CLI/API-хука «сделать бэкап сейчас» у Railway нет, поэтому в пайплайне —
@@ -47,6 +54,10 @@ GitHub → Settings → Secrets and variables → Actions:
   подключения Railway Postgres (`postgresql://…@<host>.proxy.rlwy.net:<port>/railway?sslmode=require`,
   Railway отдаёт её как `DATABASE_PUBLIC_URL`). Нужна job'ам `backup` и `migrate`.
   Внутренний `*.railway.internal` хост из GitHub Actions недоступен.
+- **Secret** `REDIS_URL` (в Environment `production`) — **публичный** URL Railway Redis
+  (`redis://default:<pass>@<host>.proxy.rlwy.net:<port>`, схема `rediss://` → TLS
+  включится сам). Нужен шагу «Invalidate role-permission cache» в job `migrate`.
+  Тот же принцип, что `DATABASE_URL`: внутренний `*.railway.internal` из Actions недоступен.
 - **Variables**:
   - `RAILWAY_API_SERVICE` — имя сервиса API в Railway.
   - `RAILWAY_WORKER_SERVICE` — имя сервиса воркера.

@@ -123,8 +123,10 @@ describe('AuthService', () => {
             .mockResolvedValueOnce({ id: 'role-sales' }),
         },
         permission: {
-          findFirst: jest.fn().mockResolvedValue(null),
-          findMany: jest.fn().mockResolvedValue([]),
+          findFirst: jest.fn().mockResolvedValue({ id: 'perm-manage-all' }),
+          findMany: jest
+            .fn()
+            .mockResolvedValue(Array.from({ length: 16 }, (_, i) => ({ id: `perm-${i}`, subject: 'Deal' }))),
         },
         rolePermission: { create: jest.fn() },
         user: { create: jest.fn().mockResolvedValue({ id: 'new-user-1' }) },
@@ -135,6 +137,9 @@ describe('AuthService', () => {
       const result = await service.validateGoogleUser(googleProfile)
 
       expect(result).toEqual(expect.objectContaining({ id: 'new-user-1', role: 'ADMIN' }))
+      expect(tx.rolePermission.create).toHaveBeenCalledWith({
+        data: { roleId: 'role-admin', permissionId: 'perm-manage-all' },
+      })
       expect(tx.account.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
@@ -144,6 +149,36 @@ describe('AuthService', () => {
           }),
         }),
       )
+    })
+
+    it('refuses to provision a new tenant when the permission catalog is not seeded', async () => {
+      mockPrismaService.account.findUnique.mockResolvedValue(null)
+      mockPrismaService.user.findUnique.mockResolvedValue(null)
+      mockPrismaService.invitation.findFirst.mockResolvedValue(null)
+
+      const tx = {
+        tenant: { create: jest.fn().mockResolvedValue({ id: 'tenant-1' }) },
+        role: {
+          create: jest
+            .fn()
+            .mockResolvedValueOnce({ id: 'role-admin' })
+            .mockResolvedValueOnce({ id: 'role-manager' })
+            .mockResolvedValueOnce({ id: 'role-sales' }),
+        },
+        permission: {
+          findFirst: jest.fn().mockResolvedValue(null),
+          findMany: jest.fn().mockResolvedValue([]),
+        },
+        rolePermission: { create: jest.fn() },
+        user: { create: jest.fn() },
+        account: { create: jest.fn() },
+      }
+      mockPrismaService.$transaction.mockImplementation((cb: any) => cb(tx))
+
+      await expect(service.validateGoogleUser(googleProfile)).rejects.toThrow(/catalog is not seeded/i)
+      expect(tx.rolePermission.create).not.toHaveBeenCalled()
+      expect(tx.user.create).not.toHaveBeenCalled()
+      expect(tx.account.create).not.toHaveBeenCalled()
     })
   })
 })
