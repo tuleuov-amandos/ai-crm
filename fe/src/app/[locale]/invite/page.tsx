@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { invitationsService } from "@/services/invitations.service";
 import { toast } from "sonner";
-import { SalesFlowLogo } from "@/components/SalesFlowLogo";
+import { NstoreLogo } from "@/components/NstoreLogo";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 function InviteContent() {
@@ -264,7 +264,7 @@ export default function InvitePage() {
       <div className="w-full" style={{ maxWidth: 420 }}>
         {/* Brand Logo Header */}
         <div className="flex flex-col items-center mb-8 text-center">
-          <SalesFlowLogo />
+          <NstoreLogo />
         </div>
 
         {/* Main form card */}
