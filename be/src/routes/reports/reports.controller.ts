@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common'
 import { ApiTags, ApiOkResponse } from '@nestjs/swagger'
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard'
+import { TenantStatusGuard } from 'src/common/guards/tenant-status.guard'
 import { CurrentUser } from 'src/common/decorators/current-user.decorator'
 import { AccessTokenPayload } from 'src/common/types/jwt.type'
 import { ZodSerializerDto } from 'nestjs-zod'
@@ -14,7 +15,7 @@ import {
   ActivitiesReportResDto,
 } from './reports.dto'
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, TenantStatusGuard)
 @ApiTags('Reports')
 @Controller('reports')
 export class ReportsController {

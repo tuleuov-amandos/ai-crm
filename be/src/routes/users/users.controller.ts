@@ -2,6 +2,7 @@ import { Controller, Get, Patch, Delete, Put, Post, Body, Param, UseGuards } fro
 import { ApiTags } from '@nestjs/swagger'
 import { CurrentUser } from 'src/common/decorators/current-user.decorator'
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard'
+import { TenantStatusGuard } from 'src/common/guards/tenant-status.guard'
 import { RolesGuard } from 'src/common/guards/roles.guard'
 import { Roles } from 'src/common/decorators/roles.decorator'
 import { ROLE } from 'src/common/constants/role.constanst'
@@ -9,7 +10,7 @@ import { AccessTokenPayload } from 'src/common/types/jwt.type'
 import { UsersService } from './users.service'
 import { UpdateUserDto } from './users.dto'
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, TenantStatusGuard)
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {

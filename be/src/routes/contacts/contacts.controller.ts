@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common'
 import { ApiTags, ApiOkResponse } from '@nestjs/swagger'
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard'
+import { TenantStatusGuard } from 'src/common/guards/tenant-status.guard'
 import { ContactsService } from './contacts.service'
 import { CurrentUser } from 'src/common/decorators/current-user.decorator'
 import { AccessTokenPayload } from 'src/common/types/jwt.type'
@@ -17,7 +18,7 @@ import { ZodSerializerDto } from 'nestjs-zod'
 
 @ApiTags('Contacts')
 @Controller('contacts')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, TenantStatusGuard)
 export class ContactsController {
   constructor(private readonly contactService: ContactsService) {}
 

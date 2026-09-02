@@ -21,6 +21,7 @@ export const authService = {
     name: string;
     role: string;
     tenantId: string;
+    tenantStatus: "PENDING" | "ACTIVE" | "SUSPENDED";
     permissions: { action: string; subject: string; conditions?: Record<string, unknown> | null }[];
   }> => {
     const response = await axiosInstance.get("auth/me");

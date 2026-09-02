@@ -82,6 +82,13 @@ export enum InvitationErrorCode {
   WORKSPACE_NOT_FOUND = 'WORKSPACE_NOT_FOUND',
 }
 
+export enum TenantErrorCode {
+  /** Workspace is awaiting manual approval — most endpoints return 403 until then. */
+  TENANT_PENDING = 'TENANT_PENDING',
+  /** Workspace access has been revoked by an operator. */
+  TENANT_SUSPENDED = 'TENANT_SUSPENDED',
+}
+
 export enum AiErrorCode {
   RATE_LIMIT_EXCEEDED = 'AI_RATE_LIMIT_EXCEEDED',
   OPENAI_TIMEOUT = 'OPENAI_TIMEOUT',
@@ -123,5 +130,6 @@ export type AppErrorCode =
   | ActivityErrorCode
   | ReportErrorCode
   | InvitationErrorCode
+  | TenantErrorCode
   | AiErrorCode
   | ValidationErrorCode

@@ -42,6 +42,10 @@ export class SharedUserRepository {
         data: {
           name: payload.companyName,
           slug: payload.slug,
+          // Explicit for clarity even though PENDING is the schema default:
+          // a fresh self-service workspace stays gated until an operator
+          // approves it via PATCH /internal/tenants/:id/status.
+          status: 'PENDING',
         },
       })
 
