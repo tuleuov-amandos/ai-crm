@@ -16,6 +16,10 @@ export enum AuthErrorCode {
   REFRESH_TOKEN_NOT_IN_STORE = 'AUTH_REFRESH_TOKEN_NOT_IN_STORE',
   GOOGLE_EMAIL_NOT_VERIFIED = 'AUTH_GOOGLE_EMAIL_NOT_VERIFIED',
   EMAIL_REGISTERED_WITH_PASSWORD = 'AUTH_EMAIL_REGISTERED_WITH_PASSWORD',
+  /** Password change attempted on an account that signs in via Google only. */
+  OAUTH_NO_PASSWORD = 'AUTH_OAUTH_NO_PASSWORD',
+  /** New password is identical to the current one. */
+  PASSWORD_SAME = 'AUTH_PASSWORD_SAME',
 }
 
 export enum DealErrorCode {
@@ -41,6 +45,14 @@ export enum UserErrorCode {
   CANNOT_CHANGE_OWN_ROLE = 'USER_CANNOT_CHANGE_OWN_ROLE',
   CANNOT_REMOVE_SELF = 'USER_CANNOT_REMOVE_SELF',
   MEMBER_HAS_OWNED_DEALS = 'MEMBER_HAS_OWNED_DEALS',
+  /** Uploaded avatar file is not an accepted image type. */
+  AVATAR_INVALID_TYPE = 'USER_AVATAR_INVALID_TYPE',
+  /** Uploaded avatar file exceeds the size limit. */
+  AVATAR_TOO_LARGE = 'USER_AVATAR_TOO_LARGE',
+  /** No file was sent with the avatar upload request. */
+  AVATAR_FILE_MISSING = 'USER_AVATAR_FILE_MISSING',
+  /** Avatar storage (Cloudinary) is not configured / reachable. */
+  AVATAR_STORAGE_UNAVAILABLE = 'USER_AVATAR_STORAGE_UNAVAILABLE',
 }
 
 export enum RoleErrorCode {

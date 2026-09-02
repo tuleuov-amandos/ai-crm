@@ -9,6 +9,7 @@ const STATUS_TEXT: Partial<Record<HttpStatus, string>> = {
   [HttpStatus.CONFLICT]: 'Conflict',
   [HttpStatus.UNPROCESSABLE_ENTITY]: 'Unprocessable Entity',
   [HttpStatus.TOO_MANY_REQUESTS]: 'Too Many Requests',
+  [HttpStatus.SERVICE_UNAVAILABLE]: 'Service Unavailable',
 }
 
 /**
@@ -58,5 +59,9 @@ export class AppException extends HttpException {
 
   static tooManyRequests(code: AppErrorCode, message: string, extra?: Record<string, unknown>) {
     return new AppException(HttpStatus.TOO_MANY_REQUESTS, code, message, extra)
+  }
+
+  static serviceUnavailable(code: AppErrorCode, message: string, extra?: Record<string, unknown>) {
+    return new AppException(HttpStatus.SERVICE_UNAVAILABLE, code, message, extra)
   }
 }

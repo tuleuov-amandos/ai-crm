@@ -940,6 +940,55 @@
         "updateSuccess": "Приглашение обновлено, письмо отправлено повторно",
         "updateError": "Не удалось обновить приглашение."
       }
+    },
+    "account": {
+      "toasts": {
+        "profileSaved": "Профиль обновлён",
+        "profileError": "Не удалось сохранить профиль",
+        "avatarSaved": "Аватар обновлён",
+        "avatarRemoved": "Аватар удалён",
+        "avatarError": "Не удалось загрузить аватар",
+        "passwordChanged": "Пароль изменён",
+        "passwordError": "Не удалось изменить пароль"
+      },
+      "profile": {
+        "heading": "Мой профиль",
+        "subtitle": "Управление личными данными вашего аккаунта",
+        "save": "Сохранить",
+        "sectionTitle": "Личные данные",
+        "uploadAvatar": "Загрузить фото",
+        "avatarHint": "JPG, PNG или WebP, до 2 МБ",
+        "removeAvatar": "Удалить фото",
+        "avatarInvalidType": "Допустимы только изображения JPG, PNG или WebP",
+        "avatarTooLarge": "Файл больше 2 МБ",
+        "name": "Имя",
+        "email": "Email",
+        "emailHint": "Email привязан к способу входа и не редактируется",
+        "validation": {
+          "nameMin": "Имя должно содержать не менее 2 символов.",
+          "nameMax": "Имя не может быть длиннее 80 символов."
+        }
+      },
+      "password": {
+        "heading": "Смена пароля",
+        "subtitle": "Обновите пароль для входа в аккаунт",
+        "sectionTitle": "Новый пароль",
+        "oauthNotice": "Вы вошли через Google — у этого аккаунта нет пароля для смены.",
+        "current": "Текущий пароль",
+        "new": "Новый пароль",
+        "confirm": "Повторите новый пароль",
+        "submit": "Изменить пароль",
+        "show": "Показать пароль",
+        "hide": "Скрыть пароль",
+        "validation": {
+          "currentRequired": "Введите текущий пароль.",
+          "newMin": "Пароль должен содержать не менее 8 символов.",
+          "newComplexity": "Пароль должен содержать заглавные и строчные буквы, цифру и спецсимвол.",
+          "confirmRequired": "Повторите новый пароль.",
+          "confirmMismatch": "Пароли не совпадают.",
+          "newSameAsCurrent": "Новый пароль должен отличаться от текущего."
+        }
+      }
     }
   },
   "auditLogs": {
@@ -1351,6 +1400,12 @@
     "VALIDATION_NUMBER_MAX": "Значение больше допустимого.",
     "VALIDATION_UNRECOGNIZED_KEYS": "В запросе есть неизвестные поля.",
     "VALIDATION_PASSWORD_MISMATCH": "Пароли не совпадают.",
-    "VALIDATION_AT_LEAST_ONE_FIELD": "Измените хотя бы одно поле."
+    "VALIDATION_AT_LEAST_ONE_FIELD": "Измените хотя бы одно поле.",
+    "AUTH_OAUTH_NO_PASSWORD": "Этот аккаунт использует вход через Google — пароль сменить нельзя.",
+    "AUTH_PASSWORD_SAME": "Новый пароль должен отличаться от текущего.",
+    "USER_AVATAR_INVALID_TYPE": "Допустимы только изображения JPG, PNG или WebP.",
+    "USER_AVATAR_TOO_LARGE": "Файл аватара слишком большой (максимум 2 МБ).",
+    "USER_AVATAR_FILE_MISSING": "Файл не выбран.",
+    "USER_AVATAR_STORAGE_UNAVAILABLE": "Хранилище аватаров не настроено. Обратитесь к администратору."
   }
 }

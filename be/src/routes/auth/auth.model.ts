@@ -60,6 +60,30 @@ export const LoginResSchema = z.object({
 
 export type LoginResType = z.infer<typeof LoginResSchema>
 
+// Password policy for user-set passwords: min 8 chars, at least one lowercase,
+// one uppercase, one digit and one special character. Mirrors the frontend
+// rule in `fe/src/lib/validations/auth.schema.ts`.
+export const PASSWORD_COMPLEXITY_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/
+
+export const ChangePasswordBodySchema = z
+  .object({
+    currentPassword: z.string().min(1),
+    newPassword: z.string().min(8).regex(PASSWORD_COMPLEXITY_REGEX),
+    confirmPassword: z.string().min(1),
+  })
+  .strict()
+  .superRefine(({ newPassword, confirmPassword }, ctx) => {
+    if (newPassword !== confirmPassword) {
+      ctx.addIssue({
+        code: 'custom',
+        message: ValidationErrorCode.PASSWORD_MISMATCH,
+        path: ['confirmPassword'],
+      })
+    }
+  })
+
+export type ChangePasswordBodyType = z.infer<typeof ChangePasswordBodySchema>
+
 export const RefreshTokenSchema = z.object({
   token: z.string(),
   userId: z.string(),

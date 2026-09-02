@@ -5,7 +5,7 @@ import {
   SidebarFooter,
   SidebarHeader,
 } from "@/components/ui/sidebar";
-import { Avatar, AvatarFallback } from "./ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import {
@@ -199,6 +199,7 @@ export function AppSidebar() {
           {/* User section */}
           <div className="flex items-center gap-2 p-3 border-t border-border shrink-0">
             <Avatar className="size-[30px] shrink-0">
+              {me?.avatarUrl && <AvatarImage src={me.avatarUrl} alt={me?.name ?? ""} />}
               <AvatarFallback
                 className="border-0"
                 style={{

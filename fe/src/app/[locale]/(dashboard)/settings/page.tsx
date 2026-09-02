@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils";
 import { WorkspaceInfo } from "./_components/WorkspaceInfo";
 import { MembersRoles }  from "./_components/MembersRoles";
 import { InvitationsList } from "./_components/InvitationsList";
+import { ProfileSettings } from "./_components/ProfileSettings";
+import { PasswordSettings } from "./_components/PasswordSettings";
 
 // ── Nav structure ─────────────────────────────────────────────────────────────
 type SettingsTab =
@@ -143,7 +145,9 @@ export default function SettingsPage() {
           {activeTab === "workspace-info" && <WorkspaceInfo />}
           {activeTab === "members"        && <MembersRoles />}
           {activeTab === "invitations"    && <InvitationsList />}
-          {activeTab !== "workspace-info" && activeTab !== "members" && activeTab !== "invitations" && (
+          {activeTab === "profile"        && <ProfileSettings />}
+          {activeTab === "password"       && <PasswordSettings />}
+          {!["workspace-info", "members", "invitations", "profile", "password"].includes(activeTab) && (
             <ComingSoonContent label={activeLabel} />
           )}
         </main>

@@ -940,6 +940,55 @@
         "updateSuccess": "Invitation updated and email resent",
         "updateError": "Couldn't update the invitation."
       }
+    },
+    "account": {
+      "toasts": {
+        "profileSaved": "Profile updated",
+        "profileError": "Could not save the profile",
+        "avatarSaved": "Avatar updated",
+        "avatarRemoved": "Avatar removed",
+        "avatarError": "Could not upload the avatar",
+        "passwordChanged": "Password changed",
+        "passwordError": "Could not change the password"
+      },
+      "profile": {
+        "heading": "My Profile",
+        "subtitle": "Manage the personal details of your account",
+        "save": "Save",
+        "sectionTitle": "Personal details",
+        "uploadAvatar": "Upload photo",
+        "avatarHint": "JPG, PNG or WebP, up to 2 MB",
+        "removeAvatar": "Remove photo",
+        "avatarInvalidType": "Only JPG, PNG or WebP images are allowed",
+        "avatarTooLarge": "File is larger than 2 MB",
+        "name": "Name",
+        "email": "Email",
+        "emailHint": "Email is tied to your sign-in method and can't be edited",
+        "validation": {
+          "nameMin": "Name must be at least 2 characters.",
+          "nameMax": "Name must be at most 80 characters."
+        }
+      },
+      "password": {
+        "heading": "Change Password",
+        "subtitle": "Update the password you use to sign in",
+        "sectionTitle": "New password",
+        "oauthNotice": "You signed in with Google — this account has no password to change.",
+        "current": "Current password",
+        "new": "New password",
+        "confirm": "Confirm new password",
+        "submit": "Change password",
+        "show": "Show password",
+        "hide": "Hide password",
+        "validation": {
+          "currentRequired": "Enter your current password.",
+          "newMin": "Password must be at least 8 characters.",
+          "newComplexity": "Password must include uppercase and lowercase letters, a number, and a special character.",
+          "confirmRequired": "Confirm your new password.",
+          "confirmMismatch": "Passwords do not match.",
+          "newSameAsCurrent": "New password must differ from the current one."
+        }
+      }
     }
   },
   "auditLogs": {
@@ -1351,6 +1400,12 @@
     "VALIDATION_NUMBER_MAX": "The value is above the allowed maximum.",
     "VALIDATION_UNRECOGNIZED_KEYS": "The request contains unknown fields.",
     "VALIDATION_PASSWORD_MISMATCH": "Passwords do not match.",
-    "VALIDATION_AT_LEAST_ONE_FIELD": "Change at least one field."
+    "VALIDATION_AT_LEAST_ONE_FIELD": "Change at least one field.",
+    "AUTH_OAUTH_NO_PASSWORD": "This account signs in with Google — its password can't be changed.",
+    "AUTH_PASSWORD_SAME": "New password must differ from the current one.",
+    "USER_AVATAR_INVALID_TYPE": "Only JPG, PNG or WebP images are allowed.",
+    "USER_AVATAR_TOO_LARGE": "The avatar file is too large (2 MB max).",
+    "USER_AVATAR_FILE_MISSING": "No file was selected.",
+    "USER_AVATAR_STORAGE_UNAVAILABLE": "Avatar storage is not configured. Contact your administrator."
   }
 }

@@ -46,6 +46,12 @@ const ConfigSchema = z
     RESEND_API_KEY: z.string().optional(),
     RESEND_FROM_EMAIL: z.string().optional(),
 
+    // Cloudinary — avatar (and future asset) storage. Format:
+    // cloudinary://<api_key>:<api_secret>@<cloud_name>
+    // Optional: when unset the avatar upload endpoints return 503 and the rest
+    // of the app runs unchanged (users just keep their initials).
+    CLOUDINARY_URL: z.string().optional(),
+
     GOOGLE_CLIENT_ID: z.string(),
     GOOGLE_CLIENT_SECRET: z.string(),
     GOOGLE_CALLBACK_URL: z.string(),

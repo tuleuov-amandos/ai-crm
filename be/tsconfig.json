@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "types": ["jest", "node"],
+    "types": ["jest", "node", "multer"],
     "jsx": "react-jsx",
     "module": "commonjs",
     "declaration": true,
