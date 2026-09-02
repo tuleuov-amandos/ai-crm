@@ -96,8 +96,8 @@ export const PipelineAnalysisResSchema = z.object({
   bottlenecks: z.array(
     z.object({
       type: z.enum(['warning', 'success']),
-      title: z.string(),
-      description: z.string(),
+      code: z.enum(['leadContactedLow', 'leadContactedGood', 'contactedProposalLow', 'proposalWonHigh']),
+      rate: z.number(),
     }),
   ),
   averageWinVelocity: z.string(),

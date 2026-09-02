@@ -757,6 +757,24 @@
       "bottlenecksTitle": "Bottleneck analysis",
       "bottlenecksInsufficient": "Not enough conversion funnel data to analyse bottlenecks yet.",
       "bottlenecksNone": "No serious bottlenecks detected in the current conversion funnel.",
+      "bottlenecks": {
+        "leadContactedLow": {
+          "title": "Low Lead → Contacted conversion ({rate}%)",
+          "description": "Few leads reach the first-contact stage. Consider increasing call/email outreach."
+        },
+        "leadContactedGood": {
+          "title": "Good Lead → Contacted conversion ({rate}%)",
+          "description": "The sales team is effectively reaching out to new leads and qualifying their needs."
+        },
+        "contactedProposalLow": {
+          "title": "Sharp drop in Contacted → Proposal ({rate}%)",
+          "description": "Many contacts aren't reaching or accepting a proposal. Consider revisiting the offer."
+        },
+        "proposalWonHigh": {
+          "title": "High Proposal → Won conversion ({rate}%)",
+          "description": "Once a proposal is sent, the team consistently closes the deal — great result."
+        }
+      },
       "winVelocityLabel": "Sales funnel win velocity",
       "winVelocityFooter": "Shows the share of opportunities that convert into actually won deals out of all closed deals.",
       "forecastTitle": "Cumulative weighted revenue forecast",

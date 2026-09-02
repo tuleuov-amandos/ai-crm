@@ -186,10 +186,10 @@ export function PipelineAnalysisTab() {
                     </span>
                     <div>
                       <p className="text-[#1A1A18] dark:text-foreground font-medium text-xs" style={{ fontSize: 12 }}>
-                        {b.title}
+                        {t(`bottlenecks.${b.code}.title`, { rate: b.rate })}
                       </p>
                       <p className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 11 }}>
-                        {b.description}
+                        {t(`bottlenecks.${b.code}.description`, { rate: b.rate })}
                       </p>
                     </div>
                   </div>
