@@ -139,7 +139,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
       { key: "tags", synonyms: ["Tags", "Nhãn", "Tag", "Теги", "Метки"] },
       { key: "ownerEmail", synonyms: ["Email người sở hữu", "Owner Email", "Chủ sở hữu", "Email ответственного", "Ответственный"] },
       { key: "dealTitle", synonyms: ["Tên Deal đi kèm", "Tên Deal", "Deal Title", "Cơ hội", "Название связанной сделки", "Название сделки", "Сделка"] },
-      { key: "dealValue", synonyms: ["Giá trị Deal (VND)", "Giá trị Deal", "Giá trị", "Value", "Giá trị cơ hội", "Сумма сделки (VND)", "Сумма сделки", "Сумма", "Стоимость"] },
+      { key: "dealValue", synonyms: ["Giá trị Deal (VND)", "Giá trị Deal", "Giá trị", "Value", "Giá trị cơ hội", "Сумма сделки (KZT)", "Сумма сделки (VND)", "Сумма сделки", "Сумма", "Стоимость"] },
       { key: "dealStage", synonyms: ["Trạng thái Deal", "Trạng thái", "Stage", "Trạng thái cơ hội", "Этап сделки", "Этап", "Статус сделки"] },
       { key: "dealNote", synonyms: ["Ghi chú Deal", "Ghi chú", "Note", "Заметка по сделке", "Заметка", "Комментарий"] }
     ];

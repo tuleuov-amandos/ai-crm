@@ -21,7 +21,7 @@ export function getInitials(name: string): string {
   return (second[0] + last[0]).toUpperCase();
 }
 
-export function formatCurrency(value: number, locale = "ru-RU", currency = "VND"): string {
+export function formatCurrency(value: number, locale = "ru-KZ", currency = "KZT"): string {
   return new Intl.NumberFormat(locale, { style: "currency", currency }).format(value);
 }
 
