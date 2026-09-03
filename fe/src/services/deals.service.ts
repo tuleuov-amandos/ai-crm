@@ -10,7 +10,7 @@ import {
 
 
 export const dealsService = {
-  getPipeline: async (params?: { ownerId?: string }): Promise<PipelineRes> => {
+  getPipeline: async (params?: { ownerId?: string; dateFrom?: string; dateTo?: string }): Promise<PipelineRes> => {
     const res = await axiosInstance.get("deals/pipeline", { params });
     return res.data;
   },

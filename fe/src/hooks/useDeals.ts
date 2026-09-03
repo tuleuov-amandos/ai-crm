@@ -21,7 +21,8 @@ import { toast } from "sonner";
 // ─────────────────────────────────────────
 export const dealKeys = {
   all: ["deals"] as const,
-  pipeline: (ownerId?: string) => [...dealKeys.all, "pipeline", ownerId] as const,
+  pipeline: (ownerId?: string, dateFrom?: string, dateTo?: string) =>
+    [...dealKeys.all, "pipeline", ownerId, dateFrom, dateTo] as const,
   details: () => [...dealKeys.all, "detail"] as const,
   detail: (id: string) => [...dealKeys.details(), id] as const,
 };
@@ -29,7 +30,7 @@ export const dealKeys = {
 // ─────────────────────────────────────────
 // GET PIPELINE — fetch and sync to Zustand
 // ─────────────────────────────────────────
-export const useGetPipeline = (params?: { ownerId?: string }) => {
+export const useGetPipeline = (params?: { ownerId?: string; dateFrom?: string; dateTo?: string }) => {
   const t = useTranslations("pipeline");
 
   const { setPipeline, setLoading, setError } = useDealPipelineStore(
@@ -41,7 +42,7 @@ export const useGetPipeline = (params?: { ownerId?: string }) => {
   )
 
   const query = useQuery({
-    queryKey: dealKeys.pipeline(params?.ownerId),
+    queryKey: dealKeys.pipeline(params?.ownerId, params?.dateFrom, params?.dateTo),
     queryFn: () => dealsService.getPipeline(params),
     staleTime: 30_000,
   });
