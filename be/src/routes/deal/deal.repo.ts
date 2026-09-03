@@ -6,11 +6,17 @@ import { CreateDealBodyType, DealStageConst, DealStageType, UpdateDealBodyType }
 export class DealRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  findAllByTenant(filters?: { ownerId?: string }) {
+  findAllByTenant(filters?: { ownerId?: string; dateFrom?: string; dateTo?: string }) {
     return this.prismaService.deal.findMany({
       where: {
         deletedAt: null,
         ...(filters?.ownerId && { ownerId: filters.ownerId }),
+        ...((filters?.dateFrom || filters?.dateTo) && {
+          closeDate: {
+            ...(filters?.dateFrom && { gte: new Date(filters.dateFrom) }),
+            ...(filters?.dateTo && { lte: new Date(filters.dateTo) }),
+          },
+        }),
       },
       include: {
         contact: { select: { id: true, name: true, company: true } },
