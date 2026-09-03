@@ -20,6 +20,7 @@ const DealOwnerSchema = z.object({
 const DealContactCardSchema = z.object({
   id: z.string(),
   name: z.string(),
+  company: z.string().nullable(),
 });
 
 // ─── Deal Card — used in pipeline view ────────────────────────────────────
