@@ -21,7 +21,7 @@ import { toast } from "sonner";
 // ─────────────────────────────────────────
 export const dealKeys = {
   all: ["deals"] as const,
-  pipeline: () => [...dealKeys.all, "pipeline"] as const,
+  pipeline: (ownerId?: string) => [...dealKeys.all, "pipeline", ownerId] as const,
   details: () => [...dealKeys.all, "detail"] as const,
   detail: (id: string) => [...dealKeys.details(), id] as const,
 };
@@ -29,7 +29,7 @@ export const dealKeys = {
 // ─────────────────────────────────────────
 // GET PIPELINE — fetch and sync to Zustand
 // ─────────────────────────────────────────
-export const useGetPipeline = () => {
+export const useGetPipeline = (params?: { ownerId?: string }) => {
   const t = useTranslations("pipeline");
 
   const { setPipeline, setLoading, setError } = useDealPipelineStore(
@@ -41,8 +41,8 @@ export const useGetPipeline = () => {
   )
 
   const query = useQuery({
-    queryKey: dealKeys.pipeline(),
-    queryFn: dealsService.getPipeline,
+    queryKey: dealKeys.pipeline(params?.ownerId),
+    queryFn: () => dealsService.getPipeline(params),
     staleTime: 30_000,
   });
 
@@ -90,7 +90,7 @@ export const useCreateDeal = () => {
     mutationFn: (data: CreateDealBodyType) => dealsService.create(data),
     onSuccess: () => {
       // invalidate pipeline to refetch and sync back to store
-      queryClient.invalidateQueries({ queryKey: dealKeys.pipeline() });
+      queryClient.invalidateQueries({ queryKey: [...dealKeys.all, "pipeline"] });
       toast.success(t("createSuccess"));
     },
     onError: (error: ApiError) => {
@@ -128,7 +128,7 @@ export const useUpdateDealStage = () => {
 
     onSuccess: () => {
       // invalidate to ensure server state is synchronized
-      queryClient.invalidateQueries({ queryKey: dealKeys.pipeline() });
+      queryClient.invalidateQueries({ queryKey: [...dealKeys.all, "pipeline"] });
     },
   });
 };
@@ -145,7 +145,7 @@ export const useUpdateDeal = (dealId: string) => {
     mutationFn: (data: UpdateDealBodyType) => dealsService.update(dealId, data),
     onSuccess: () => {
       // invalidate both pipeline and detail
-      queryClient.invalidateQueries({ queryKey: dealKeys.pipeline() });
+      queryClient.invalidateQueries({ queryKey: [...dealKeys.all, "pipeline"] });
       queryClient.invalidateQueries({ queryKey: dealKeys.detail(dealId) });
       toast.success(t("updateSuccess"));
     },
@@ -174,13 +174,13 @@ export const useDeleteDeal = () => {
     },
 
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: dealKeys.pipeline() });
+      queryClient.invalidateQueries({ queryKey: [...dealKeys.all, "pipeline"] });
       toast.success(t("deleteSuccess"));
     },
 
     onError: (error: ApiError) => {
       // rollback: refetch pipeline to restore accidentally deleted deal
-      queryClient.invalidateQueries({ queryKey: dealKeys.pipeline() });
+      queryClient.invalidateQueries({ queryKey: [...dealKeys.all, "pipeline"] });
       toast.error(getApiError(error, t("deleteError")));
     },
   });

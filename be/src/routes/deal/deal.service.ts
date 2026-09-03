@@ -9,6 +9,7 @@ import {
   DealCardSchema,
   AnalyzeDealBodyType,
   AnalyzeDealResType,
+  GetPipelineQueryType,
 } from './deal.model'
 import { DealRepository } from './deal.repo'
 import { TaskRepository } from './task.repo'
@@ -98,7 +99,11 @@ export class DealService {
     return deal
   }
 
-  async getPipleline(tenantId: string, user: { userId: string; role: string; tenantId: string }) {
+  async getPipleline(
+    tenantId: string,
+    user: { userId: string; role: string; tenantId: string },
+    query: GetPipelineQueryType,
+  ) {
     const ability = await this.caslAbilityFactory.createForUser(user)
     const filters: { ownerId?: string } = {}
     if (ability.cannot('read', 'Deal')) {
@@ -106,7 +111,9 @@ export class DealService {
     }
 
     if (ability.cannot('read', subject('Deal', { ownerId: 'other' } as any))) {
-      filters.ownerId = user.userId
+      filters.ownerId = user.userId // hard-locked to own userId, query.ownerId is ignored
+    } else if (query.ownerId) {
+      filters.ownerId = query.ownerId // filter by chosen owner, only when the user has the rights
     }
 
     const deals = await this.dealRepo.findAllByTenant(filters)

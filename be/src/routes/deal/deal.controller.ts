@@ -7,6 +7,7 @@ import {
   Get,
   Delete,
   Param,
+  Query,
   HttpCode,
   HttpException,
   HttpStatus,
@@ -15,7 +16,13 @@ import { ApiTags, ApiOkResponse } from '@nestjs/swagger'
 import { AnalyzeDealBodyType, CreateDealBodyType, DealStageType, UpdateDealBodyType } from './deal.model'
 import { DealService } from './deal.service'
 import { ZodSerializerDto } from 'nestjs-zod'
-import { CreateDealResDto, GetDealResDto, GetDealsPipelineResDto, UpdateDealResDto } from './deal.dto'
+import {
+  CreateDealResDto,
+  GetDealResDto,
+  GetDealsPipelineResDto,
+  GetPipelineQueryDto,
+  UpdateDealResDto,
+} from './deal.dto'
 import { CreateTaskBodyDto, CreateTasksBulkBodyDto, UpdateTaskBodyDto, TaskResDto } from './task.dto'
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard'
 import { TenantStatusGuard } from 'src/common/guards/tenant-status.guard'
@@ -48,8 +55,8 @@ export class DealController {
   @Get('pipeline')
   @ApiOkResponse({ type: GetDealsPipelineResDto })
   @ZodSerializerDto(GetDealsPipelineResDto)
-  getPipeline(@CurrentUser() user: AccessTokenPayload) {
-    return this.dealService.getPipleline(user.tenantId, user)
+  getPipeline(@CurrentUser() user: AccessTokenPayload, @Query() query: GetPipelineQueryDto) {
+    return this.dealService.getPipleline(user.tenantId, user, query)
   }
 
   @Get(':id')

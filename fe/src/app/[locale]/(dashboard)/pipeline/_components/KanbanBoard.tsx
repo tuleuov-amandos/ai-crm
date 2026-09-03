@@ -144,11 +144,11 @@ function EmptyPipelineIllustration() {
 }
 
 // ── Main board ──────────────────────────────────────────────────────────────
-export function KanbanBoard() {
+export function KanbanBoard({ ownerId }: { ownerId?: string }) {
   const t = useTranslations("pipeline");
   const tCommon = useTranslations("common");
   const { pipeline, moveDeal, setPipeline } = useDealPipelineStore();
-  const { isLoading, isError, error } = useGetPipeline();
+  const { isLoading, isError, error } = useGetPipeline({ ownerId });
   const updateDealStage = useUpdateDealStage();
 
   const [activeDeal, setActiveDeal] = useState<Deal | null>(null);

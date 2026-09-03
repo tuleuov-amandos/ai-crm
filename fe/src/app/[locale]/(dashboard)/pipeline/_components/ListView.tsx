@@ -41,14 +41,14 @@ import { EditDealSheet } from "./EditDealSheet";
 type SortKey = "title" | "value" | "closeDate";
 type SortState = { key: SortKey; direction: "asc" | "desc" } | null;
 
-export function ListView() {
+export function ListView({ ownerId }: { ownerId?: string }) {
   const t = useTranslations("pipeline");
   const tCommon = useTranslations("common");
   const relativeTime = useRelativeTime();
 
   const { pipeline } = useDealPipelineStore();
   // react-query dedupes this against KanbanBoard's call (same queryKey)
-  const { isLoading, isError, error } = useGetPipeline();
+  const { isLoading, isError, error } = useGetPipeline({ ownerId });
   const deleteDealMutation = useDeleteDeal();
 
   const [sort, setSort] = useState<SortState>(null);

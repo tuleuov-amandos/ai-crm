@@ -218,6 +218,7 @@
       "listView": "List",
       "filter": "Filter",
       "allReps": "All reps",
+      "noReps": "No employees",
       "addDeal": "Add deal"
     },
     "units": {
