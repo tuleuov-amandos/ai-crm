@@ -786,7 +786,13 @@
       "forecastEmptyDescription": "Нет данных о фактической выручке и взвешенном прогнозе закрытия сделок за этот период.",
       "seriesActual": "Фактическая выручка",
       "seriesForecast": "Прогноз закрытия",
-      "seriesTarget": "План"
+      "seriesTarget": "План",
+      "funnelStages": {
+        "PROSPECT": "Лид",
+        "QUALIFIED": "Контакт установлен",
+        "PROPOSAL": "Предложение",
+        "CLOSED_WON": "Выиграно"
+      }
     },
     "activityTab": {
       "loading": "Загрузка отчёта по активностям…",

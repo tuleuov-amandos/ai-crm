@@ -61,6 +61,7 @@ export interface TeamRepPerformance {
 
 export interface FunnelStage {
   stage: string;
+  stageKey: "PROSPECT" | "QUALIFIED" | "PROPOSAL" | "CLOSED_WON";
   count: number;
   value: number;
   percentage: number;

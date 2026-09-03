@@ -72,6 +72,7 @@ export class PipelineReportService {
 
       return {
         stage: stage.name,
+        stageKey: stage.key,
         count,
         value: value, // raw VND
         percentage,

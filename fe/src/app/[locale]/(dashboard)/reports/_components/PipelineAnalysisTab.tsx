@@ -15,24 +15,16 @@ import { STAGE_COLORS } from "@/lib/helper";
 import { useShortValue } from "@/lib/format";
 import { reportsService } from "@/services/reports.service";
 
-function getFunnelColor(stageName: string): string {
-  if (stageName.includes("Prospect")) return STAGE_COLORS.PROSPECT.funnel;
-  if (stageName.includes("Qualified")) return STAGE_COLORS.QUALIFIED.funnel;
-  if (stageName.includes("Proposal")) return STAGE_COLORS.PROPOSAL.funnel;
-  if (stageName.includes("Won")) return STAGE_COLORS.CLOSED_WON.funnel;
-  return STAGE_COLORS.PROSPECT.funnel;
-}
-
 import { CustomTooltipProps } from "@/lib/types/chart";
 
 const FunnelTooltip = ({ active, payload }: CustomTooltipProps) => {
   const t = useTranslations("reports.pipelineTab");
   const shortValue = useShortValue();
   if (!active || !payload?.length) return null;
-  const data = payload[0].payload as { stage: string; count: number; value: number; percentage: number };
+  const data = payload[0].payload as { stage: string; stageKey: "PROSPECT" | "QUALIFIED" | "PROPOSAL" | "CLOSED_WON"; count: number; value: number; percentage: number };
   return (
     <div className="bg-white dark:bg-card border border-[#E8E7E2] dark:border-border rounded-lg shadow-md px-3 py-2.5 text-xs text-left">
-      <p className="text-[#1A1A18] dark:text-foreground mb-1.5" style={{ fontWeight: 600 }}>{data.stage}</p>
+      <p className="text-[#1A1A18] dark:text-foreground mb-1.5" style={{ fontWeight: 600 }}>{t(`funnelStages.${data.stageKey}`)}</p>
       <div className="space-y-1">
         <div className="flex justify-between gap-6">
           <span className="text-[#6B6B67] dark:text-muted-foreground">{t("tooltipCount")}</span>
@@ -132,8 +124,9 @@ export function PipelineAnalysisTab() {
                 >
                   <XAxis type="number" domain={[0, 100]} hide />
                   <YAxis
-                    dataKey="stage"
+                    dataKey="stageKey"
                     type="category"
+                    tickFormatter={(value) => t(`funnelStages.${value}`)}
                     tick={{ fontSize: 11, fill: "var(--foreground)", fontWeight: 500 }}
                     axisLine={false}
                     tickLine={false}
@@ -147,7 +140,7 @@ export function PipelineAnalysisTab() {
                     background={{ fill: "var(--muted)", radius: 4 }}
                   >
                     {data.conversionFunnel.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={getFunnelColor(entry.stage)} />
+                      <Cell key={`cell-${index}`} fill={STAGE_COLORS[entry.stageKey].funnel} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -157,9 +150,9 @@ export function PipelineAnalysisTab() {
               <div className="grid grid-cols-4 border-t border-[#E8E7E2] dark:border-border pt-4 text-center">
                 {data.conversionFunnel.map((d) => (
                   <div key={d.stage} className="flex flex-col gap-1 border-r border-[#E8E7E2] dark:border-border last:border-0">
-                    <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 10 }}>{d.stage.split(" (")[0].split(". ")[1] || d.stage}</span>
+                    <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 10 }}>{t(`funnelStages.${d.stageKey}`)}</span>
                     <span className="text-[#1A1A18] dark:text-foreground font-bold" style={{ fontSize: 13 }}>{d.count}</span>
-                    <span className="font-semibold" style={{ fontSize: 10, color: getFunnelColor(d.stage) }}>{d.percentage}%</span>
+                    <span className="font-semibold" style={{ fontSize: 10, color: STAGE_COLORS[d.stageKey].funnel }}>{d.percentage}%</span>
                   </div>
                 ))}
               </div>
