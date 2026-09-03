@@ -4,6 +4,7 @@ import { Plus, Filter, LayoutGrid, List, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { KanbanBoard } from "@/app/[locale]/(dashboard)/pipeline/_components/KanbanBoard";
+import { ListView } from "@/app/[locale]/(dashboard)/pipeline/_components/ListView";
 import { CreateDealSheet } from "@/app/[locale]/(dashboard)/pipeline/_components/CreateDealSheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -11,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 export default function Pipeline() {
   const t = useTranslations("pipeline");
   const [createOpen, setCreateOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
 
   return (
     <div className="flex h-full flex-col flex-1 min-w-0 overflow-hidden">
@@ -39,13 +41,23 @@ export default function Pipeline() {
           <div className="flex border border-border rounded-lg overflow-hidden">
             <button
               title="Kanban"
-              className="px-2.5 py-1.5 bg-secondary text-primary flex items-center border-0 cursor-pointer"
+              onClick={() => setViewMode("kanban")}
+              className={`px-2.5 py-1.5 flex items-center border-0 cursor-pointer ${
+                viewMode === "kanban"
+                  ? "bg-secondary text-primary"
+                  : "bg-background text-muted-foreground hover:bg-muted transition-colors"
+              }`}
             >
               <LayoutGrid size={13} />
             </button>
             <button
               title={t("toolbar.listView")}
-              className="px-2.5 py-1.5 bg-background text-muted-foreground flex items-center border-0 border-l border-border hover:bg-muted transition-colors cursor-pointer"
+              onClick={() => setViewMode("list")}
+              className={`px-2.5 py-1.5 flex items-center border-0 border-l border-border cursor-pointer ${
+                viewMode === "list"
+                  ? "bg-secondary text-primary"
+                  : "bg-background text-muted-foreground hover:bg-muted transition-colors"
+              }`}
             >
               <List size={13} />
             </button>
@@ -84,9 +96,15 @@ export default function Pipeline() {
 
       {/* Kanban area */}
       <main className="flex-1 overflow-x-auto overflow-y-hidden p-5 bg-[#F8F8F7] dark:bg-background">
-        <div className="min-w-230 h-full">
-          <KanbanBoard />
-        </div>
+        {viewMode === "kanban" ? (
+          <div className="min-w-230 h-full">
+            <KanbanBoard />
+          </div>
+        ) : (
+          <div className="h-full">
+            <ListView />
+          </div>
+        )}
       </main>
 
       <CreateDealSheet open={createOpen} onOpenChange={setCreateOpen} />

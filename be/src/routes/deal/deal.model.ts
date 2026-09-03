@@ -148,6 +148,7 @@ export const DealCardSchema = DealBaseSchema.omit({ deletedAt: true }).extend({
   contact: z.object({
     id: z.string(),
     name: z.string(),
+    company: z.string().nullable(),
   }),
   owner: z.object({
     id: z.string(),

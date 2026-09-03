@@ -247,6 +247,15 @@
       "description": "Сделка <b>{title}</b> будет удалена навсегда без возможности восстановления.",
       "confirm": "Удалить сделку"
     },
+    "listView": {
+      "colDeal": "Сделка",
+      "colContact": "Контакт",
+      "colOwner": "Владелец",
+      "colValue": "Сумма",
+      "colStage": "Стадия",
+      "colCloseDate": "Дата закрытия",
+      "colActions": "Действия"
+    },
     "notFound": "Сделка не найдена",
     "detail": {
       "follow": "Отслеживать",

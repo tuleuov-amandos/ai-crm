@@ -247,6 +247,15 @@
       "description": "The deal <b>{title}</b> will be permanently deleted and cannot be recovered.",
       "confirm": "Delete deal"
     },
+    "listView": {
+      "colDeal": "Deal",
+      "colContact": "Contact",
+      "colOwner": "Owner",
+      "colValue": "Value",
+      "colStage": "Stage",
+      "colCloseDate": "Close date",
+      "colActions": "Actions"
+    },
     "notFound": "Deal not found",
     "detail": {
       "follow": "Follow",

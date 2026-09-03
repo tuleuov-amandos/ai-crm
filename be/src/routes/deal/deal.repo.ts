@@ -13,7 +13,7 @@ export class DealRepository {
         ...(filters?.ownerId && { ownerId: filters.ownerId }),
       },
       include: {
-        contact: { select: { id: true, name: true } },
+        contact: { select: { id: true, name: true, company: true } },
         owner: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: 'desc' },
