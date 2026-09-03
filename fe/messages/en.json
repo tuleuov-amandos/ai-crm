@@ -786,7 +786,13 @@
       "forecastEmptyDescription": "There's no actual revenue or weighted deal-closing forecast for this period.",
       "seriesActual": "Actual revenue",
       "seriesForecast": "Forecast",
-      "seriesTarget": "Target"
+      "seriesTarget": "Target",
+      "funnelStages": {
+        "PROSPECT": "Lead",
+        "QUALIFIED": "Contacted",
+        "PROPOSAL": "Proposal",
+        "CLOSED_WON": "Won"
+      }
     },
     "activityTab": {
       "loading": "Loading activity report…",
