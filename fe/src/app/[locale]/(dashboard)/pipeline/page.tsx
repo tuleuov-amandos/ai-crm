@@ -16,6 +16,7 @@ import { useTranslations } from "next-intl";
 import { KanbanBoard } from "@/app/[locale]/(dashboard)/pipeline/_components/KanbanBoard";
 import { ListView } from "@/app/[locale]/(dashboard)/pipeline/_components/ListView";
 import { CreateDealSheet } from "@/app/[locale]/(dashboard)/pipeline/_components/CreateDealSheet";
+import type { Stage } from "@/app/[locale]/(dashboard)/pipeline/_components/types";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -224,6 +225,9 @@ function RepRow({
 export default function Pipeline() {
   const t = useTranslations("pipeline");
   const [createOpen, setCreateOpen] = useState(false);
+  const [createDefaultStage, setCreateDefaultStage] = useState<
+    Stage | undefined
+  >(undefined);
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const [selectedOwnerId, setSelectedOwnerId] = useState<string | undefined>(
     undefined,
@@ -237,6 +241,11 @@ export default function Pipeline() {
     ? format(dateRange.from, "yyyy-MM-dd")
     : undefined;
   const dateTo = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined;
+
+  function handleAddDealInStage(stage: Stage) {
+    setCreateDefaultStage(stage);
+    setCreateOpen(true);
+  }
 
   return (
     <div className="flex h-full flex-col flex-1 min-w-0 overflow-hidden">
@@ -307,7 +316,10 @@ export default function Pipeline() {
           <Button
             size="sm"
             className="h-8 gap-1.5 text-xs"
-            onClick={() => setCreateOpen(true)}
+            onClick={() => {
+              setCreateDefaultStage(undefined);
+              setCreateOpen(true);
+            }}
           >
             <Plus size={13} />
             {t("toolbar.addDeal")}
@@ -323,6 +335,7 @@ export default function Pipeline() {
               ownerId={selectedOwnerId}
               dateFrom={dateFrom}
               dateTo={dateTo}
+              onAddDeal={handleAddDealInStage}
             />
           </div>
         ) : (
@@ -336,7 +349,11 @@ export default function Pipeline() {
         )}
       </main>
 
-      <CreateDealSheet open={createOpen} onOpenChange={setCreateOpen} />
+      <CreateDealSheet
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        defaultStage={createDefaultStage}
+      />
     </div>
   );
 }

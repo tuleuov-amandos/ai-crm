@@ -63,7 +63,7 @@ export class DealRepository {
         ownerId: data.ownerId,
         title: data.title,
         value: data.value ?? 0,
-        stage: DealStageConst.PROSPECT,
+        stage: data.stage ?? DealStageConst.PROSPECT,
         contactId: data.contactId,
         closeDate: data.closeDate ?? null,
         note: data.note ?? null,

@@ -48,6 +48,15 @@ export const CreateDealBodySchema = DealBaseSchema.pick({
 })
   .extend({
     closeDate: zIsoDatetime.nullable().optional(),
+    stage: z
+      .enum([
+        DealStageConst.PROSPECT,
+        DealStageConst.QUALIFIED,
+        DealStageConst.PROPOSAL,
+        DealStageConst.CLOSED_WON,
+        DealStageConst.CLOSED_LOST,
+      ])
+      .optional(),
   })
   .strict()
 

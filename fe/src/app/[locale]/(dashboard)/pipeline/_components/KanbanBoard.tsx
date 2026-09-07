@@ -148,15 +148,17 @@ export function KanbanBoard({
   ownerId,
   dateFrom,
   dateTo,
+  onAddDeal,
 }: {
   ownerId?: string;
   dateFrom?: string;
   dateTo?: string;
+  onAddDeal: (stage: Stage) => void;
 }) {
   const t = useTranslations("pipeline");
   const tCommon = useTranslations("common");
   const { pipeline, moveDeal, setPipeline } = useDealPipelineStore();
-  const { isLoading, isError, error } = useGetPipeline({ ownerId, dateFrom, dateTo });
+  const { data, isLoading, isError, error } = useGetPipeline({ ownerId, dateFrom, dateTo });
   const updateDealStage = useUpdateDealStage();
 
   const [activeDeal, setActiveDeal] = useState<Deal | null>(null);
@@ -188,7 +190,7 @@ export function KanbanBoard({
     }),
   );
 
-  if (isLoading) {
+  if (isLoading || !data) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="flex flex-col items-center gap-3 text-muted-foreground">
@@ -358,6 +360,7 @@ export function KanbanBoard({
                 deals={pipeline[stage]}
                 onEdit={setEditingDeal}
                 onDelete={setDeletingDeal}
+                onAddDeal={onAddDeal}
               />
             ))}
           </div>

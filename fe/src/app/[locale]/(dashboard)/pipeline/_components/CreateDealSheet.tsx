@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import ContactDialog from "@/app/[locale]/(dashboard)/contacts/_components/ContactDialog";
+import type { Stage } from "./types";
 import { useGetContacts } from "@/hooks/useContacts";
 import { useCreateDeal } from "@/hooks/useDeals";
 import { useGetUsers } from "@/hooks/useUsers";
@@ -58,9 +59,14 @@ type CreateDealFormValues = z.infer<ReturnType<typeof buildCreateDealSchema>>;
 interface CreateDealSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  defaultStage?: Stage;
 }
 
-export function CreateDealSheet({ open, onOpenChange }: CreateDealSheetProps) {
+export function CreateDealSheet({
+  open,
+  onOpenChange,
+  defaultStage,
+}: CreateDealSheetProps) {
   const t = useTranslations("pipeline.form");
   const tv = useTranslations("pipeline.form.validation");
   const tCommon = useTranslations("common");
@@ -143,6 +149,7 @@ export function CreateDealSheet({ open, onOpenChange }: CreateDealSheetProps) {
       value: values.value,
       closeDate: values.closeDate ? new Date(values.closeDate) : new Date(),
       note: values.note?.trim() ? values.note.trim() : undefined,
+      stage: defaultStage,
     });
 
     handleOpenChange(false);
