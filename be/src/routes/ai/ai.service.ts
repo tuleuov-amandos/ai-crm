@@ -23,7 +23,14 @@ export class AiService {
 
   async enqueueAnalysis(opts: EnqueueOpts) {
     const jobId = uuidv4()
-    const payload = { jobId, ...opts }
+
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: opts.tenantId },
+      select: { defaultLocale: true },
+    })
+    const locale = tenant?.defaultLocale ?? 'ru'
+
+    const payload = { jobId, ...opts, locale }
 
     try {
       await aiQueue.add('analyze', payload, {
