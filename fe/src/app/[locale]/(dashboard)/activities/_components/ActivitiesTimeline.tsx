@@ -8,17 +8,19 @@ import { EmptyState } from "./EmptyState";
 export function ActivitiesTimeline({
   groups,
   showEmpty,
+  onCreate,
   onEdit,
   onDelete,
 }: {
   groups: ActivityGroup[];
   showEmpty: boolean;
+  onCreate: () => void;
   onEdit?: (activity: ActivityItem) => void;
   onDelete?: (activity: ActivityItem) => void;
 }) {
   return showEmpty || groups.length === 0 ? (
     <div className="bg-white dark:bg-card rounded-xl border border-border/70 dark:border-border">
-      <EmptyState />
+      <EmptyState onCreate={onCreate} />
     </div>
   ) : (
     <>

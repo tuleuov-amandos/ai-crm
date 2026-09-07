@@ -226,6 +226,7 @@ export default function Activities() {
                 <ActivitiesTimeline
                   groups={groups}
                   showEmpty={isEmpty || showEmpty}
+                  onCreate={handleOpenCreate}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                 />
