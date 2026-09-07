@@ -212,6 +212,13 @@
       "targetPrefix": "Target: {value}"
     }
   },
+  "dealStages": {
+    "PROSPECT": "Lead",
+    "QUALIFIED": "Contacted",
+    "PROPOSAL": "Proposal",
+    "CLOSED_WON": "Won",
+    "CLOSED_LOST": "Lost"
+  },
   "pipeline": {
     "title": "Pipeline",
     "toolbar": {

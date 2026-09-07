@@ -31,12 +31,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as ShadcnCalendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 
-const PIPELINE_STAGES: { key: DealStage; label: string }[] = [
-  { key: "PROSPECT",   label: "Prospect" },
-  { key: "QUALIFIED",  label: "Qualified" },
-  { key: "PROPOSAL",   label: "Proposal" },
-  { key: "CLOSED_WON", label: "Closed Won" },
-  { key: "CLOSED_LOST", label: "Closed Lost" },
+const PIPELINE_STAGES: { key: DealStage }[] = [
+  { key: "PROSPECT" },
+  { key: "QUALIFIED" },
+  { key: "PROPOSAL" },
+  { key: "CLOSED_WON" },
+  { key: "CLOSED_LOST" },
 ];
 
 type DealLeftPanelProps = {
@@ -48,6 +48,7 @@ type DealLeftPanelProps = {
 export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
   const t = useTranslations("pipeline.leftPanel");
   const tCommon = useTranslations("common");
+  const tStages = useTranslations("dealStages");
   const locale = useLocale();
   const [tasks, setTasks]         = useState<Task[]>(deal?.tasks || []);
   const [addingTask, setAddingTask] = useState(false);
@@ -300,7 +301,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                     )}
                     style={{ fontSize: 10, fontWeight: isActive ? 600 : 400 }}
                   >
-                    {s.label}
+                    {tStages(s.key)}
                   </span>
                 </div>
               );
