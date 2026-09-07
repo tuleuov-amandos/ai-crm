@@ -11,7 +11,7 @@ import { useTranslations } from "next-intl";
 import * as XLSX from "xlsx";
 import { ChartCard } from "./ChartCard";
 import { EmptyState } from "./EmptyState";
-import { STAGE_COLORS } from "@/lib/helper";
+import { FUNNEL_CHART_COLORS } from "@/lib/helper";
 import { useShortValue } from "@/lib/format";
 import { reportsService } from "@/services/reports.service";
 
@@ -140,7 +140,7 @@ export function PipelineAnalysisTab() {
                     background={{ fill: "var(--muted)", radius: 4 }}
                   >
                     {data.conversionFunnel.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={STAGE_COLORS[entry.stageKey].funnel} />
+                      <Cell key={`cell-${index}`} fill={FUNNEL_CHART_COLORS[entry.stageKey].funnel} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -152,7 +152,7 @@ export function PipelineAnalysisTab() {
                   <div key={d.stage} className="flex flex-col gap-1 border-r border-[#E8E7E2] dark:border-border last:border-0">
                     <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 10 }}>{t(`funnelStages.${d.stageKey}`)}</span>
                     <span className="text-[#1A1A18] dark:text-foreground font-bold" style={{ fontSize: 13 }}>{d.count}</span>
-                    <span className="font-semibold" style={{ fontSize: 10, color: STAGE_COLORS[d.stageKey].funnel }}>{d.percentage}%</span>
+                    <span className="font-semibold" style={{ fontSize: 10, color: FUNNEL_CHART_COLORS[d.stageKey].funnel }}>{d.percentage}%</span>
                   </div>
                 ))}
               </div>

@@ -14,15 +14,15 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { STAGE_COLORS } from "@/lib/helper";
+import { FUNNEL_CHART_COLORS } from "@/lib/helper";
 import { useShortValue } from "@/lib/format";
 
 function getStageColor(name: string): string {
-  if (name.includes("Prospect")) return STAGE_COLORS.PROSPECT.funnel;
-  if (name.includes("Qualified")) return STAGE_COLORS.QUALIFIED.funnel;
-  if (name.includes("Proposal")) return STAGE_COLORS.PROPOSAL.funnel;
-  if (name.includes("Closed Won") || name.includes("Won")) return STAGE_COLORS.CLOSED_WON.funnel;
-  return STAGE_COLORS.PROSPECT.funnel;
+  if (name.includes("Prospect")) return FUNNEL_CHART_COLORS.PROSPECT.funnel;
+  if (name.includes("Qualified")) return FUNNEL_CHART_COLORS.QUALIFIED.funnel;
+  if (name.includes("Proposal")) return FUNNEL_CHART_COLORS.PROPOSAL.funnel;
+  if (name.includes("Closed Won") || name.includes("Won")) return FUNNEL_CHART_COLORS.CLOSED_WON.funnel;
+  return FUNNEL_CHART_COLORS.PROSPECT.funnel;
 }
 
 interface PipelineChartProps {

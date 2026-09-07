@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { getInitials, getAvatarColors, STAGE_COLORS } from "@/lib/helper";
+import { getInitials, getAvatarColors, FUNNEL_CHART_COLORS } from "@/lib/helper";
 import { useShortValue } from "@/lib/format";
 
 interface Deal {
@@ -157,7 +157,7 @@ export function RecentDeals({ deals = [], isLoading = false }: RecentDealsProps)
                   {/* Stage badge */}
                   <TableCell className="px-2 py-3">
                     {(() => {
-                      const stageColors = STAGE_COLORS[deal.stage as keyof typeof STAGE_COLORS] || STAGE_COLORS.PROSPECT;
+                      const stageColors = FUNNEL_CHART_COLORS[deal.stage as keyof typeof FUNNEL_CHART_COLORS] || FUNNEL_CHART_COLORS.PROSPECT;
                       return (
                         <span
                           className="inline-block rounded-full px-2 py-0.5 whitespace-nowrap"
