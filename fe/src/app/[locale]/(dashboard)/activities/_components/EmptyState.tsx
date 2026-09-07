@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 
-export function EmptyState() {
+export function EmptyState({ onCreate }: { onCreate: () => void }) {
   const t = useTranslations("activities");
   return (
     <div className="flex flex-col items-center justify-center py-20 px-8 text-center">
@@ -38,7 +38,12 @@ export function EmptyState() {
       <p className="text-muted-foreground mb-5" style={{ fontSize: 13 }}>
         {t("empty.description")}
       </p>
-      <Button size="sm" className="gap-1.5" style={{ fontSize: 13 }}>
+      <Button
+        size="sm"
+        className="gap-1.5"
+        style={{ fontSize: 13 }}
+        onClick={onCreate}
+      >
         <Plus size={13} />
         {t("newActivity")}
       </Button>
