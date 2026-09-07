@@ -52,6 +52,21 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     await this.redis.del(key)
   }
 
+  async addToSet(key: string, member: string, expiresIn?: number) {
+    await this.redis.sadd(key, member)
+    if (expiresIn) {
+      await this.redis.expire(key, expiresIn)
+    }
+  }
+
+  async getSetMembers(key: string): Promise<string[]> {
+    return this.redis.smembers(key)
+  }
+
+  async removeFromSet(key: string, member: string) {
+    await this.redis.srem(key, member)
+  }
+
   async clear() {
     await this.redis.flushdb()
   }

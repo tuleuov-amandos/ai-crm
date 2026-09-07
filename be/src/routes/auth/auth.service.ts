@@ -96,7 +96,11 @@ export class AuthService {
 
   async logout(refreshToken: string) {
     // The refresh token value itself is a credential — never logged.
+    const stored = await this.redisService.get(`auth:refresh:${refreshToken}`)
     await this.redisService.delete(`auth:refresh:${refreshToken}`)
+    if (stored?.userId) {
+      await this.redisService.removeFromSet(`auth:refresh:user:${stored.userId}`, refreshToken)
+    }
     log.info({ event: 'logout' })
     return { message: 'Signed out successfully' }
   }
@@ -115,6 +119,7 @@ export class AuthService {
     const ttlSeconds = Math.max(0, Math.floor(decodedRefreshToken.exp - Date.now() / 1000))
 
     await this.redisService.set(`auth:refresh:${refreshToken}`, { userId, role, tenantId }, ttlSeconds)
+    await this.redisService.addToSet(`auth:refresh:user:${userId}`, refreshToken, ttlSeconds)
 
     // Token strings and the token secret are never logged — ids only.
     log.debug({ event: 'tokens.issued', userId, tenantId, role })
@@ -146,6 +151,7 @@ export class AuthService {
     }
 
     await this.redisService.delete(`auth:refresh:${refreshToken}`)
+    await this.redisService.removeFromSet(`auth:refresh:user:${userId}`, refreshToken)
 
     const tokens = await this.generateTokens({
       userId,
@@ -258,11 +264,16 @@ export class AuthService {
       data: { password: hashedPassword },
     })
 
-    // NOTE: existing access/refresh tokens stay valid after a password change.
-    // A "sign out everywhere" step (revoking this user's Redis refresh tokens)
-    // is a follow-up — refresh tokens are keyed by token value, not userId, so
-    // it needs a userId->tokens index first.
-    log.info({ event: 'password.change', userId, outcome: 'success' })
+    // Sign out everywhere: revoke every refresh token this user holds, including
+    // the session that initiated the change (standard practice on password
+    // change). The current session's access token stays valid for up to 15
+    // minutes — it is a stateless JWT with no blocklist — which is an accepted
+    // limitation, not a bug.
+    const activeTokens = await this.redisService.getSetMembers(`auth:refresh:user:${userId}`)
+    await Promise.all(activeTokens.map((token) => this.redisService.delete(`auth:refresh:${token}`)))
+    await this.redisService.delete(`auth:refresh:user:${userId}`)
+
+    log.info({ event: 'password.change', userId, outcome: 'success', revokedSessions: activeTokens.length })
     return { message: 'Password changed successfully' }
   }
 
