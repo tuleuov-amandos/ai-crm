@@ -56,6 +56,15 @@ describe('AuthService', () => {
     compare: jest.fn(),
   }
 
+  const mockRedisService = {
+    set: jest.fn(),
+    get: jest.fn(),
+    delete: jest.fn(),
+    addToSet: jest.fn(),
+    getSetMembers: jest.fn().mockResolvedValue([]),
+    removeFromSet: jest.fn(),
+  }
+
   beforeEach(async () => {
     jest.clearAllMocks()
 
@@ -67,7 +76,7 @@ describe('AuthService', () => {
         { provide: SharedUserRepository, useValue: {} },
         { provide: TokenService, useValue: {} },
         { provide: AuthRepository, useValue: {} },
-        { provide: RedisService, useValue: {} },
+        { provide: RedisService, useValue: mockRedisService },
       ],
     }).compile()
 
