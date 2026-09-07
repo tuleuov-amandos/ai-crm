@@ -17,7 +17,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 // ─────────────────────────────────────────
-// QUERY KEYS — source of truth cho cache
+// QUERY KEYS — source of truth for cache
 // ─────────────────────────────────────────
 export const dealKeys = {
   all: ["deals"] as const,
