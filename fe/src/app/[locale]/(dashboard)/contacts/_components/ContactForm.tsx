@@ -36,8 +36,12 @@ const buildContactFormSchema = (tv: (key: string) => string) =>
         .string()
         .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, tv("emailInvalid"))
         .optional()
+        .or(z.literal(""))
         .nullable(),
-      phone: z.string().optional().nullable(),
+      phone: z
+        .string()
+        .min(1, tv("phoneRequired"))
+        .regex(/^\+?[0-9\s\-()]{7,20}$/, tv("phoneInvalid")),
       company: z.string().optional().nullable(),
       position: z.string().optional().nullable(),
       tags: z
@@ -51,6 +55,8 @@ const buildContactFormSchema = (tv: (key: string) => string) =>
         .optional(),
     })
     .strict();
+
+type ContactFormValues = z.infer<ReturnType<typeof buildContactFormSchema>>;
 
 interface ContactFormProps {
   isOpen: boolean;
@@ -71,7 +77,7 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
   const tCommon = useTranslations("common");
   const tv = useTranslations("contacts.form.validation");
   const contactFormSchema = useMemo(() => buildContactFormSchema(tv), [tv]);
-  const form = useForm<CreateContactBodyType>({
+  const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
     defaultValues: {
       name: defaultValues?.name ?? "",
@@ -149,7 +155,7 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor="form-rhf-contact-phone">
-                {t("phoneLabel")}
+                {t("phoneLabel")} <span className="text-destructive">*</span>
               </FieldLabel>
               <Input
                 {...field}

@@ -414,7 +414,9 @@
       "validation": {
         "nameMin": "Contact name must be at least 2 characters.",
         "nameMax": "Contact name must be at most 100 characters.",
-        "emailInvalid": "Invalid email address."
+        "emailInvalid": "Invalid email address.",
+        "phoneRequired": "Phone number is required.",
+        "phoneInvalid": "Invalid phone number."
       }
     },
     "dialog": {
