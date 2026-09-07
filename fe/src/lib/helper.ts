@@ -42,12 +42,12 @@ export function getAvatarColors(id: string) {
   return AVATAR_COLORS[index];
 }
 
-export const STAGE_COLORS = {
-  PROSPECT: { funnel: '#C4C0F0', bg: '#EEEDFE', text: '#534AB7', label: 'Prospect' },
-  QUALIFIED: { funnel: '#9B94E3', bg: '#E6F4D7', text: '#3B6D11', label: 'Qualified' },
-  PROPOSAL: { funnel: '#7168CC', bg: '#FEF3E2', text: '#854F0B', label: 'Proposal' },
-  CLOSED_WON: { funnel: '#534AB7', bg: '#DCFCE7', text: '#166534', label: 'Closed Won' },
-  CLOSED_LOST: { funnel: '#E11D48', bg: '#FEE2E2', text: '#A32D2D', label: 'Closed Lost' },
+export const FUNNEL_CHART_COLORS = {
+  PROSPECT: { funnel: '#C4C0F0', bg: '#EEEDFE', text: '#534AB7' },
+  QUALIFIED: { funnel: '#9B94E3', bg: '#E6F4D7', text: '#3B6D11' },
+  PROPOSAL: { funnel: '#7168CC', bg: '#FEF3E2', text: '#854F0B' },
+  CLOSED_WON: { funnel: '#534AB7', bg: '#DCFCE7', text: '#166534' },
+  CLOSED_LOST: { funnel: '#E11D48', bg: '#FEE2E2', text: '#A32D2D' },
 } as const;
 
 export const ACTIVITY_CONFIG = {
