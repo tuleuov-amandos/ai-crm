@@ -16,6 +16,7 @@ export type ContactTagType  = typeof ContactTagConst [keyof typeof ContactTagCon
 const ContactBaseSchema = z.object({
   id: z.string(),
   tenantId: z.string(),
+  ownerId: z.string(),
   name: z.string().min(2).max(100),
   email: z
     .string()
@@ -63,6 +64,7 @@ export type Contact = z.infer<typeof CreateContactResSchema>;
 // ─────────────────────────────────────────
 export const UpdateContactBodySchema = CreateContactBodySchema
   .partial()
+  .extend({ ownerId: z.string().optional() })
   .refine((data) => Object.keys(data).length > 0);
 
 export const UpdateContactResSchema = CreateContactResSchema; // returns same as Create

@@ -1,16 +1,110 @@
 "use client";
-import { ArrowLeft, Plus, MoreHorizontal, UserPlus } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Plus, MoreHorizontal, UserPlus, Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { ContactInfoPanel } from "../_components/ContactInfoPanel";
 import ActivityTimeline from "@/components/activities/ActivityTimeline";
 import { ContactDetailSkeleton } from "../_components/ContactDetailSkeleton";
 import { Button } from "@/components/ui/button";
-import { useGetContact } from "@/hooks/useContacts";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { useGetContact, useUpdateContact } from "@/hooks/useContacts";
+import { useGetUsers } from "@/hooks/useUsers";
 import { useParams } from "next/navigation";
 import { useContactActivities, useCreateContactActivity } from "@/hooks/useActivities";
 
 import { CreateActivityForContactBodyType } from "@/lib/validations/activities.scheme";
+
+// ─── ASSIGN OWNER ─────────────────────────────────────────────────────────────
+function AssignOwnerPopover({
+  contactId,
+  currentOwnerId,
+}: {
+  contactId: string;
+  currentOwnerId: string | undefined;
+}) {
+  const t = useTranslations("contacts");
+  const [open, setOpen] = useState(false);
+  const { data: users, isLoading } = useGetUsers();
+  const updateContact = useUpdateContact();
+
+  const handleSelect = (userId: string) => {
+    if (userId === currentOwnerId) {
+      setOpen(false);
+      return;
+    }
+    updateContact.mutate(
+      { id: contactId, data: { ownerId: userId } },
+      { onSuccess: () => setOpen(false) },
+    );
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs"
+        >
+          <UserPlus size={13} />
+          {t("detail.assign")}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-56 p-1.5">
+        <div className="max-h-64 space-y-0.5 overflow-y-auto">
+          {isLoading ? (
+            <p
+              className="px-2 py-1.5 text-muted-foreground"
+              style={{ fontSize: 12 }}
+            >
+              …
+            </p>
+          ) : users && users.length > 0 ? (
+            users.map((u) => {
+              const active = u.id === currentOwnerId;
+              return (
+                <button
+                  key={u.id}
+                  onClick={() => handleSelect(u.id)}
+                  disabled={updateContact.isPending}
+                  className={cn(
+                    "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50",
+                    active
+                      ? "bg-primary/10 text-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                  style={{ fontSize: 12 }}
+                >
+                  <Check
+                    size={13}
+                    className={cn(
+                      "shrink-0",
+                      active ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                  <span className="min-w-0 flex-1 truncate">{u.name}</span>
+                </button>
+              );
+            })
+          ) : (
+            <p
+              className="px-2 py-1.5 text-muted-foreground"
+              style={{ fontSize: 12 }}
+            >
+              {t("detail.assignEmpty")}
+            </p>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 export default function ContactDetailPage() {
   const t = useTranslations("contacts");
@@ -86,14 +180,10 @@ export default function ContactDetailPage() {
 
         {/* Right: action buttons */}
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs"
-          >
-            <UserPlus size={13} />
-            {t("detail.assign")}
-          </Button>
+          <AssignOwnerPopover
+            contactId={contact.id}
+            currentOwnerId={contact.ownerId}
+          />
 
           <Button size="sm" className="h-8 gap-1.5 text-xs">
             <Plus size={13} />

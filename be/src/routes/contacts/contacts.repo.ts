@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/common/services/prisma.service'
-import { CreateContactBodyType, GetContactsQueryType } from './contacts.model'
+import { CreateContactBodyType, GetContactsQueryType, UpdateContactBodyType } from './contacts.model'
 
 @Injectable()
 export class ContactsRepository {
@@ -60,7 +60,7 @@ export class ContactsRepository {
     })
   }
 
-  update(contactId: string, data: Partial<CreateContactBodyType>) {
+  update(contactId: string, data: UpdateContactBodyType) {
     return this.prismaService.contact.update({
       where: { id: contactId, deletedAt: null },
       data: { ...data },
