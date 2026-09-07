@@ -16,6 +16,7 @@ interface Props {
   deals: Deal[];
   onEdit: (deal: Deal) => void;
   onDelete: (deal: Deal) => void;
+  onAddDeal: (stage: Stage) => void;
 }
 
 function formatTotal(total: number, units: { billion: string; million: string }): string {
@@ -25,7 +26,13 @@ function formatTotal(total: number, units: { billion: string; million: string })
   return `${millions % 1 === 0 ? millions : millions.toFixed(1)}${units.million}`;
 }
 
-export function KanbanColumn({ stage, deals, onEdit, onDelete }: Props) {
+export function KanbanColumn({
+  stage,
+  deals,
+  onEdit,
+  onDelete,
+  onAddDeal,
+}: Props) {
   const t = useTranslations("pipeline");
   const units = { billion: t("units.billion"), million: t("units.million") };
   const config = STAGE_CONFIG[stage];
@@ -108,6 +115,7 @@ export function KanbanColumn({ stage, deals, onEdit, onDelete }: Props) {
                 size="sm"
                 className="h-7 gap-1.5 text-muted-foreground hover:text-primary hover:bg-primary/8 px-3"
                 style={{ fontSize: 12 }}
+                onClick={() => onAddDeal(stage)}
               >
                 <Plus size={12} />
                 {t("column.addDeal")}
@@ -124,6 +132,18 @@ export function KanbanColumn({ stage, deals, onEdit, onDelete }: Props) {
             ))
           )}
         </SortableContext>
+        {!isEmpty && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 text-muted-foreground hover:text-primary hover:bg-primary/8 px-3 mt-1 shrink-0"
+            style={{ fontSize: 12 }}
+            onClick={() => onAddDeal(stage)}
+          >
+            <Plus size={12} />
+            {t("column.addDeal")}
+          </Button>
+        )}
       </div>
     </div>
   );

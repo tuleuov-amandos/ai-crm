@@ -115,6 +115,9 @@ export const CreateDealBodySchema = z.object({
   value: z.coerce.number().nonnegative().default(0),
   closeDate: z.coerce.date(),
   note: z.string().optional(),
+  stage: z
+    .enum(["PROSPECT", "QUALIFIED", "PROPOSAL", "CLOSED_WON", "CLOSED_LOST"])
+    .optional(),
 });
 
 export type CreateDealBodyType = z.infer<typeof CreateDealBodySchema>;

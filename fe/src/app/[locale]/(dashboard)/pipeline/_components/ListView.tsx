@@ -56,7 +56,7 @@ export function ListView({
 
   const { pipeline } = useDealPipelineStore();
   // react-query dedupes this against KanbanBoard's call (same queryKey)
-  const { isLoading, isError, error } = useGetPipeline({ ownerId, dateFrom, dateTo });
+  const { data, isLoading, isError, error } = useGetPipeline({ ownerId, dateFrom, dateTo });
   const deleteDealMutation = useDeleteDeal();
 
   const [sort, setSort] = useState<SortState>(null);
@@ -100,7 +100,7 @@ export function ListView({
     }
   };
 
-  if (isLoading) {
+  if (isLoading || !data) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="flex flex-col items-center gap-3 text-muted-foreground">
