@@ -45,7 +45,10 @@ function withTimeout<T>(promise: Promise<T>, ms = OPENAI_TIMEOUT_MS) {
   return Promise.race([promise, new Promise<T>((_, rej) => setTimeout(() => rej(new Error('OpenAI timeout')), ms))])
 }
 
-async function callOpenAiAndParse(meetingNote: string): Promise<AiResponseType> {
+async function callOpenAiAndParse(meetingNote: string, locale?: string): Promise<AiResponseType> {
+  const LANGUAGE_NAMES: Record<string, string> = { ru: 'Russian', en: 'English' }
+  const language = LANGUAGE_NAMES[locale ?? 'ru'] ?? 'Russian'
+
   const prompt = `
     You are an assistant that extracts actionable items from a meeting note.
     \nReturn ONLY a single valid JSON object (no explanation) with keys:
@@ -55,7 +58,7 @@ async function callOpenAiAndParse(meetingNote: string): Promise<AiResponseType> 
       "dueDate": "<ISO-8601 or null>" 
     }],
   "emailDraft": "<string>",
-  "summary": "<string>"\n}\nNote: You MUST write a detailed follow-up email draft in Vietnamese under "emailDraft", and a brief summary in Vietnamese under "summary". Do not set them to null.\nMeeting Note:\n"""${meetingNote}"""\n`
+  "summary": "<string>"\n}\nNote: You MUST write a detailed follow-up email draft in ${language} under "emailDraft", and a brief summary in ${language} under "summary". Do not set them to null.\nMeeting Note:\n"""${meetingNote}"""\n`
 
   const doCall = async () => {
     const content = await aiClient.complete(prompt, { temperature: 0.0, maxTokens: 800 })
@@ -95,7 +98,7 @@ async function callOpenAiAndParse(meetingNote: string): Promise<AiResponseType> 
         "emailDraft":"string",
         "summary":"string"
       }. 
-      All texts must be written in Vietnamese. Meeting note:\n"""${meetingNote}"""
+      All texts must be written in ${language}. Meeting note:\n"""${meetingNote}"""
       `
       const retryText = String(await withTimeout(aiClient.complete(retryPrompt, { temperature: 0.0, maxTokens: 800 })))
       const parsed2 = extractJson(retryText)
@@ -124,11 +127,12 @@ export function startAiWorker(): Worker {
   const worker = new Worker(
     AI_QUEUE_NAME,
     async (job) => {
-      const { jobId, dealId, tenantId, meetingNote } = job.data as {
+      const { jobId, dealId, tenantId, meetingNote, locale } = job.data as {
         jobId: string
         dealId: string
         tenantId: string
         meetingNote: string
+        locale?: string
       }
 
       // Per-job child logger — `jobId` is the correlation id for the queue
@@ -138,7 +142,7 @@ export function startAiWorker(): Worker {
 
       let aiResult: AiResponseType | null = null
       try {
-        aiResult = await callOpenAiAndParse(meetingNote)
+        aiResult = await callOpenAiAndParse(meetingNote, locale)
       } catch (err) {
         const error = err as CustomAiError
         const rawErrorObj = error.raw as Record<string, any> | undefined
