@@ -22,7 +22,7 @@ export const useAbility = () => {
 
         // Support MongoDB/CASL $in operator
         if (value && typeof value === "object" && "$in" in value) {
-          const inArray = (value as { $in: any[] }).$in;
+          const inArray = (value as { $in: unknown[] }).$in;
           return Array.isArray(inArray) && inArray.includes(userValue);
         }
 

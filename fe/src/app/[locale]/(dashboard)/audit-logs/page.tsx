@@ -171,7 +171,7 @@ export default function AuditLogsPage() {
                 <div>
                   <span className="text-[#868E96] dark:text-muted-foreground block">{t("detailActor")}</span>
                   <strong className="text-[#212529] dark:text-foreground">
-                    {selectedLog.user?.name} ({(selectedLog.user?.role as any)?.name || (typeof selectedLog.user?.role === "string" ? selectedLog.user.role : "N/A")})
+                    {selectedLog.user?.name} ({(selectedLog.user?.role as unknown as { name?: string } | undefined)?.name ?? (typeof selectedLog.user?.role === "string" ? selectedLog.user.role : "N/A")})
                   </strong>
                 </div>
                 <div>

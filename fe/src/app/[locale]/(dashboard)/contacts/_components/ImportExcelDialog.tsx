@@ -176,14 +176,14 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
         const workbook = XLSX.read(data, { type: "array" });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const rawJson = XLSX.utils.sheet_to_json(worksheet) as any[];
+        const rawJson = XLSX.utils.sheet_to_json(worksheet) as Record<string, unknown>[];
 
         if (rawJson.length === 0) {
           toast.error(t("toasts.emptyFile"));
           return;
         }
 
-        const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[];
+        const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as unknown[][];
         const firstRow = rawRows[0] as string[];
         const headers = firstRow ? firstRow.filter(Boolean).map(String) : [];
 
