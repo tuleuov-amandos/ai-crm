@@ -19,6 +19,7 @@ import { useAbility } from "@/hooks/useAbility";
 import { dashboardService } from "@/services/dashboard.service";
 import { DashboardPeriod } from "@/lib/validations/dashboard.schema";
 import { useShortValue } from "@/lib/format";
+import type { AxiosError } from "axios";
 
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
@@ -44,7 +45,7 @@ export default function DashboardPage() {
     retry: false,
   });
 
-  const isForbidden = isError && (error as any)?.response?.status === 403;
+  const isForbidden = isError && (error as AxiosError)?.response?.status === 403;
 
   const canCreateDeal = can("create", "Deal");
   const canViewLeaderboard = can("read", "Report", { view: "team" });

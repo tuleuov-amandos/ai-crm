@@ -25,6 +25,7 @@ import { PipelineAnalysisTab } from "./_components/PipelineAnalysisTab";
 import { ActivityReportTab } from "./_components/ActivityReportTab";
 import { reportsService } from "@/services/reports.service";
 import { useShortValue } from "@/lib/format";
+import type { AxiosError } from "axios";
 
 // ── Tabs ─────────────────────────────────────────────────────────────────────
 type Tab = "overview" | "team" | "pipeline" | "activity";
@@ -127,7 +128,7 @@ export default function ReportsPage() {
     enabled: activeTab === "overview" && hasPermission && !isTabRestricted,
   });
 
-  const isForbidden = isOverviewError && (overviewError as any)?.response?.status === 403;
+  const isForbidden = isOverviewError && (overviewError as AxiosError)?.response?.status === 403;
 
   const isExportDisabled = isOverviewLoading || !overviewData;
 
