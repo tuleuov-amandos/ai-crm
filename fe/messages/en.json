@@ -384,6 +384,7 @@
       "notFound": "Contact not found",
       "activitiesNotFound": "Activities not found",
       "assign": "Assign",
+      "assignEmpty": "No staff",
       "addDeal": "Add deal"
     },
     "table": {

@@ -384,6 +384,7 @@
       "notFound": "Контакт не найден",
       "activitiesNotFound": "Активности не найдены",
       "assign": "Назначить",
+      "assignEmpty": "Нет сотрудников",
       "addDeal": "Добавить сделку"
     },
     "table": {

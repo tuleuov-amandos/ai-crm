@@ -16,6 +16,7 @@ export type ContactTagType = (typeof ContactTagConst)[keyof typeof ContactTagCon
 const ContactBaseSchema = z.object({
   id: z.string(),
   tenantId: z.string(),
+  ownerId: z.string(),
   name: z.string().min(2).max(100),
   email: z.string().optional().nullable(),
   phone: z.string().optional().nullable(),
@@ -47,10 +48,11 @@ export type CreateContactResType = z.infer<typeof CreateContactResSchema>
 // ─────────────────────────────────────────
 // UPDATE — PATCH /contacts/:id
 // ─────────────────────────────────────────
-export const UpdateContactBodySchema = CreateContactBodySchema.partial().refine(
-  (data) => Object.keys(data).length > 0,
-  { message: ValidationErrorCode.AT_LEAST_ONE_FIELD },
-)
+export const UpdateContactBodySchema = CreateContactBodySchema.partial()
+  .extend({ ownerId: z.string().optional() })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: ValidationErrorCode.AT_LEAST_ONE_FIELD,
+  })
 
 export const UpdateContactResSchema = CreateContactResSchema // returns same as Create
 

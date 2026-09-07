@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { AppException, ContactErrorCode } from 'src/common/errors'
 import { ContactsRepository } from './contacts.repo'
-import { CreateContactBodyType, ContactTagType, GetContactsQueryType } from './contacts.model'
+import { CreateContactBodyType, ContactTagType, GetContactsQueryType, UpdateContactBodyType } from './contacts.model'
 import { RedisService } from 'src/common/services/redis.service'
 import { AuditLogsService } from '../audit-logs/audit-logs.service'
 import { AuditLogChanges } from '../audit-logs/audit-logs.model'
@@ -95,7 +95,7 @@ export class ContactsService {
   async update(
     contactId: string,
     tenantId: string,
-    body: Partial<CreateContactBodyType>,
+    body: UpdateContactBodyType,
     user: { userId: string; role: string; tenantId: string },
   ) {
     const oldContact = await this.contactRepository.findOne(contactId)
