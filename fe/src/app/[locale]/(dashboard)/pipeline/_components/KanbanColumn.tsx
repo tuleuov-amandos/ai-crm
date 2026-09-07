@@ -34,6 +34,7 @@ export function KanbanColumn({
   onAddDeal,
 }: Props) {
   const t = useTranslations("pipeline");
+  const tStages = useTranslations("dealStages");
   const units = { billion: t("units.billion"), million: t("units.million") };
   const config = STAGE_CONFIG[stage];
 
@@ -59,7 +60,7 @@ export function KanbanColumn({
             className="text-foreground"
             style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.2 }}
           >
-            {config.label}
+            {tStages(stage)}
           </span>
           <span
             className="rounded-full px-1.5 tabular-nums"

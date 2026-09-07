@@ -212,6 +212,13 @@
       "targetPrefix": "Цель: {value}"
     }
   },
+  "dealStages": {
+    "PROSPECT": "Лид",
+    "QUALIFIED": "Контакт установлен",
+    "PROPOSAL": "Предложение",
+    "CLOSED_WON": "Выиграно",
+    "CLOSED_LOST": "Проиграно"
+  },
   "pipeline": {
     "title": "Воронка",
     "toolbar": {

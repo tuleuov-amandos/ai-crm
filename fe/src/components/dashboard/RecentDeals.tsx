@@ -45,6 +45,7 @@ interface RecentDealsProps {
 export function RecentDeals({ deals = [], isLoading = false }: RecentDealsProps) {
   const t = useTranslations("dashboard.recentDeals");
   const tCommon = useTranslations("common");
+  const tStages = useTranslations("dealStages");
   const format = useFormatter();
   const shortValue = useShortValue();
   const router = useRouter();
@@ -167,7 +168,7 @@ export function RecentDeals({ deals = [], isLoading = false }: RecentDealsProps)
                             background: stageColors.bg,
                           }}
                         >
-                          {stageColors.label}
+                          {tStages(deal.stage)}
                         </span>
                       );
                     })()}

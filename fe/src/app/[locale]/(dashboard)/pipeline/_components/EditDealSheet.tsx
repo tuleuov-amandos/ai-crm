@@ -27,7 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Deal, DealDetail, STAGE_CONFIG, STAGES } from "./types";
+import { Deal, DealDetail, STAGES } from "./types";
 import { useUpdateDeal } from "@/hooks/useDeals";
 import { useGetUsers } from "@/hooks/useUsers";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -56,6 +56,7 @@ interface Props {
 
 export function EditDealSheet({ deal, open, onOpenChange }: Props) {
   const t = useTranslations("pipeline.form");
+  const tStages = useTranslations("dealStages");
   const tv = useTranslations("pipeline.form.validation");
   const tCommon = useTranslations("common");
   const formSchema = useMemo(() => buildFormSchema(tv), [tv]);
@@ -155,7 +156,7 @@ export function EditDealSheet({ deal, open, onOpenChange }: Props) {
                       <SelectContent>
                         {STAGES.map((s) => (
                           <SelectItem key={s} value={s} style={{ fontSize: 13 }}>
-                            {STAGE_CONFIG[s].label}
+                            {tStages(s)}
                           </SelectItem>
                         ))}
                       </SelectContent>

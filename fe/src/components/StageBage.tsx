@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 // ── Canonical stage type ────────────────────────────────────────────────────
@@ -74,6 +77,7 @@ interface StageBadgeProps {
 }
 
 export function StageBadge({ stage, className }: StageBadgeProps) {
+  const t = useTranslations("dealStages");
   const key = normalizeStageName(stage as string);
   const meta = STAGE_COLORS[key];
 
@@ -86,7 +90,7 @@ export function StageBadge({ stage, className }: StageBadgeProps) {
       )}
       style={{ fontSize: 12 }}
     >
-      {meta.label}
+      {t(stage.toUpperCase())}
     </span>
   );
 }
