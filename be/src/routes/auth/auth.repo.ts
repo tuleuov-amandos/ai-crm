@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/common/services/prisma.service'
+import { RoleType } from 'src/common/constants/role.constanst'
 
 @Injectable()
 export class AuthRepository {
@@ -15,7 +16,7 @@ export class AuthRepository {
     }
     return {
       ...user,
-      role: user.role.name as any,
+      role: user.role.name as RoleType,
     }
   }
 
