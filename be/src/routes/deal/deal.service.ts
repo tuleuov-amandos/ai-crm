@@ -105,7 +105,7 @@ export class DealService {
     query: GetPipelineQueryType,
   ) {
     const ability = await this.caslAbilityFactory.createForUser(user)
-    const filters: { ownerId?: string; dateFrom?: string; dateTo?: string } = {}
+    const filters: { ownerId?: string; dateFrom?: string; dateTo?: string; search?: string } = {}
     if (ability.cannot('read', 'Deal')) {
       throw AppException.forbidden(DealErrorCode.FORBIDDEN_LIST, 'You do not have permission to view deals')
     }
@@ -119,6 +119,7 @@ export class DealService {
     // closeDate range — no security check, dates don't affect data visibility
     if (query.dateFrom) filters.dateFrom = query.dateFrom
     if (query.dateTo) filters.dateTo = query.dateTo
+    if (query.search) filters.search = query.search
 
     const deals = await this.dealRepo.findAllByTenant(filters)
 

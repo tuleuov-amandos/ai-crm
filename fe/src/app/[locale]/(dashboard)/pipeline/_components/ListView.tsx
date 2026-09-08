@@ -45,10 +45,12 @@ export function ListView({
   ownerId,
   dateFrom,
   dateTo,
+  search,
 }: {
   ownerId?: string;
   dateFrom?: string;
   dateTo?: string;
+  search?: string;
 }) {
   const t = useTranslations("pipeline");
   const tCommon = useTranslations("common");
@@ -56,7 +58,7 @@ export function ListView({
 
   const { pipeline } = useDealPipelineStore();
   // react-query dedupes this against KanbanBoard's call (same queryKey)
-  const { data, isLoading, isError, error } = useGetPipeline({ ownerId, dateFrom, dateTo });
+  const { data, isLoading, isError, error } = useGetPipeline({ ownerId, dateFrom, dateTo, search });
   const deleteDealMutation = useDeleteDeal();
 
   const [sort, setSort] = useState<SortState>(null);

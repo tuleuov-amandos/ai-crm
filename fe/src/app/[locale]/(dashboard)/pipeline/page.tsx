@@ -2,22 +2,24 @@
 
 import {
   Plus,
-  Filter,
   LayoutGrid,
   List,
   ChevronDown,
   Check,
   Calendar,
+  Search,
 } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { useTranslations } from "next-intl";
+import { useDebounceValue } from "usehooks-ts";
 import { KanbanBoard } from "@/app/[locale]/(dashboard)/pipeline/_components/KanbanBoard";
 import { ListView } from "@/app/[locale]/(dashboard)/pipeline/_components/ListView";
 import { CreateDealSheet } from "@/app/[locale]/(dashboard)/pipeline/_components/CreateDealSheet";
 import type { Stage } from "@/app/[locale]/(dashboard)/pipeline/_components/types";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import {
   Popover,
@@ -236,6 +238,8 @@ export default function Pipeline() {
     undefined,
   );
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch] = useDebounceValue(search, 300);
 
   const dateFrom = dateRange?.from
     ? format(dateRange.from, "yyyy-MM-dd")
@@ -295,14 +299,15 @@ export default function Pipeline() {
 
           <Separator orientation="vertical" className="h-5" />
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs"
-          >
-            <Filter size={13} />
-            {t("toolbar.filter")}
-          </Button>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder={t("toolbar.searchPlaceholder")}
+              className="h-8 pl-8 w-44 text-xs bg-background border-border"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
 
           <RepFilter
             selectedOwnerId={selectedOwnerId}
@@ -335,6 +340,7 @@ export default function Pipeline() {
               ownerId={selectedOwnerId}
               dateFrom={dateFrom}
               dateTo={dateTo}
+              search={debouncedSearch}
               onAddDeal={handleAddDealInStage}
             />
           </div>
@@ -344,6 +350,7 @@ export default function Pipeline() {
               ownerId={selectedOwnerId}
               dateFrom={dateFrom}
               dateTo={dateTo}
+              search={debouncedSearch}
             />
           </div>
         )}

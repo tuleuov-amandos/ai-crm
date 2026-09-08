@@ -180,6 +180,7 @@ export const GetPipelineQuerySchema = z.object({
   ownerId: z.string().optional(),
   dateFrom: z.string().optional(),
   dateTo: z.string().optional(),
+  search: z.string().optional(),
 })
 export type GetPipelineQueryType = z.infer<typeof GetPipelineQuerySchema>
 
