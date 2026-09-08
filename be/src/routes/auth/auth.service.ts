@@ -4,7 +4,7 @@ import { PrismaService } from 'src/common/services/prisma.service'
 import { HashingService } from 'src/common/services/hashing.service'
 import { ChangePasswordBodyType, LoginBodyType, RegisterBodyType } from './auth.model'
 import slugify from 'slugify'
-import { ROLE } from 'src/common/constants/role.constanst'
+import { ROLE, RoleType } from 'src/common/constants/role.constanst'
 import { SharedUserRepository } from 'src/common/repositories/shared-user.repo'
 import { AccessTokenPayloadCreate } from 'src/common/types/jwt.type'
 import { TokenService } from 'src/common/services/token.service'
@@ -312,7 +312,7 @@ export class AuthService {
       })
       return {
         ...account.user,
-        role: account.user.role.name as any,
+        role: account.user.role.name as RoleType,
       }
     }
     // 2. Find user by email
@@ -437,7 +437,7 @@ export class AuthService {
           userId: newUser.id,
           tenantId: tenant.id,
         })
-        return { ...newUser, role: 'ADMIN' as any }
+        return { ...newUser, role: ROLE.ADMIN }
       })
     }
     // If joining via invitation
@@ -451,7 +451,7 @@ export class AuthService {
     log.info({ event: 'google.login', email, outcome: 'invitation_user_created', userId: newUser.id, tenantId })
     return {
       ...newUser,
-      role: newUser.role.name as any,
+      role: newUser.role.name as RoleType,
     }
   }
 }

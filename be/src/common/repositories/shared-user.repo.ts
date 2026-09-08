@@ -39,7 +39,7 @@ export class SharedUserRepository {
     name: string
     hashedPassword: string
     role: RoleType
-  }): Promise<UserType & { role: { name: string } }> {
+  }): Promise<UserType> {
     return this.prismaService.$transaction(async (tx) => {
       // 1. Create new Tenant
       const tenant = await tx.tenant.create({
@@ -129,7 +129,7 @@ export class SharedUserRepository {
 
       return {
         ...user,
-        role: user.role.name as any, // Return as backward-compatible string string type
+        role: user.role.name as RoleType, // Return as backward-compatible string type
       }
     })
   }
