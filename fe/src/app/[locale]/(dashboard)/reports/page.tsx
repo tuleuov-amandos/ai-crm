@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Download, FileText, Calendar, ChevronDown, TrendingUp, TrendingDown,
@@ -108,13 +108,12 @@ export default function ReportsPage() {
 
   const isRedirecting = !isLoadingMe && !visibleTabs.some((t) => t.value === activeTab);
 
-  useEffect(() => {
-    if (isLoadingMe) return;
-    const isCurrentTabVisible = visibleTabs.some((t) => t.value === activeTab);
-    if (!isCurrentTabVisible && visibleTabs.length > 0) {
-      setActiveTab(visibleTabs[0].value);
-    }
-  }, [activeTab, visibleTabs, isLoadingMe]);
+  // Fall back to the first visible tab when the active one becomes inaccessible.
+  // Self-terminating: once setActiveTab runs, the condition is false next render,
+  // so this does not loop.
+  if (!isLoadingMe && visibleTabs.length > 0 && !visibleTabs.some((t) => t.value === activeTab)) {
+    setActiveTab(visibleTabs[0].value);
+  }
 
   // Fetch overview analytics
   const {

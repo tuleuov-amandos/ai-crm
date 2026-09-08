@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import {
   Calendar,
@@ -51,6 +51,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
   const tStages = useTranslations("dealStages");
   const locale = useLocale();
   const [tasks, setTasks]         = useState<Task[]>(deal?.tasks || []);
+  const [prevDealTasks, setPrevDealTasks] = useState(deal?.tasks);
   const [addingTask, setAddingTask] = useState(false);
   const [newTitle, setNewTitle]   = useState("");
   const [newDueDate, setNewDueDate] = useState<string | null>(null);
@@ -62,9 +63,12 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
-  useEffect(() => {
+  // Adjust local task state during render when the deal's tasks change
+  // (official React "adjusting state during render" pattern — no effect needed).
+  if (deal?.tasks !== prevDealTasks) {
+    setPrevDealTasks(deal?.tasks);
     setTasks(deal?.tasks || []);
-  }, [deal?.tasks]);
+  }
 
   const toggle = async (id: string) => {
     const target = tasks.find((t) => t.id === id);
