@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/common/services/prisma.service'
+import { Prisma } from '../../../generated/prisma-client/client'
 import { CreateContactBodyType, GetContactsQueryType, UpdateContactBodyType } from './contacts.model'
 
 @Injectable()
@@ -16,7 +17,7 @@ export class ContactsRepository {
         company: data.company ?? null,
         position: data.position ?? null,
         tags: data.tags ?? [],
-      } as any,
+      } as Prisma.ContactUncheckedCreateInput,
     })
   }
 

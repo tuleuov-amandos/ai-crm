@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/common/services/prisma.service'
+import { Prisma } from '../../../generated/prisma-client/client'
 import { CreateDealBodyType, DealStageConst, DealStageType, UpdateDealBodyType } from './deal.model'
 
 @Injectable()
@@ -74,7 +75,7 @@ export class DealRepository {
         contactId: data.contactId,
         closeDate: data.closeDate ?? null,
         note: data.note ?? null,
-      } as any,
+      } as Prisma.DealUncheckedCreateInput,
     })
   }
 
@@ -118,7 +119,7 @@ export class DealRepository {
         contactId: data.contactId,
         closeDate: data.closeDate ?? null,
         note: data.note ?? null,
-      } as any,
+      } as Prisma.DealUncheckedCreateInput,
     })
   }
 }

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/common/services/prisma.service'
+import { Prisma } from '../../../generated/prisma-client/client'
 import {
   CreateActivityForContactBodyType,
   CreateActivityForDealBodyType,
@@ -30,7 +31,7 @@ export class ActivitiesRepository {
         date: data.date ?? new Date(),
         contactId: context.contactId ?? null,
         dealId: context.dealId ?? null,
-      } as any,
+      } as Prisma.ActivityUncheckedCreateInput,
       include: {
         user: { select: { id: true, name: true } },
         contact: { select: { id: true, name: true, company: true } },
