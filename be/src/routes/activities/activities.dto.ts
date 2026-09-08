@@ -1,5 +1,6 @@
 import { createZodDto } from 'nestjs-zod'
 import {
+  CreateActivityBodySchema,
   CreateActivityForContactBodySchema,
   CreateActivityForDealBodySchema,
   UpdateActivityBodySchema,
@@ -8,6 +9,8 @@ import {
   GetActivitiesResSchema,
   GetActivitiesPaginatedResSchema,
 } from './activities.model'
+
+export class CreateActivityBodyDto extends createZodDto(CreateActivityBodySchema) {}
 
 export class CreateActivityForContactBodyDto extends createZodDto(CreateActivityForContactBodySchema) {}
 

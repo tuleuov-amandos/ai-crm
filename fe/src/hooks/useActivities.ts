@@ -3,6 +3,7 @@
 import { activitiesService } from "@/services/activities.service";
 import {
   ActivityType,
+  CreateActivityBodyType,
   CreateActivityForContactBodyType,
   CreateActivityForDealBodyType,
   GetActivitiesParamsType,
@@ -87,6 +88,27 @@ export const useDealActivities = (dealId: string) => {
     enabled: !!dealId,
     staleTime: 30_000,
     select: (data) => data.data, // return ActivityItem[] directly for ease of use
+  });
+};
+
+// ─────────────────────────────────────────
+// CREATE STANDALONE (no contact/deal)
+// ─────────────────────────────────────────
+export const useCreateActivity = () => {
+  const queryClient = useQueryClient();
+  const t = useTranslations("activities.toasts");
+  const getApiError = useApiError();
+
+  return useMutation({
+    mutationFn: (body: CreateActivityBodyType) =>
+      activitiesService.create(body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: activityKeys.all });
+      toast.success(t("createSuccess"));
+    },
+    onError: (error: ApiError) => {
+      toast.error(getApiError(error, t("createError")));
+    },
   });
 };
 
