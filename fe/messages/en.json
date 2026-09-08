@@ -224,6 +224,7 @@
     "toolbar": {
       "listView": "List",
       "filter": "Filter",
+      "searchPlaceholder": "Search deal, contact, company...",
       "allReps": "All reps",
       "noReps": "No employees",
       "addDeal": "Add deal"
