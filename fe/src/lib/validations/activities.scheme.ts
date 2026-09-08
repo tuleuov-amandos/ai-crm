@@ -104,6 +104,16 @@ export type CreateActivityForContactBodyType = z.infer<
   typeof CreateActivityForContactBodySchema
 >;
 
+// ─── CREATE STANDALONE — POST /activities ───────────────────────────────────
+export const CreateActivityBodySchema = z.object({
+  type: ActivityTypeEnum,
+  title: z.string().nullable().optional(),
+  note: z.string().min(1),
+  date: z.coerce.date().optional(),
+});
+
+export type CreateActivityBodyType = z.infer<typeof CreateActivityBodySchema>;
+
 // ─── CREATE FOR DEAL — POST /deals/:dealId/activities ────────────────────────
 export const CreateActivityForDealBodySchema = z
   .object({

@@ -1,6 +1,7 @@
 import { axiosInstance } from "@/lib/api";
 import {
   ActivityItem,
+  CreateActivityBodyType,
   CreateActivityForContactBodyType,
   CreateActivityForDealBodyType,
   GetActivitiesListResType,
@@ -29,6 +30,12 @@ export const activitiesService = {
   // GET /deals/:dealId/activities
   getByDeal: async (dealId: string): Promise<GetActivitiesListResType> => {
     const res = await axiosInstance.get(`deals/${dealId}/activities`);
+    return res.data;
+  },
+
+  // POST /activities — standalone activity, no contact/deal
+  create: async (body: CreateActivityBodyType): Promise<ActivityItem> => {
+    const res = await axiosInstance.post("activities", body);
     return res.data;
   },
 

@@ -9,6 +9,7 @@ import { MessageDto } from 'src/common/dto/message.dto'
 import { ActivitiesService } from './activities.service'
 import {
   ActivityResDto,
+  CreateActivityBodyDto,
   CreateActivityForContactBodyDto,
   CreateActivityForDealBodyDto,
   GetActivitiesQueryDto,
@@ -79,6 +80,14 @@ export class DealActivitiesController {
 @UseGuards(JwtAuthGuard, TenantStatusGuard)
 export class ActivitiesController {
   constructor(private readonly activitiesService: ActivitiesService) {}
+
+  // POST /activities — create a standalone activity (no contact/deal)
+  @Post()
+  @ApiOkResponse({ type: ActivityResDto })
+  @ZodSerializerDto(ActivityResDto)
+  createActivity(@CurrentUser() user: AccessTokenPayload, @Body() body: CreateActivityBodyDto) {
+    return this.activitiesService.create(user.tenantId, user.userId, body)
+  }
 
   // GET /activities?page=1&limit=20&type=CALL&search=...&contactId=...&dealId=...
   // Declare before PATCH/DELETE :id so NestJS matches correctly

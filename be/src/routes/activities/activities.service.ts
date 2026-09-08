@@ -3,6 +3,7 @@ import { ActivityErrorCode, AppException, ContactErrorCode, DealErrorCode } from
 import { PrismaClientKnownRequestError } from '../../../generated/prisma-client/internal/prismaNamespace'
 import { ActivitiesRepository } from './activities.repo'
 import {
+  CreateActivityBodyType,
   CreateActivityForContactBodyType,
   CreateActivityForDealBodyType,
   UpdateActivityBodyType,
@@ -25,6 +26,12 @@ export class ActivitiesService {
     private readonly redisService: RedisService,
     private readonly caslAbilityFactory: CaslAbilityFactory,
   ) {}
+
+  async create(tenantId: string, userId: string, body: CreateActivityBodyType): Promise<ActivityWithRelations> {
+    const activity = await this.activitiesRepo.create(userId, body, {})
+    await this.redisService.invalidateTenantCache(tenantId)
+    return activity
+  }
 
   async createForContact(
     tenantId: string,

@@ -65,6 +65,19 @@ export const CreateActivityForContactBodySchema = z
 
 export type CreateActivityForContactBodyType = z.infer<typeof CreateActivityForContactBodySchema>
 
+// ─── CREATE STANDALONE ────────────────────────────────────────────────────────
+// POST /activities
+export const CreateActivityBodySchema = z
+  .object({
+    type: ActivityTypeEnum,
+    title: z.string().optional().nullable(),
+    note: z.string().min(1),
+    date: zIsoDatetime.optional(),
+  })
+  .strict()
+
+export type CreateActivityBodyType = z.infer<typeof CreateActivityBodySchema>
+
 // ─── CREATE FOR DEAL ──────────────────────────────────────────────────────────
 // POST /deals/:dealId/activities
 export const CreateActivityForDealBodySchema = z

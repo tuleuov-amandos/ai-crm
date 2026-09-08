@@ -39,6 +39,7 @@ import {
   ActivityTypeEnum,
 } from "@/lib/validations/activities.scheme";
 import {
+  useCreateActivity,
   useCreateContactActivity,
   useCreateDealActivity,
   useUpdateActivity,
@@ -126,12 +127,14 @@ export function ActivityForm({
 
   const createForContact = useCreateContactActivity(contactId);
   const createForDeal = useCreateDealActivity(dealId);
+  const createGlobal = useCreateActivity();
   const updateActivity = useUpdateActivity();
 
   // isPending of active mutation
   const isPending =
     createForContact.isPending ||
     createForDeal.isPending ||
+    createGlobal.isPending ||
     updateActivity.isPending;
 
   // ── Form setup ──────────────────────────────────────────────────────────
@@ -188,13 +191,7 @@ export function ActivityForm({
         } else if (context.type === "deal") {
           await createForDeal.mutateAsync(payload);
         } else {
-          // global context — no specific endpoint in spec;
-          // temporarily do nothing (needs contactId or dealId)
-          // In future can show additional UI to select contact/deal
-          console.warn(
-            "Global context does not support creating an activity directly",
-          );
-          return;
+          await createGlobal.mutateAsync(payload);
         }
       }
       // Success -> close form
