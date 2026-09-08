@@ -17,17 +17,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FUNNEL_CHART_COLORS } from "@/lib/helper";
 import { useShortValue } from "@/lib/format";
 
-function getStageColor(name: string): string {
-  if (name.includes("Prospect")) return FUNNEL_CHART_COLORS.PROSPECT.funnel;
-  if (name.includes("Qualified")) return FUNNEL_CHART_COLORS.QUALIFIED.funnel;
-  if (name.includes("Proposal")) return FUNNEL_CHART_COLORS.PROPOSAL.funnel;
-  if (name.includes("Closed Won") || name.includes("Won")) return FUNNEL_CHART_COLORS.CLOSED_WON.funnel;
-  return FUNNEL_CHART_COLORS.PROSPECT.funnel;
+type PipelineStageKey =
+  | "PROSPECT"
+  | "QUALIFIED"
+  | "PROPOSAL"
+  | "CLOSED_WON"
+  | "CLOSED_LOST";
+
+function getStageColor(key: PipelineStageKey): string {
+  return FUNNEL_CHART_COLORS[key].funnel;
 }
 
 interface PipelineChartProps {
   stages?: {
     name: string;
+    key: PipelineStageKey;
     count: number;
     value: number;
   }[];
@@ -43,6 +47,7 @@ export function PipelineChart({
   isLoading = false,
 }: PipelineChartProps) {
   const t = useTranslations("dashboard.pipelineChart");
+  const tStages = useTranslations("dealStages");
   const shortValue = useShortValue();
   const maxCount = stages.reduce((max, s) => Math.max(max, s.count), 0) || 1;
 
@@ -98,16 +103,16 @@ export function PipelineChart({
                 : null;
 
             return (
-              <div key={stage.name} className="space-y-1.5">
+              <div key={stage.key} className="space-y-1.5">
                 {/* Label row */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div
                       className="size-2 rounded-sm shrink-0"
-                      style={{ background: getStageColor(stage.name) }}
+                      style={{ background: getStageColor(stage.key) }}
                     />
                     <span className="text-foreground" style={{ fontSize: 13 }}>
-                      {stage.name}
+                      {tStages(stage.key)}
                     </span>
                     {convRate !== null && !isNaN(convRate) && isFinite(convRate) && (
                       <span className="text-muted-foreground bg-muted border border-border/50 px-1.5 py-px rounded-full" style={{ fontSize: 10 }}>
@@ -132,7 +137,7 @@ export function PipelineChart({
                 <div className="h-6 bg-muted rounded-md overflow-hidden">
                   <div
                     className="h-full rounded-md transition-all duration-700"
-                    style={{ width: `${widthPct}%`, background: getStageColor(stage.name) }}
+                    style={{ width: `${widthPct}%`, background: getStageColor(stage.key) }}
                   />
                 </div>
               </div>
@@ -157,13 +162,13 @@ export function PipelineChart({
         <CardFooter className="border-t px-5 py-3 flex items-center justify-between">
           <div className="flex gap-4">
             {stages.map((s) => (
-              <div key={s.name} className="flex items-center gap-1.5">
+              <div key={s.key} className="flex items-center gap-1.5">
                 <div
                   className="size-1.5 rounded-sm shrink-0"
-                  style={{ background: getStageColor(s.name) }}
+                  style={{ background: getStageColor(s.key) }}
                 />
                 <span className="text-muted-foreground" style={{ fontSize: 11 }}>
-                  {s.name}
+                  {tStages(s.key)}
                 </span>
               </div>
             ))}

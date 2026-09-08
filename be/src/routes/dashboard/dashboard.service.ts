@@ -153,6 +153,7 @@ export class DashboardService {
       const totalValue = stageDeals.reduce((sum, d) => sum + Number(d.value), 0)
       return {
         name: stage.name,
+        key: stage.key,
         count,
         value: totalValue,
       }
