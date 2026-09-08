@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { DealStage } from '../../../generated/prisma-client/enums'
 
 export const DashboardPeriodEnum = z.enum(['week', 'month', 'quarter'])
 export type DashboardPeriodType = z.infer<typeof DashboardPeriodEnum>
@@ -31,6 +32,7 @@ export const MetricCardSchema = z.object({
 
 export const PipelineStageSchema = z.object({
   name: z.string(),
+  key: z.nativeEnum(DealStage),
   count: z.number(),
   value: z.number(),
 })

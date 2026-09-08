@@ -18,6 +18,7 @@ export const MetricCardSchema = z.object({
 
 export const PipelineStageSchema = z.object({
   name: z.string(),
+  key: z.enum(["PROSPECT", "QUALIFIED", "PROPOSAL", "CLOSED_WON", "CLOSED_LOST"]),
   count: z.number(),
   value: z.number(),
 });
