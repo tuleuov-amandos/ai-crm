@@ -345,7 +345,11 @@ export function KanbanBoard({
               >
                 {t("empty.description")}
               </p>
-              <Button size="sm" className="h-8 gap-1.5 text-xs px-4">
+              <Button
+                size="sm"
+                className="h-8 gap-1.5 text-xs px-4"
+                onClick={() => onAddDeal(STAGES[0])}
+              >
                 <Plus size={13} />
                 {t("empty.cta")}
               </Button>
