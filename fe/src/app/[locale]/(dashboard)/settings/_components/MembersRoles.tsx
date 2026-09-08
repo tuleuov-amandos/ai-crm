@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Plus, MailOpen, Search, Clock, RefreshCw, X, Pencil, Trash2,
   Crown, BarChart2 as ChartIcon, Info,
@@ -92,12 +92,12 @@ function InviteModal({ open, onClose }: { open: boolean; onClose: () => void }) 
     queryFn: usersService.getRoles,
   });
 
-  useEffect(() => {
-    if (roles.length > 0 && !roles.some((r: RoleDto) => r.name === role)) {
-      const defaultRole = roles.find((r: RoleDto) => r.name === "SALES_REP") || roles[0];
-      setRole(defaultRole.name);
-    }
-  }, [roles, role]);
+  // Once roles load, snap the selection to a valid role if the current one is
+  // absent. Self-terminating: after setRole the condition is false next render.
+  if (roles.length > 0 && !roles.some((r: RoleDto) => r.name === role)) {
+    const defaultRole = roles.find((r: RoleDto) => r.name === "SALES_REP") || roles[0];
+    setRole(defaultRole.name);
+  }
 
   const handleSend = async () => {
     if (!email.trim()) return;
@@ -551,12 +551,16 @@ function EditMemberDialog({
     queryFn: usersService.getRoles,
   });
 
-  useEffect(() => {
+  // Reset form fields during render when a different member is opened
+  // (React "adjusting state during render" pattern — no effect needed).
+  const [prevMember, setPrevMember] = useState(member);
+  if (member !== prevMember) {
+    setPrevMember(member);
     if (member) {
       setName(member.name);
       setRole(member.role);
     }
-  }, [member]);
+  }
 
   const handleSave = async () => {
     if (!member) return;

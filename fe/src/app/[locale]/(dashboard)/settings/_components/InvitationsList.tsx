@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useGetInvitations, useRevokeInvitation, useUpdateInvitation } from "@/hooks/useInvitations";
 import {
   Copy, Check, Clock, Trash2, Mail, RefreshCw, Pencil
@@ -320,12 +320,16 @@ function EditInvitationDialog({
     queryFn: usersService.getRoles,
   });
 
-  useEffect(() => {
+  // Reset form fields during render when a different invitation is opened
+  // (React "adjusting state during render" pattern — no effect needed).
+  const [prevInvitation, setPrevInvitation] = useState(invitation);
+  if (invitation !== prevInvitation) {
+    setPrevInvitation(invitation);
     if (invitation) {
       setEmail(invitation.email);
       setRole(invitation.role);
     }
-  }, [invitation]);
+  }
 
   const handleSave = async () => {
     if (!invitation) return;

@@ -70,6 +70,7 @@ const TargetCursor = ({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- mount-detection for SSR-safe client-only animation, no render-time alternative
     setMounted(true);
   }, []);
 
