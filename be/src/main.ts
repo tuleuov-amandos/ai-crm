@@ -9,11 +9,18 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
 import { cleanupOpenApiDoc } from 'nestjs-zod'
 import cookieParser from 'cookie-parser'
 import helmet from 'helmet'
+import { json, urlencoded } from 'express'
 import { initAiSseBridge } from './routes/ai/ai.sse'
 import { Sentry } from './instrument'
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true })
+  const app = await NestFactory.create(AppModule, { bufferLogs: true, bodyParser: false })
+
+  // Raise the request body limit from Express's 100kb default so bulk imports
+  // (POST /contacts/bulk with 1000+ rows) aren't rejected with 413. 10mb leaves
+  // generous headroom without opening the door to obviously oversized payloads.
+  app.use(json({ limit: '10mb' }))
+  app.use(urlencoded({ extended: true, limit: '10mb' }))
 
   // Route Nest's own logs (and everything below) through pino.
   app.useLogger(app.get(Logger))
