@@ -23,12 +23,14 @@ import { TenantInterceptor } from './common/interceptors/tenant.interceptor'
 import { AuditLogsModule } from './routes/audit-logs/audit-logs.module'
 import { HealthModule } from './routes/health/health.module'
 import { InternalModule } from './routes/internal/internal.module'
+import { PlatformAdminModule } from './routes/platform-admin/platform-admin.module'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 @Module({
   imports: [
     LoggerModule.forRoot({ pinoHttp: pinoHttpOptions }),
     CommonModule,
     AuthModule,
+    PlatformAdminModule,
     ContactsModule,
     ActivitiesModule,
     DealModule,

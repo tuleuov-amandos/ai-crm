@@ -111,6 +111,10 @@ export enum TenantErrorCode {
   LOGO_FILE_MISSING = 'TENANT_LOGO_FILE_MISSING',
 }
 
+export enum PlatformAdminErrorCode {
+  INVALID_CREDENTIALS = 'PLATFORM_ADMIN_INVALID_CREDENTIALS',
+}
+
 export enum AiErrorCode {
   RATE_LIMIT_EXCEEDED = 'AI_RATE_LIMIT_EXCEEDED',
   OPENAI_TIMEOUT = 'OPENAI_TIMEOUT',
@@ -153,5 +157,6 @@ export type AppErrorCode =
   | ReportErrorCode
   | InvitationErrorCode
   | TenantErrorCode
+  | PlatformAdminErrorCode
   | AiErrorCode
   | ValidationErrorCode
