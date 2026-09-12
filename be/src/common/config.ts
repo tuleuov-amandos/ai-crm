@@ -19,6 +19,13 @@ const ConfigSchema = z
     REFRESH_TOKEN_SECRET: z.string(),
     REFRESH_TOKEN_EXPIRES_IN: z.string(),
 
+    // Separate JWT secret for the platform-admin login (see routes/platform-admin).
+    // Deliberately distinct from ACCESS_TOKEN_SECRET — a leak of one must not
+    // grant access to the other, since a PlatformAdmin token bypasses tenant
+    // scoping entirely.
+    PLATFORM_ADMIN_JWT_SECRET: z.string(),
+    PLATFORM_ADMIN_JWT_EXPIRES_IN: z.string().default('8h'),
+
     FRONTEND_URL: z.string(),
     VERCEL_PREVIEW_PREFIX: z.string().optional(),
     COOKIE_DOMAIN: z.string().optional(),
