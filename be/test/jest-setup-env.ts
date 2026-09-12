@@ -17,6 +17,8 @@ const testEnv: Record<string, string> = {
   ACCESS_TOKEN_EXPIRES_IN: '15m',
   REFRESH_TOKEN_SECRET: 'test-refresh-token-secret-1111111111111111',
   REFRESH_TOKEN_EXPIRES_IN: '7d',
+  PLATFORM_ADMIN_JWT_SECRET: 'test-platform-admin-jwt-secret-2222222222',
+  PLATFORM_ADMIN_JWT_EXPIRES_IN: '8h',
 
   FRONTEND_URL: 'http://localhost:3000',
 
