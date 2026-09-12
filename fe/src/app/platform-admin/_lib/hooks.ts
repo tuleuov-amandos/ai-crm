@@ -16,6 +16,18 @@ export interface Tenant {
   dealCount: number;
 }
 
+export interface TenantUser {
+  id: string;
+  name: string;
+  email: string;
+  roleName: string;
+  createdAt: string;
+}
+
+export interface TenantDetail extends Tenant {
+  users: TenantUser[];
+}
+
 export interface PlatformAdminMe {
   id: string;
   email: string;
@@ -34,6 +46,14 @@ export const useTenants = () =>
     queryKey: ["platform-admin", "tenants"],
     queryFn: async () =>
       (await platformAdminApi.get<Tenant[]>("platform-admin/tenants")).data,
+  });
+
+export const useTenantDetail = (id: string) =>
+  useQuery({
+    queryKey: ["platform-admin", "tenant", id],
+    queryFn: async () =>
+      (await platformAdminApi.get<TenantDetail>(`platform-admin/tenants/${id}`)).data,
+    enabled: !!id,
   });
 
 export const useUpdateTenantStatus = () => {

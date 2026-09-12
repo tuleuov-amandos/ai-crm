@@ -6,7 +6,7 @@ import { AppException, PlatformAdminErrorCode } from 'src/common/errors'
 import { PrismaService } from 'src/common/services/prisma.service'
 import { HashingService } from 'src/common/services/hashing.service'
 import { rootLogger } from 'src/common/logger/root-logger'
-import { LoginBodyType, TenantListItemType, UpdateTenantStatusType } from './platform-admin.model'
+import { LoginBodyType, TenantDetailType, TenantListItemType, UpdateTenantStatusType } from './platform-admin.model'
 
 // Module-level logger; `requestId` is attached from CLS per request. Passwords
 // and tokens are never logged — ids/emails/outcomes only.
@@ -81,6 +81,45 @@ export class PlatformAdminService {
       contactCount: tenant._count.contacts,
       dealCount: tenant._count.deals,
     }))
+  }
+
+  async getTenantDetail(tenantId: string): Promise<TenantDetailType> {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      include: {
+        users: {
+          select: { id: true, name: true, email: true, createdAt: true, role: { select: { name: true } } },
+          orderBy: { createdAt: 'asc' },
+        },
+        _count: { select: { users: true, contacts: true, deals: true } },
+      },
+    })
+    if (!tenant) {
+      throw new NotFoundException('Tenant not found')
+    }
+
+    const admin = tenant.users.find((u) => u.role.name === 'ADMIN')
+
+    return {
+      id: tenant.id,
+      name: tenant.name,
+      slug: tenant.slug,
+      plan: tenant.plan,
+      status: tenant.status,
+      createdAt: tenant.createdAt,
+      adminName: admin?.name ?? null,
+      adminEmail: admin?.email ?? null,
+      userCount: tenant._count.users,
+      contactCount: tenant._count.contacts,
+      dealCount: tenant._count.deals,
+      users: tenant.users.map((u) => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        roleName: u.role.name,
+        createdAt: u.createdAt,
+      })),
+    }
   }
 
   async updateTenantStatus(tenantId: string, status: UpdateTenantStatusType['status']) {
