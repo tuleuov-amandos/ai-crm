@@ -17,6 +17,7 @@ import { routing } from "./i18n/routing";
 export default createMiddleware(routing);
 
 export const config = {
-  // Пропускаем API-проксирование, служебные пути Next/Vercel и файлы с расширением.
-  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)'],
+  // Пропускаем API-проксирование, служебные пути Next/Vercel, файлы с расширением
+  // и отдельное дерево platform-admin (вне [locale], без i18n).
+  matcher: ['/((?!api|_next|_vercel|platform-admin|.*\\..*).*)'],
 };
