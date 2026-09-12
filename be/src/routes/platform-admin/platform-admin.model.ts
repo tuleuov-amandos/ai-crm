@@ -33,6 +33,22 @@ export const TenantListItemSchema = z.object({
 
 export type TenantListItemType = z.infer<typeof TenantListItemSchema>
 
+export const TenantUserSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string(),
+  roleName: z.string(),
+  createdAt: zDate,
+})
+
+export type TenantUserType = z.infer<typeof TenantUserSchema>
+
+export const TenantDetailSchema = TenantListItemSchema.extend({
+  users: z.array(TenantUserSchema),
+})
+
+export type TenantDetailType = z.infer<typeof TenantDetailSchema>
+
 // Reused from the (soon to be retired) internal-tenants module instead of
 // duplicating the same status enum.
 export { UpdateTenantStatusSchema }

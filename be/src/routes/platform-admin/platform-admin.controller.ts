@@ -59,6 +59,12 @@ export class PlatformAdminController {
   }
 
   @UseGuards(PlatformAdminAuthGuard)
+  @Get('tenants/:id')
+  async getTenantDetail(@Param('id') id: string) {
+    return this.service.getTenantDetail(id)
+  }
+
+  @UseGuards(PlatformAdminAuthGuard)
   @Patch('tenants/:id/status')
   async updateStatus(@Param('id') id: string, @Body() body: UpdateTenantStatusDto) {
     return this.service.updateTenantStatus(id, body.status)

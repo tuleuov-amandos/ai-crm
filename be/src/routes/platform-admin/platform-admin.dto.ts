@@ -3,6 +3,7 @@ import {
   LoginBodySchema,
   LoginResSchema,
   MeResSchema,
+  TenantDetailSchema,
   TenantListItemSchema,
   UpdateTenantStatusSchema,
 } from './platform-admin.model'
@@ -13,6 +14,8 @@ export class LoginResDto extends createZodDto(LoginResSchema) {}
 
 export class TenantListItemDto extends createZodDto(TenantListItemSchema) {}
 export class TenantListResDto extends createZodDto(z.array(TenantListItemSchema)) {}
+
+export class TenantDetailDto extends createZodDto(TenantDetailSchema) {}
 
 export class UpdateTenantStatusDto extends createZodDto(UpdateTenantStatusSchema) {}
 
