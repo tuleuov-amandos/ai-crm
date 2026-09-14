@@ -420,6 +420,8 @@
       "positionPlaceholder": "Введите должность",
       "tagsLabel": "Теги",
       "tagsPlaceholder": "Выберите теги контакта",
+      "channelLabel": "Канал",
+      "channelPlaceholder": "Выберите канал",
       "validation": {
         "nameMin": "Имя контакта должно содержать не менее 2 символов.",
         "nameMax": "Имя контакта не может быть длиннее 100 символов.",
@@ -427,6 +429,16 @@
         "phoneRequired": "Телефон обязателен.",
         "phoneInvalid": "Некорректный номер телефона."
       }
+    },
+    "channels": {
+      "CATEGORY_A": "Категория А",
+      "CATEGORY_B": "Категория Б",
+      "CATEGORY_C": "Категория С",
+      "HORECA": "HoReCa",
+      "OFFICE": "Офис",
+      "PHARMACY": "Аптека",
+      "WHOLESALE": "Оптовый",
+      "RETAIL": "Розница"
     },
     "dialog": {
       "createTitle": "Новый контакт",

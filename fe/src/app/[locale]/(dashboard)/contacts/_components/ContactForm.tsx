@@ -4,6 +4,7 @@ import {
   CreateContactBodyType,
   ContactTagConst,
   ContactTagType,
+  ContactChannelConst,
 } from "@/lib/validations/contacts.scheme";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo } from "react";
@@ -23,6 +24,13 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ChevronDown, Tag } from "lucide-react";
 
 const buildContactFormSchema = (tv: (key: string) => string) =>
@@ -44,6 +52,10 @@ const buildContactFormSchema = (tv: (key: string) => string) =>
         .regex(/^\+?[0-9\s\-()]{7,20}$/, tv("phoneInvalid")),
       company: z.string().optional().nullable(),
       position: z.string().optional().nullable(),
+      channel: z
+        .enum(Object.values(ContactChannelConst) as [string, ...string[]])
+        .optional()
+        .nullable(),
       tags: z
         .array(
           z.enum([
@@ -76,7 +88,18 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
   const t = useTranslations("contacts.form");
   const tCommon = useTranslations("common");
   const tv = useTranslations("contacts.form.validation");
+  const tChannels = useTranslations("contacts.channels");
   const contactFormSchema = useMemo(() => buildContactFormSchema(tv), [tv]);
+  const CHANNEL_LABELS: Record<string, string> = {
+    [ContactChannelConst.CategoryA]: tChannels("CATEGORY_A"),
+    [ContactChannelConst.CategoryB]: tChannels("CATEGORY_B"),
+    [ContactChannelConst.CategoryC]: tChannels("CATEGORY_C"),
+    [ContactChannelConst.HoReCa]: tChannels("HORECA"),
+    [ContactChannelConst.Office]: tChannels("OFFICE"),
+    [ContactChannelConst.Pharmacy]: tChannels("PHARMACY"),
+    [ContactChannelConst.Wholesale]: tChannels("WHOLESALE"),
+    [ContactChannelConst.Retail]: tChannels("RETAIL"),
+  };
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
     defaultValues: {
@@ -85,6 +108,7 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
       phone: defaultValues?.phone ?? "",
       company: defaultValues?.company ?? "",
       position: defaultValues?.position ?? "",
+      channel: defaultValues?.channel ?? null,
       tags: defaultValues?.tags ?? [],
     },
   });
@@ -96,6 +120,7 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
       phone: defaultValues?.phone ?? "",
       company: defaultValues?.company ?? "",
       position: defaultValues?.position ?? "",
+      channel: defaultValues?.channel ?? null,
       tags: defaultValues?.tags ?? [],
     });
   }, [defaultValues]);
@@ -209,6 +234,28 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
                 placeholder={t("positionPlaceholder")}
                 autoComplete="off"
               />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
+
+        {/* Channel (single-select) */}
+        <Controller
+          name="channel"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="form-rhf-contact-channel">{t("channelLabel")}</FieldLabel>
+              <Select value={field.value ?? undefined} onValueChange={field.onChange}>
+                <SelectTrigger id="form-rhf-contact-channel" size="sm">
+                  <SelectValue placeholder={t("channelPlaceholder")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(CHANNEL_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}

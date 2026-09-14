@@ -17,6 +17,7 @@ export class ContactsRepository {
         company: data.company ?? null,
         position: data.position ?? null,
         tags: data.tags ?? [],
+        channel: data.channel ?? null,
       } as Prisma.ContactUncheckedCreateInput,
     })
   }

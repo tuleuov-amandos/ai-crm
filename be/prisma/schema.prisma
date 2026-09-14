@@ -122,6 +122,7 @@ model Contact {
   company    String?
   position   String?
   tags       String[]
+  channel    String?
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
   deletedAt  DateTime?
