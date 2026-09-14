@@ -420,6 +420,8 @@
       "positionPlaceholder": "Enter job title",
       "tagsLabel": "Tags",
       "tagsPlaceholder": "Select contact tags",
+      "channelLabel": "Channel",
+      "channelPlaceholder": "Select channel",
       "validation": {
         "nameMin": "Contact name must be at least 2 characters.",
         "nameMax": "Contact name must be at most 100 characters.",
@@ -427,6 +429,16 @@
         "phoneRequired": "Phone number is required.",
         "phoneInvalid": "Invalid phone number."
       }
+    },
+    "channels": {
+      "CATEGORY_A": "Category A",
+      "CATEGORY_B": "Category B",
+      "CATEGORY_C": "Category C",
+      "HORECA": "HoReCa",
+      "OFFICE": "Office",
+      "PHARMACY": "Pharmacy",
+      "WHOLESALE": "Wholesale",
+      "RETAIL": "Retail"
     },
     "dialog": {
       "createTitle": "New contact",

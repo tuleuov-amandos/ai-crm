@@ -7,6 +7,19 @@ export const ContactTagConst  = {
 
 export type ContactTagType  = typeof ContactTagConst [keyof typeof ContactTagConst ];
 
+export const ContactChannelConst = {
+  CategoryA: "CATEGORY_A",
+  CategoryB: "CATEGORY_B",
+  CategoryC: "CATEGORY_C",
+  HoReCa: "HORECA",
+  Office: "OFFICE",
+  Pharmacy: "PHARMACY",
+  Wholesale: "WHOLESALE",
+  Retail: "RETAIL",
+} as const;
+
+export type ContactChannelType = typeof ContactChannelConst[keyof typeof ContactChannelConst];
+
 // ─────────────────────────────────────────
 // BASE SCHEMAS — Not used directly as Res/Body
 // ─────────────────────────────────────────
@@ -31,6 +44,7 @@ const ContactBaseSchema = z.object({
     ContactTagConst.Vip,
     ContactTagConst.Potential,
   ])).optional(),
+  channel: z.enum(Object.values(ContactChannelConst) as [string, ...string[]]).optional().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
   deletedAt: z.date().nullable(),
@@ -49,6 +63,7 @@ export const CreateContactBodySchema = ContactBaseSchema.pick({
   company: true,
   position: true,
   tags: true,
+  channel: true,
 }).strict();
 
 export const CreateContactResSchema = ContactBaseSchema.omit({
