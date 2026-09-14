@@ -1,7 +1,14 @@
 import { Injectable } from '@nestjs/common'
 import { AppException, ContactErrorCode } from 'src/common/errors'
 import { ContactsRepository } from './contacts.repo'
-import { CreateContactBodyType, ContactTagType, GetContactsQueryType, UpdateContactBodyType } from './contacts.model'
+import {
+  CreateContactBodyType,
+  ContactTagType,
+  ContactChannelConst,
+  ContactChannelType,
+  GetContactsQueryType,
+  UpdateContactBodyType,
+} from './contacts.model'
 import { RedisService } from 'src/common/services/redis.service'
 import { AuditLogsService } from '../audit-logs/audit-logs.service'
 import { AuditLogChanges } from '../audit-logs/audit-logs.model'
@@ -13,6 +20,27 @@ import { AiService } from '../ai/ai.service'
 import { PrismaService } from 'src/common/services/prisma.service'
 import { DealStageType } from '../deal/deal.model'
 import { BulkImportContactsBodyDto } from './contacts.dto'
+
+function normalizeChannel(raw: string | null | undefined): ContactChannelType | null {
+  if (!raw) return null
+  const validValues = Object.values(ContactChannelConst) as string[]
+  const trimmed = raw.trim()
+  const normalized = trimmed.toUpperCase()
+  if (normalized === 'A' || normalized === 'А' || normalized === 'CATEGORY_A' || normalized === 'КАТЕГОРИЯ А')
+    return ContactChannelConst.CategoryA
+  if (normalized === 'B' || normalized === 'Б' || normalized === 'CATEGORY_B' || normalized === 'КАТЕГОРИЯ Б')
+    return ContactChannelConst.CategoryB
+  if (
+    normalized === 'C' ||
+    normalized === 'С' ||
+    normalized === 'CATEGORY_C' ||
+    normalized === 'КАТЕГОРИЯ С' ||
+    normalized === 'КАТЕГОРИЯ C'
+  )
+    return ContactChannelConst.CategoryC
+  if (validValues.includes(normalized)) return normalized as ContactChannelType
+  return null
+}
 
 @Injectable()
 export class ContactsService {
@@ -200,7 +228,8 @@ export class ContactsService {
 
       if (contact) {
         // Update with new information
-        const updateData: Partial<CreateContactBodyType> & { tags?: ContactTagType[] } = {}
+        const updateData: Partial<CreateContactBodyType> & { tags?: ContactTagType[]; channel?: ContactChannelType } =
+          {}
         if (item.name) updateData.name = item.name
         if (item.company) updateData.company = item.company
         if (item.position) updateData.position = item.position
@@ -211,6 +240,11 @@ export class ContactsService {
           // Tags from BulkImportContactItemSchema are plain strings; cast to ContactTagType[] after Zod validation
           const validNewTags = item.tags as ContactTagType[]
           updateData.tags = Array.from(new Set([...existingTags, ...validNewTags])) as ContactTagType[]
+        }
+
+        if (item.channel) {
+          const normalizedChannel = normalizeChannel(item.channel)
+          if (normalizedChannel) updateData.channel = normalizedChannel
         }
 
         const oldContact = { ...contact }
@@ -239,6 +273,7 @@ export class ContactsService {
           position: item.position || null,
           // Tags from BulkImportContactItemSchema are plain strings; cast to ContactTagType[] after validation
           tags: (item.tags || []) as ContactTagType[],
+          channel: normalizeChannel(item.channel),
         })
 
         // Write Audit Log for CREATE Contact action
@@ -312,7 +347,7 @@ export class ContactsService {
 
   async aiMapColumns(headers: string[]) {
     const prompt = `You are an expert data mapping assistant for a CRM system.
-    We have 11 system fields:
+    We have 12 system fields:
     - name (Họ và tên - Required)
     - email (Email)
     - phone (Số điện thoại)
@@ -324,6 +359,7 @@ export class ContactsService {
     - dealValue (Giá trị Deal)
     - dealStage (Trạng thái Deal)
     - dealNote (Ghi chú Deal)
+    - channel (Kênh/Phân loại khách hàng)
 
     Given this list of headers from an uploaded spreadsheet:
     ${JSON.stringify(headers)}
@@ -363,6 +399,7 @@ export class ContactsService {
         'dealValue',
         'dealStage',
         'dealNote',
+        'channel',
       ]
       fields.forEach((f) => {
         mappings[f] = null

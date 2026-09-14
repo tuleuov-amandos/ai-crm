@@ -15,6 +15,7 @@ export interface BulkImportContactItem {
   company?: string | null;
   position?: string | null;
   tags?: string[];
+  channel?: string | null;
   ownerEmail?: string | null;
   dealTitle?: string | null;
   dealValue?: number | null;

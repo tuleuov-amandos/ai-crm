@@ -29,6 +29,7 @@ interface ParsedRow {
   company: string | null;
   position: string | null;
   tags: string[];
+  channel: string | null;
   ownerEmail: string | null;
   dealTitle: string | null;
   dealValue: number | null;
@@ -84,6 +85,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
       company: t("template.headerCompany"),
       position: t("template.headerPosition"),
       tags: t("template.headerTags"),
+      channel: t("template.headerChannel"),
       ownerEmail: t("template.headerOwnerEmail"),
       dealTitle: t("template.headerDealTitle"),
       dealValue: t("template.headerDealValue"),
@@ -99,6 +101,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
         [H.company]: t("template.row1Company"),
         [H.position]: t("template.row1Position"),
         [H.tags]: "Vip, Potential",
+        [H.channel]: t("template.row1Channel"),
         [H.ownerEmail]: "sales_member@example.com",
         [H.dealTitle]: t("template.row1DealTitle"),
         [H.dealValue]: 15000000,
@@ -112,6 +115,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
         [H.company]: "",
         [H.position]: "",
         [H.tags]: "Enterprise",
+        [H.channel]: "",
         [H.ownerEmail]: "",
         [H.dealTitle]: "",
         [H.dealValue]: 0,
@@ -137,6 +141,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
       { key: "company", synonyms: ["Công ty", "Company", "Doanh nghiệp", "Компания", "Организация"] },
       { key: "position", synonyms: ["Chức vụ", "Position", "Vai trò", "Должность"] },
       { key: "tags", synonyms: ["Tags", "Nhãn", "Tag", "Теги", "Метки"] },
+      { key: "channel", synonyms: ["Channel", "Канал", "Категория", "Category"] },
       { key: "ownerEmail", synonyms: ["Email người sở hữu", "Owner Email", "Chủ sở hữu", "Email ответственного", "Ответственный"] },
       { key: "dealTitle", synonyms: ["Tên Deal đi kèm", "Tên Deal", "Deal Title", "Cơ hội", "Название связанной сделки", "Название сделки", "Сделка"] },
       { key: "dealValue", synonyms: ["Giá trị Deal (VND)", "Giá trị Deal", "Giá trị", "Value", "Giá trị cơ hội", "Сумма сделки (KZT)", "Сумма сделки (VND)", "Сумма сделки", "Сумма", "Стоимость"] },
@@ -260,6 +265,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
       const companyVal = mappings["company"] ? row[mappings["company"]] : undefined;
       const positionVal = mappings["position"] ? row[mappings["position"]] : undefined;
       const tagsVal = mappings["tags"] ? row[mappings["tags"]] : undefined;
+      const channelVal = mappings["channel"] ? row[mappings["channel"]] : undefined;
       const ownerEmailVal = mappings["ownerEmail"] ? row[mappings["ownerEmail"]] : undefined;
       const dealTitleVal = mappings["dealTitle"] ? row[mappings["dealTitle"]] : undefined;
       const dealValueRaw = mappings["dealValue"] ? row[mappings["dealValue"]] : undefined;
@@ -314,6 +320,7 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
         company: companyVal ? String(companyVal).trim() : null,
         position: positionVal ? String(positionVal).trim() : null,
         tags,
+        channel: channelVal ? String(channelVal).trim() : null,
         ownerEmail: ownerEmailStr || null,
         dealTitle: dealTitleVal ? String(dealTitleVal).trim() : null,
         dealValue,
