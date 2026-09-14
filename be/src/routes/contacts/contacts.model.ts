@@ -154,6 +154,7 @@ export const BulkImportContactItemSchema = z.object({
   company: z.string().optional().nullable().or(z.literal('')),
   position: z.string().optional().nullable().or(z.literal('')),
   tags: z.array(z.string()).optional(),
+  channel: z.string().optional().nullable().or(z.literal('')),
   ownerEmail: z.string().email().optional().nullable().or(z.literal('')),
   dealTitle: z.string().optional().nullable().or(z.literal('')),
   dealValue: z
