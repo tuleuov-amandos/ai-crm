@@ -86,6 +86,7 @@ export class InvitationsService {
       companyName: tenant.name,
       role: body.role,
       inviteLink,
+      locale: tenant.defaultLocale ?? 'ru',
     })
     log.info({
       event: 'invitation.created',
@@ -269,6 +270,7 @@ export class InvitationsService {
       companyName: tenant?.name || 'Workspace CRM',
       role: updatedInvitation.role.name,
       inviteLink,
+      locale: tenant?.defaultLocale ?? 'ru',
     })
     log.info({
       event: 'invitation.updated',

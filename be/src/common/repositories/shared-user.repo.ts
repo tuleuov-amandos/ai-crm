@@ -21,7 +21,7 @@ export class SharedUserRepository {
   async findTenantUnique(tenantId: string) {
     return this.prismaService.tenant.findUnique({
       where: { id: tenantId },
-      select: { name: true },
+      select: { name: true, defaultLocale: true },
     })
   }
 
