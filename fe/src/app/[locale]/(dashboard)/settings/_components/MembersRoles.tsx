@@ -23,6 +23,7 @@ import {
 
 import { useGetUsers, useUpdateUser, useDeleteUser } from "@/hooks/useUsers";
 import { useGetInvitations, useCreateInvitation } from "@/hooks/useInvitations";
+import { useMe } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { usersService, RoleDto } from "@/services/users.service";
 
@@ -235,7 +236,11 @@ export function MembersRoles() {
   const [showInvite, setShowInvite] = useState(false);
   const [search,     setSearch]     = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
-  
+
+  const { data: me } = useMe();
+  const canInvite = me?.role === "ADMIN" || me?.role === "MANAGER";
+  const canManageUsers = me?.role === "ADMIN";
+
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [deletingMemberId, setDeletingMemberId] = useState<string | null>(null);
 
@@ -301,14 +306,16 @@ export function MembersRoles() {
               {t("subtitle")}
             </p>
           </div>
-          <Button
-            onClick={() => setShowInvite(true)}
-            className="h-9 rounded-[10px] bg-[#534AB7] hover:bg-[#4840A0] text-white gap-1.5 shrink-0"
-            style={{ fontSize: 13 }}
-          >
-            <Plus size={14} />
-            {t("inviteMember")}
-          </Button>
+          {canInvite && (
+            <Button
+              onClick={() => setShowInvite(true)}
+              className="h-9 rounded-[10px] bg-[#534AB7] hover:bg-[#4840A0] text-white gap-1.5 shrink-0"
+              style={{ fontSize: 13 }}
+            >
+              <Plus size={14} />
+              {t("inviteMember")}
+            </Button>
+          )}
         </div>
 
         {/* Pending invite amber banner */}
@@ -468,47 +475,51 @@ export function MembersRoles() {
                     <td className="px-5 py-3" style={{ width: 140 }}>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         {m.isYou ? null : m.status === "pending" ? (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toast.success(t("toastResent", { name: m.name }))}
-                              className="h-7 px-2 rounded-lg text-[#534AB7] dark:text-primary hover:bg-[#EEEDFE] dark:hover:bg-muted hover:text-[#534AB7] dark:hover:text-primary"
-                              style={{ fontSize: 12 }}
-                            >
-                              <RefreshCw size={11} className="mr-1" />
-                              {t("resend")}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toast.info(t("toastCancelled"))}
-                              className="h-7 px-2 rounded-lg hover:bg-[#FEE2E2] dark:hover:bg-destructive/20 text-[#A32D2D] dark:text-destructive"
-                              style={{ fontSize: 12 }}
-                            >
-                              <X size={11} className="mr-1" />
-                              {tCommon("cancel")}
-                            </Button>
-                          </>
+                          canInvite && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toast.success(t("toastResent", { name: m.name }))}
+                                className="h-7 px-2 rounded-lg text-[#534AB7] dark:text-primary hover:bg-[#EEEDFE] dark:hover:bg-muted hover:text-[#534AB7] dark:hover:text-primary"
+                                style={{ fontSize: 12 }}
+                              >
+                                <RefreshCw size={11} className="mr-1" />
+                                {t("resend")}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toast.info(t("toastCancelled"))}
+                                className="h-7 px-2 rounded-lg hover:bg-[#FEE2E2] dark:hover:bg-destructive/20 text-[#A32D2D] dark:text-destructive"
+                                style={{ fontSize: 12 }}
+                              >
+                                <X size={11} className="mr-1" />
+                                {tCommon("cancel")}
+                              </Button>
+                            </>
+                          )
                         ) : (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setEditingMember(m)}
-                              className="size-7 rounded-lg text-[#6B6B67] dark:text-muted-foreground hover:bg-[#EEEDFE] dark:hover:bg-muted hover:text-[#534AB7] dark:hover:text-primary"
-                            >
-                              <Pencil size={13} />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setDeletingMemberId(m.id)}
-                              className="size-7 rounded-lg text-[#6B6B67] dark:text-muted-foreground hover:bg-[#FEE2E2] dark:hover:bg-destructive/20 hover:text-[#A32D2D] dark:hover:text-destructive"
-                            >
-                              <Trash2 size={13} />
-                            </Button>
-                          </>
+                          canManageUsers && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setEditingMember(m)}
+                                className="size-7 rounded-lg text-[#6B6B67] dark:text-muted-foreground hover:bg-[#EEEDFE] dark:hover:bg-muted hover:text-[#534AB7] dark:hover:text-primary"
+                              >
+                                <Pencil size={13} />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setDeletingMemberId(m.id)}
+                                className="size-7 rounded-lg text-[#6B6B67] dark:text-muted-foreground hover:bg-[#FEE2E2] dark:hover:bg-destructive/20 hover:text-[#A32D2D] dark:hover:text-destructive"
+                              >
+                                <Trash2 size={13} />
+                              </Button>
+                            </>
+                          )
                         )}
                       </div>
                     </td>
