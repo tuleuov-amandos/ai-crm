@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
-import { AppException, ContactErrorCode, DealErrorCode } from 'src/common/errors'
+import { AppException, ContactErrorCode, DealErrorCode, TaskErrorCode } from 'src/common/errors'
+import { ROLE } from 'src/common/constants/role.constanst'
 import {
   CreateDealBodyType,
   DealStageConst,
@@ -288,6 +289,27 @@ export class DealService {
 
   // ─── SECURITY RULES FOR TASK OPERATIONS BASED ON DEAL PERMISSIONS ───
 
+  // Only Admin/Manager may set or change a task's assignee, and the assignee
+  // must belong to the same tenant as the task.
+  private async assertAssigneeChangeAllowed(
+    tenantId: string,
+    assigneeId: string | null | undefined,
+    user: { userId: string; role: string; tenantId: string },
+  ) {
+    if (assigneeId === undefined) return
+
+    if (user.role !== ROLE.ADMIN && user.role !== ROLE.MANAGER) {
+      throw AppException.forbidden(TaskErrorCode.FORBIDDEN_ASSIGN, 'Only Admin or Manager can assign tasks')
+    }
+
+    if (assigneeId !== null) {
+      const assignee = await this.taskRepo.findAssigneeInTenant(tenantId, assigneeId)
+      if (!assignee) {
+        throw AppException.badRequest(TaskErrorCode.ASSIGNEE_NOT_FOUND, 'Assignee not found in this workspace')
+      }
+    }
+  }
+
   async createTask(
     dealId: string,
     tenantId: string,
@@ -301,6 +323,8 @@ export class DealService {
     if (ability.cannot('update', subject('Deal', deal as any))) {
       throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
     }
+
+    await this.assertAssigneeChangeAllowed(tenantId, data.assigneeId, user)
 
     const task = await this.taskRepo.create(dealId, tenantId, data)
     await this.redisService.invalidateTenantCache(tenantId)
@@ -340,6 +364,8 @@ export class DealService {
     if (ability.cannot('update', subject('Deal', deal as any))) {
       throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
     }
+
+    await this.assertAssigneeChangeAllowed(tenantId, data.assigneeId, user)
 
     const task = await this.taskRepo.update(dealId, taskId, data)
     await this.redisService.invalidateTenantCache(tenantId)

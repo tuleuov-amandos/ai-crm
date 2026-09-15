@@ -28,4 +28,6 @@ export type Task = {
   done: boolean;
   dueDate: Date | null;
   createdAt: Date;
+  assigneeId: string | null;
+  assignee: { id: string; name: string; email: string } | null;
 };

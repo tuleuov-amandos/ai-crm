@@ -12,11 +12,19 @@ import {
   TrendingUp,
   CheckCircle2,
   Trash2,
+  UserCircle2,
 } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { StageBadge } from "@/components/ui/StageBadge";
 import { DealStage } from "./types";
 import { cn } from "@/lib/utils";
@@ -30,6 +38,10 @@ import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as ShadcnCalendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { useMe } from "@/hooks/useAuth";
+import { useGetUsers } from "@/hooks/useUsers";
+
+const UNASSIGNED = "__unassigned__";
 
 const PIPELINE_STAGES: { key: DealStage }[] = [
   { key: "PROSPECT" },
@@ -55,13 +67,20 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
   const [addingTask, setAddingTask] = useState(false);
   const [newTitle, setNewTitle]   = useState("");
   const [newDueDate, setNewDueDate] = useState<string | null>(null);
+  const [newAssigneeId, setNewAssigneeId] = useState<string | null>(null);
 
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle]   = useState("");
   const [editingDueDate, setEditingDueDate] = useState<string | null>(null);
+  const [editingAssigneeId, setEditingAssigneeId] = useState<string | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+
+  const { data: me } = useMe();
+  const canAssign = me?.role === "ADMIN" || me?.role === "MANAGER";
+  const usersQuery = useGetUsers();
+  const users = usersQuery.data ?? [];
 
   // Adjust local task state during render when the deal's tasks change
   // (official React "adjusting state during render" pattern — no effect needed).
@@ -98,15 +117,17 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
     if (!title) {
       setAddingTask(false);
       setNewDueDate(null);
+      setNewAssigneeId(null);
       return;
     }
 
     setNewTitle("");
     setNewDueDate(null);
+    setNewAssigneeId(null);
     setAddingTask(false);
 
     try {
-      await dealsService.createTask(deal.id, title, newDueDate);
+      await dealsService.createTask(deal.id, title, newDueDate, canAssign ? newAssigneeId : undefined);
       await queryClient.invalidateQueries({ queryKey: dealKeys.detail(deal.id) });
       toast.success(t("toasts.taskAdded"));
     } catch (err) {
@@ -123,6 +144,9 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
     }
 
     // Optimistically update local state
+    const editingAssignee = canAssign
+      ? (users.find((u) => u.id === editingAssigneeId) ?? null)
+      : null;
     setTasks((prev) =>
       prev.map((t) =>
         t.id === taskId
@@ -130,6 +154,9 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
               ...t,
               title,
               dueDate: editingDueDate ? new Date(editingDueDate) : null,
+              ...(canAssign
+                ? { assigneeId: editingAssigneeId, assignee: editingAssignee }
+                : {}),
             }
           : t
       )
@@ -140,6 +167,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
       await dealsService.updateTask(deal.id, taskId, {
         title,
         dueDate: editingDueDate ? new Date(editingDueDate).toISOString() : null,
+        ...(canAssign ? { assigneeId: editingAssigneeId } : {}),
       });
       await queryClient.invalidateQueries({ queryKey: dealKeys.detail(deal.id) });
       toast.success(t("toasts.taskUpdated"));
@@ -472,7 +500,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                         />
                       </PopoverContent>
                     </Popover>
-                    
+
                     <div className="flex gap-1">
                       <Button
                         size="sm"
@@ -491,6 +519,28 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                       </Button>
                     </div>
                   </div>
+                  {canAssign && (
+                    <Select
+                      value={editingAssigneeId ?? UNASSIGNED}
+                      onValueChange={(value) =>
+                        setEditingAssigneeId(value === UNASSIGNED ? null : value)
+                      }
+                    >
+                      <SelectTrigger size="sm" className="h-7 text-xs bg-background border-border text-foreground">
+                        <SelectValue placeholder={t("selectAssignee")} />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background border-border">
+                        <SelectItem value={UNASSIGNED} style={{ fontSize: 12 }}>
+                          {t("unassigned")}
+                        </SelectItem>
+                        {users.map((u) => (
+                          <SelectItem key={u.id} value={u.id} style={{ fontSize: 12 }}>
+                            {u.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
               );
             }
@@ -527,6 +577,15 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                     <span style={{ fontSize: 11 }} className="text-muted-foreground">
                       {task.dueDate ? new Date(task.dueDate).toLocaleDateString(locale) : t("noDueDate")}
                     </span>
+                    {task.assignee && (
+                      <>
+                        <span className="text-muted-foreground/50">·</span>
+                        <UserCircle2 size={9} strokeWidth={1.7} className="text-muted-foreground shrink-0" />
+                        <span style={{ fontSize: 11 }} className="text-muted-foreground truncate">
+                          {task.assignee.name}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -536,6 +595,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                       setEditingTaskId(task.id);
                       setEditingTitle(task.title);
                       setEditingDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : null);
+                      setEditingAssigneeId(task.assigneeId);
                     }}
                     className="p-1 text-muted-foreground hover:text-primary rounded hover:bg-muted shrink-0 mt-0.5 bg-transparent border-0 cursor-pointer"
                   >
@@ -604,6 +664,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                       setAddingTask(false);
                       setNewTitle("");
                       setNewDueDate(null);
+                      setNewAssigneeId(null);
                     }}
                   >
                     {tCommon("cancel")}
@@ -617,6 +678,28 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                   </Button>
                 </div>
               </div>
+              {canAssign && (
+                <Select
+                  value={newAssigneeId ?? UNASSIGNED}
+                  onValueChange={(value) =>
+                    setNewAssigneeId(value === UNASSIGNED ? null : value)
+                  }
+                >
+                  <SelectTrigger size="sm" className="h-7 text-xs bg-background border-border text-foreground">
+                    <SelectValue placeholder={t("selectAssignee")} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border-border">
+                    <SelectItem value={UNASSIGNED} style={{ fontSize: 12 }}>
+                      {t("unassigned")}
+                    </SelectItem>
+                    {users.map((u) => (
+                      <SelectItem key={u.id} value={u.id} style={{ fontSize: 12 }}>
+                        {u.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           )}
         </div>

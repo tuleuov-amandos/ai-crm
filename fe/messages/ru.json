@@ -286,6 +286,8 @@
       "newTaskNamePlaceholder": "Название новой задачи…",
       "pickDueDate": "Выбрать срок",
       "noDueDate": "Без срока",
+      "selectAssignee": "Выберите исполнителя",
+      "unassigned": "Без исполнителя",
       "tasksCompleted": "{done}/{total} задач выполнено",
       "toasts": {
         "taskStatusError": "Не удалось обновить статус задачи.",
@@ -673,6 +675,21 @@
       "updateError": "Не удалось обновить активность",
       "deleteSuccess": "Активность удалена",
       "deleteError": "Не удалось удалить активность"
+    }
+  },
+  "tasks": {
+    "title": "Мои задачи",
+    "subtitle": "Задачи, назначенные на вас, по всем сделкам",
+    "table": {
+      "colTask": "Задача",
+      "colDeal": "Сделка",
+      "colDueDate": "Срок",
+      "noDueDate": "Без срока",
+      "empty": "У вас нет назначенных задач"
+    },
+    "pageOf": "Страница {page} из {total}",
+    "toasts": {
+      "updateError": "Не удалось обновить задачу."
     }
   },
   "reports": {
@@ -1175,6 +1192,7 @@
       "sales": "Продажи",
       "pipeline": "Воронка",
       "contacts": "Контакты",
+      "tasks": "Мои задачи",
       "activities": "Активности",
       "reports": "Отчёты",
       "administration": "Администрирование",
@@ -1436,6 +1454,8 @@
     "DEAL_MEETING_NOTE_REQUIRED": "Требуется заметка о встрече.",
     "CONTACT_NOT_FOUND": "Контакт не найден.",
     "CONTACT_FORBIDDEN_LIST": "У вас нет прав на просмотр контактов.",
+    "TASK_FORBIDDEN_ASSIGN": "Назначать исполнителя может только Admin или Manager.",
+    "TASK_ASSIGNEE_NOT_FOUND": "Исполнитель не найден в этом рабочем пространстве.",
     "DASHBOARD_FORBIDDEN": "У вас нет прав на доступ к дашборду.",
     "MEMBER_NOT_FOUND": "Участник не найден.",
     "USER_CANNOT_CHANGE_OWN_ROLE": "Вы не можете изменить собственную роль.",

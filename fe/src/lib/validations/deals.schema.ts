@@ -81,6 +81,14 @@ export const DealDetailSchema = DealCardSchema.extend({
       done: z.boolean(),
       dueDate: z.coerce.date().nullable(),
       createdAt: z.coerce.date(),
+      assigneeId: z.string().nullable(),
+      assignee: z
+        .object({
+          id: z.string(),
+          name: z.string(),
+          email: z.string(),
+        })
+        .nullable(),
     }),
   ),
   activities: z.array(
