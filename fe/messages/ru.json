@@ -227,7 +227,10 @@
       "searchPlaceholder": "Поиск по сделке, контакту, компании...",
       "allReps": "Все сотрудники",
       "noReps": "Нет сотрудников",
-      "addDeal": "Добавить сделку"
+      "addDeal": "Добавить сделку",
+      "paymentStatusAll": "Все",
+      "paymentStatusPaid": "Оплачено",
+      "paymentStatusUnpaid": "Не оплачено"
     },
     "units": {
       "billion": "млрд",
@@ -262,6 +265,7 @@
       "colOwner": "Владелец",
       "colValue": "Сумма",
       "colStage": "Стадия",
+      "colPaymentStatus": "Оплата",
       "colCloseDate": "Дата закрытия",
       "colActions": "Действия"
     },
@@ -373,7 +377,14 @@
       "updateError": "Не удалось обновить сделку",
       "stageError": "Не удалось переместить сделку",
       "deleteSuccess": "Сделка удалена",
-      "deleteError": "Не удалось удалить сделку"
+      "deleteError": "Не удалось удалить сделку",
+      "paymentStatusSuccess": "Статус оплаты обновлён",
+      "paymentStatusError": "Не удалось обновить статус оплаты"
+    },
+    "paymentStatus": {
+      "paid": "Оплачено",
+      "unpaid": "Не оплачено",
+      "toggleHint": "Изменить статус оплаты"
     }
   },
   "contacts": {

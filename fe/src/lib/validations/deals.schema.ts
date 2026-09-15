@@ -38,6 +38,7 @@ export const DealCardSchema = z.object({
     "CLOSED_WON",
     "CLOSED_LOST",
   ]),
+  isPaid: z.boolean().default(false),
   closeDate: z.coerce.date(),
   note: z.string().nullable(),
   createdAt: z.coerce.date(),
@@ -155,3 +156,12 @@ export const UpdateDealStageBodySchema = z.object({
 });
 
 export type UpdateDealStageBodyType = z.infer<typeof UpdateDealStageBodySchema>;
+
+// ─── UPDATE PAYMENT STATUS — PATCH /deals/:id/payment-status ─────────────────
+export const UpdateDealPaymentStatusBodySchema = z.object({
+  isPaid: z.boolean(),
+});
+
+export type UpdateDealPaymentStatusBodyType = z.infer<
+  typeof UpdateDealPaymentStatusBodySchema
+>;

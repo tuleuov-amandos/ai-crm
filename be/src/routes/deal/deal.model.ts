@@ -28,6 +28,7 @@ export const DealBaseSchema = z.object({
     DealStageConst.CLOSED_WON,
     DealStageConst.CLOSED_LOST,
   ]),
+  isPaid: z.boolean().default(false),
   closeDate: zDate.nullable(),
   note: z.string().nullable(),
   createdAt: zDate,
@@ -102,6 +103,18 @@ export const UpdateDealStageBodySchema = z
 
 export type UpdateDealStageBodyType = z.infer<typeof UpdateDealStageBodySchema>
 export type UpdateDealStageResType = UpdateDealResType
+
+// ─────────────────────────────────────────
+// UPDATE PAYMENT STATUS — PATCH /deals/:id/payment-status
+// ─────────────────────────────────────────
+export const UpdateDealPaymentStatusBodySchema = z
+  .object({
+    isPaid: z.boolean(),
+  })
+  .strict()
+
+export type UpdateDealPaymentStatusBodyType = z.infer<typeof UpdateDealPaymentStatusBodySchema>
+export type UpdateDealPaymentStatusResType = UpdateDealResType
 
 // ─────────────────────────────────────────
 // GET ONE — GET /deals/:id
@@ -189,6 +202,7 @@ export const GetPipelineQuerySchema = z.object({
   dateFrom: z.string().optional(),
   dateTo: z.string().optional(),
   search: z.string().optional(),
+  isPaid: z.enum(['true', 'false']).optional(),
 })
 export type GetPipelineQueryType = z.infer<typeof GetPipelineQuerySchema>
 

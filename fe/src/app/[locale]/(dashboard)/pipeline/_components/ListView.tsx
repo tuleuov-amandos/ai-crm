@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { StageBadge } from "@/components/ui/StageBadge";
+import { PaymentStatusBadge } from "@/components/ui/PaymentStatusBadge";
 import { useDealPipelineStore } from "@/stores/dealCards-store";
 import { useGetPipeline, useDeleteDeal } from "@/hooks/useDeals";
 import { formatCurrency } from "@/lib/helper";
@@ -46,11 +47,13 @@ export function ListView({
   dateFrom,
   dateTo,
   search,
+  isPaid,
 }: {
   ownerId?: string;
   dateFrom?: string;
   dateTo?: string;
   search?: string;
+  isPaid?: boolean;
 }) {
   const t = useTranslations("pipeline");
   const tCommon = useTranslations("common");
@@ -58,7 +61,7 @@ export function ListView({
 
   const { pipeline } = useDealPipelineStore();
   // react-query dedupes this against KanbanBoard's call (same queryKey)
-  const { data, isLoading, isError, error } = useGetPipeline({ ownerId, dateFrom, dateTo, search });
+  const { data, isLoading, isError, error } = useGetPipeline({ ownerId, dateFrom, dateTo, search, isPaid });
   const deleteDealMutation = useDeleteDeal();
 
   const [sort, setSort] = useState<SortState>(null);
@@ -203,6 +206,9 @@ export function ListView({
               {t("listView.colStage")}
             </TableHead>
             <TableHead className={headerClass} style={headerStyle}>
+              {t("listView.colPaymentStatus")}
+            </TableHead>
+            <TableHead className={headerClass} style={headerStyle}>
               {sortableHead("closeDate", t("listView.colCloseDate"))}
             </TableHead>
             <TableHead
@@ -273,6 +279,11 @@ export function ListView({
               {/* ── Stage ── */}
               <TableCell className="px-4 py-3">
                 <StageBadge stage={deal.stage} />
+              </TableCell>
+
+              {/* ── Payment status ── */}
+              <TableCell className="px-4 py-3">
+                <PaymentStatusBadge isPaid={deal.isPaid} />
               </TableCell>
 
               {/* ── Close date ── */}

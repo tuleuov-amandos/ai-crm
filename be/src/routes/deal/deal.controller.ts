@@ -14,6 +14,9 @@ import {
 } from '@nestjs/common'
 import { ApiTags, ApiOkResponse } from '@nestjs/swagger'
 import { AnalyzeDealBodyType, CreateDealBodyType, DealStageType, UpdateDealBodyType } from './deal.model'
+import { RolesGuard } from 'src/common/guards/roles.guard'
+import { Roles } from 'src/common/decorators/roles.decorator'
+import { ROLE } from 'src/common/constants/role.constanst'
 import { DealService } from './deal.service'
 import { ZodSerializerDto } from 'nestjs-zod'
 import {
@@ -75,6 +78,19 @@ export class DealController {
     @Body() body: { stage: DealStageType },
   ) {
     return this.dealService.updateDealStage(dealId, user.tenantId, body.stage, user)
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(ROLE.ADMIN, ROLE.MANAGER)
+  @Patch(':id/payment-status')
+  @ApiOkResponse({ type: UpdateDealResDto })
+  @ZodSerializerDto(UpdateDealResDto)
+  updatePaymentStatus(
+    @Param('id') dealId: string,
+    @CurrentUser() user: AccessTokenPayload,
+    @Body() body: { isPaid: boolean },
+  ) {
+    return this.dealService.updateDealPaymentStatus(dealId, user.tenantId, body.isPaid, user)
   }
 
   @Patch(':id')

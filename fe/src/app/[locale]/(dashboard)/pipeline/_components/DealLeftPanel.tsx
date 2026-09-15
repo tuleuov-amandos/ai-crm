@@ -26,13 +26,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { StageBadge } from "@/components/ui/StageBadge";
+import { PaymentStatusBadge } from "@/components/ui/PaymentStatusBadge";
 import { DealStage } from "./types";
 import { cn } from "@/lib/utils";
 import { DealDetail } from "./types";
 import { Task } from "./types";
 import {  formatCurrency, formatDate, getInitials } from "@/lib/helper";
 import { useQueryClient } from "@tanstack/react-query";
-import { dealKeys } from "@/hooks/useDeals";
+import { dealKeys, useUpdateDealPaymentStatus } from "@/hooks/useDeals";
 import { dealsService } from "@/services/deals.service";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -81,6 +82,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
   const canAssign = me?.role === "ADMIN" || me?.role === "MANAGER";
   const usersQuery = useGetUsers();
   const users = usersQuery.data ?? [];
+  const updatePaymentStatus = useUpdateDealPaymentStatus(deal.id);
 
   // Adjust local task state during render when the deal's tasks change
   // (official React "adjusting state during render" pattern — no effect needed).
@@ -205,9 +207,21 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
       {/* ── Deal header ──────────────────────────────────────────────── */}
       <div className="px-5 pt-5 pb-5 border-b border-border">
 
-        {/* Stage badge + edit */}
+        {/* Stage badge + payment status + edit */}
         <div className="flex items-center justify-between mb-3">
-          <StageBadge stage={deal.stage} />
+          <div className="flex items-center gap-1.5">
+            <StageBadge stage={deal.stage} />
+            <PaymentStatusBadge
+              isPaid={deal.isPaid}
+              disabled={updatePaymentStatus.isPending}
+              onToggle={
+                canAssign
+                  ? () =>
+                      updatePaymentStatus.mutate({ isPaid: !deal.isPaid })
+                  : undefined
+              }
+            />
+          </div>
           <Button
             variant="ghost"
             size="sm"
