@@ -121,6 +121,7 @@ model Contact {
   phone      String?
   company    String?
   position   String?
+  address    String?
   tags       String[]
   channel    String?
   createdAt  DateTime   @default(now())

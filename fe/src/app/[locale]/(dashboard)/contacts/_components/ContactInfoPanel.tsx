@@ -7,10 +7,12 @@ import {
   Phone,
   Building2,
   Briefcase,
+  MapPin,
   Calendar,
   ChevronRight,
   Edit2,
   Trash2,
+  MessageCircle,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -36,6 +38,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import ContactDialog from "./ContactDialog";
+
+function getWhatsAppLink(phone: string) {
+  const digitsOnly = phone.replace(/\D/g, "");
+  return `https://wa.me/${digitsOnly}`;
+}
 
 const CONTACT_TAG_COLOR: Record<ContactTagType, string> = {
   [ContactTagConst.Enterprise]: "bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
@@ -79,6 +86,12 @@ export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
       icon: Briefcase,
       label: t("infoPosition"),
       value: contact.position || "",
+    },
+    {
+      key: "address",
+      icon: MapPin,
+      label: t("infoAddress"),
+      value: contact.address || "",
     },
     {
       key: "createdAt",
@@ -250,7 +263,7 @@ export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
                     strokeWidth={1.7}
                   />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p
                     className="text-muted-foreground"
                     style={{ fontSize: 10, marginBottom: 1 }}
@@ -264,6 +277,17 @@ export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
                     {row.value}
                   </p>
                 </div>
+                {row.key === "phone" && contact.phone && (
+                  <a
+                    href={getWhatsAppLink(contact.phone)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 flex items-center justify-center size-6 rounded-full hover:bg-[#F8F8F7] transition-colors"
+                    title="WhatsApp"
+                  >
+                    <MessageCircle size={15} style={{ color: "#25D366" }} strokeWidth={1.8} />
+                  </a>
+                )}
               </div>
             );
           })}
