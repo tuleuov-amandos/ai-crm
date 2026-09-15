@@ -149,18 +149,20 @@ export function KanbanBoard({
   dateFrom,
   dateTo,
   search,
+  isPaid,
   onAddDeal,
 }: {
   ownerId?: string;
   dateFrom?: string;
   dateTo?: string;
   search?: string;
+  isPaid?: boolean;
   onAddDeal: (stage: Stage) => void;
 }) {
   const t = useTranslations("pipeline");
   const tCommon = useTranslations("common");
   const { pipeline, moveDeal, setPipeline } = useDealPipelineStore();
-  const { data, isLoading, isError, error } = useGetPipeline({ ownerId, dateFrom, dateTo, search });
+  const { data, isLoading, isError, error } = useGetPipeline({ ownerId, dateFrom, dateTo, search, isPaid });
   const updateDealStage = useUpdateDealStage();
 
   const [activeDeal, setActiveDeal] = useState<Deal | null>(null);

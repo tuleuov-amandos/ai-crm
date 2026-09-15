@@ -3,6 +3,7 @@ import {
   CreateDealBodyType,
   UpdateDealBodyType,
   UpdateDealStageBodyType,
+  UpdateDealPaymentStatusBodyType,
   DealCard,
   DealDetail,
   PipelineRes,
@@ -10,7 +11,7 @@ import {
 
 
 export const dealsService = {
-  getPipeline: async (params?: { ownerId?: string; dateFrom?: string; dateTo?: string; search?: string }): Promise<PipelineRes> => {
+  getPipeline: async (params?: { ownerId?: string; dateFrom?: string; dateTo?: string; search?: string; isPaid?: boolean }): Promise<PipelineRes> => {
     const res = await axiosInstance.get("deals/pipeline", { params });
     return res.data;
   },
@@ -30,6 +31,14 @@ export const dealsService = {
     data: UpdateDealStageBodyType,
   ): Promise<DealCard> => {
     const res = await axiosInstance.patch(`deals/${id}/stage`, data);
+    return res.data;
+  },
+
+  updatePaymentStatus: async (
+    id: string,
+    data: UpdateDealPaymentStatusBodyType,
+  ): Promise<DealCard> => {
+    const res = await axiosInstance.patch(`deals/${id}/payment-status`, data);
     return res.data;
   },
 

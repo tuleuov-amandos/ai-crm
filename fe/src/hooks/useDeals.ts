@@ -11,6 +11,7 @@ import {
   DealStage,
   UpdateDealBodyType,
   UpdateDealStageBodyType,
+  UpdateDealPaymentStatusBodyType,
 } from "@/lib/validations/deals.schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -21,8 +22,8 @@ import { toast } from "sonner";
 // ─────────────────────────────────────────
 export const dealKeys = {
   all: ["deals"] as const,
-  pipeline: (ownerId?: string, dateFrom?: string, dateTo?: string, search?: string) =>
-    [...dealKeys.all, "pipeline", ownerId, dateFrom, dateTo, search] as const,
+  pipeline: (ownerId?: string, dateFrom?: string, dateTo?: string, search?: string, isPaid?: boolean) =>
+    [...dealKeys.all, "pipeline", ownerId, dateFrom, dateTo, search, isPaid] as const,
   details: () => [...dealKeys.all, "detail"] as const,
   detail: (id: string) => [...dealKeys.details(), id] as const,
 };
@@ -30,7 +31,7 @@ export const dealKeys = {
 // ─────────────────────────────────────────
 // GET PIPELINE — fetch and sync to Zustand
 // ─────────────────────────────────────────
-export const useGetPipeline = (params?: { ownerId?: string; dateFrom?: string; dateTo?: string; search?: string }) => {
+export const useGetPipeline = (params?: { ownerId?: string; dateFrom?: string; dateTo?: string; search?: string; isPaid?: boolean }) => {
   const t = useTranslations("pipeline");
 
   const { setPipeline, setLoading, setError } = useDealPipelineStore(
@@ -42,7 +43,7 @@ export const useGetPipeline = (params?: { ownerId?: string; dateFrom?: string; d
   )
 
   const query = useQuery({
-    queryKey: dealKeys.pipeline(params?.ownerId, params?.dateFrom, params?.dateTo, params?.search),
+    queryKey: dealKeys.pipeline(params?.ownerId, params?.dateFrom, params?.dateTo, params?.search, params?.isPaid),
     queryFn: () => dealsService.getPipeline(params),
     staleTime: 30_000,
   });
@@ -152,6 +153,28 @@ export const useUpdateDeal = (dealId: string) => {
     },
     onError: (error: ApiError) => {
       toast.error(getApiError(error, t("updateError")));
+    },
+  });
+};
+
+// ─────────────────────────────────────────
+// UPDATE DEAL PAYMENT STATUS (isPaid)
+// ─────────────────────────────────────────
+export const useUpdateDealPaymentStatus = (dealId: string) => {
+  const queryClient = useQueryClient();
+  const t = useTranslations("pipeline.toasts");
+  const getApiError = useApiError();
+
+  return useMutation({
+    mutationFn: (data: UpdateDealPaymentStatusBodyType) =>
+      dealsService.updatePaymentStatus(dealId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...dealKeys.all, "pipeline"] });
+      queryClient.invalidateQueries({ queryKey: dealKeys.detail(dealId) });
+      toast.success(t("paymentStatusSuccess"));
+    },
+    onError: (error: ApiError) => {
+      toast.error(getApiError(error, t("paymentStatusError")));
     },
   });
 };

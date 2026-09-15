@@ -3,6 +3,7 @@ import {
   CreateDealBodySchema,
   CreateDealResSchema,
   UpdateDealStageBodySchema,
+  UpdateDealPaymentStatusBodySchema,
   UpdateDealBodySchema,
   GetDealResSchema,
   GetDealsPipelineResSchema,
@@ -16,6 +17,7 @@ export class CreateDealBodyDto extends createZodDto(CreateDealBodySchema) {}
 export class CreateDealResDto extends createZodDto(CreateDealResSchema) {}
 
 export class UpdateDealStageBodyDto extends createZodDto(UpdateDealStageBodySchema) {}
+export class UpdateDealPaymentStatusBodyDto extends createZodDto(UpdateDealPaymentStatusBodySchema) {}
 export class UpdateDealBodyDto extends createZodDto(UpdateDealBodySchema) {}
 export class UpdateDealResDto extends createZodDto(UpdateDealResSchema) {}
 

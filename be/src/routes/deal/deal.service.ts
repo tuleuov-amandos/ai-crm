@@ -106,7 +106,7 @@ export class DealService {
     query: GetPipelineQueryType,
   ) {
     const ability = await this.caslAbilityFactory.createForUser(user)
-    const filters: { ownerId?: string; dateFrom?: string; dateTo?: string; search?: string } = {}
+    const filters: { ownerId?: string; dateFrom?: string; dateTo?: string; search?: string; isPaid?: boolean } = {}
     if (ability.cannot('read', 'Deal')) {
       throw AppException.forbidden(DealErrorCode.FORBIDDEN_LIST, 'You do not have permission to view deals')
     }
@@ -121,6 +121,7 @@ export class DealService {
     if (query.dateFrom) filters.dateFrom = query.dateFrom
     if (query.dateTo) filters.dateTo = query.dateTo
     if (query.search) filters.search = query.search
+    if (query.isPaid !== undefined) filters.isPaid = query.isPaid === 'true'
 
     const deals = await this.dealRepo.findAllByTenant(filters)
 
@@ -210,6 +211,41 @@ export class DealService {
 
     const changes = {
       stage: { old: oldDeal.stage, new: stage },
+    }
+    await this.auditLogsService.logAction({
+      tenantId,
+      userId: user.userId,
+      action: 'UPDATE',
+      targetType: 'DEAL',
+      targetId: dealId,
+      targetName: updated.title,
+      changes,
+    })
+
+    return updated
+  }
+
+  async updateDealPaymentStatus(
+    dealId: string,
+    tenantId: string,
+    isPaid: boolean,
+    user: { userId: string; role: string; tenantId: string },
+  ) {
+    const oldDeal = await this.dealRepo.findOne(dealId)
+    if (!oldDeal) {
+      throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
+    }
+
+    const ability = await this.caslAbilityFactory.createForUser(user)
+    if (ability.cannot('update', subject('Deal', oldDeal))) {
+      throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
+    }
+
+    const updated = await this.dealRepo.updatePaymentStatus(dealId, isPaid)
+    await this.redisService.invalidateTenantCache(tenantId)
+
+    const changes = {
+      isPaid: { old: oldDeal.isPaid, new: isPaid },
     }
     await this.auditLogsService.logAction({
       tenantId,

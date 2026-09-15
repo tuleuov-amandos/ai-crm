@@ -147,6 +147,7 @@ model Deal {
   title         String
   value         Decimal        @default(0)
   stage         DealStage      @default(PROSPECT)
+  isPaid        Boolean        @default(false)
   closeDate     DateTime?
   note          String?
   createdAt     DateTime       @default(now())

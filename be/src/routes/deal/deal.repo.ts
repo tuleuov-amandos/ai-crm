@@ -7,11 +7,18 @@ import { CreateDealBodyType, DealStageConst, DealStageType, UpdateDealBodyType }
 export class DealRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  findAllByTenant(filters?: { ownerId?: string; dateFrom?: string; dateTo?: string; search?: string }) {
+  findAllByTenant(filters?: {
+    ownerId?: string
+    dateFrom?: string
+    dateTo?: string
+    search?: string
+    isPaid?: boolean
+  }) {
     return this.prismaService.deal.findMany({
       where: {
         deletedAt: null,
         ...(filters?.ownerId && { ownerId: filters.ownerId }),
+        ...(filters?.isPaid !== undefined && { isPaid: filters.isPaid }),
         ...((filters?.dateFrom || filters?.dateTo) && {
           closeDate: {
             ...(filters?.dateFrom && { gte: new Date(filters.dateFrom) }),
@@ -93,6 +100,13 @@ export class DealRepository {
     return this.prismaService.deal.update({
       where: { id: dealId, deletedAt: null },
       data: { stage },
+    })
+  }
+
+  updatePaymentStatus(dealId: string, isPaid: boolean) {
+    return this.prismaService.deal.update({
+      where: { id: dealId, deletedAt: null },
+      data: { isPaid },
     })
   }
 

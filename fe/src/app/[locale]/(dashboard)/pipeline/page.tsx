@@ -195,6 +195,66 @@ function RepFilter({
   );
 }
 
+// ─── PAYMENT STATUS FILTER ────────────────────────────────────────────────────
+function PaymentStatusFilter({
+  value,
+  onChange,
+}: {
+  value: boolean | undefined;
+  onChange: (value: boolean | undefined) => void;
+}) {
+  const t = useTranslations("pipeline");
+  const [open, setOpen] = useState(false);
+
+  const label =
+    value === undefined
+      ? t("toolbar.paymentStatusAll")
+      : value
+        ? t("toolbar.paymentStatusPaid")
+        : t("toolbar.paymentStatusUnpaid");
+
+  const options: { label: string; value: boolean | undefined }[] = [
+    { label: t("toolbar.paymentStatusAll"), value: undefined },
+    { label: t("toolbar.paymentStatusPaid"), value: true },
+    { label: t("toolbar.paymentStatusUnpaid"), value: false },
+  ];
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "h-8 gap-1 border-border text-xs",
+            value !== undefined
+              ? "text-foreground"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <span className="max-w-[140px] truncate">{label}</span>
+          <ChevronDown size={12} className="shrink-0" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-48 p-1.5">
+        <div className="space-y-0.5">
+          {options.map((opt) => (
+            <RepRow
+              key={String(opt.value)}
+              label={opt.label}
+              active={value === opt.value}
+              onClick={() => {
+                onChange(opt.value);
+                setOpen(false);
+              }}
+            />
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function RepRow({
   label,
   active,
@@ -238,6 +298,7 @@ export default function Pipeline() {
     undefined,
   );
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [isPaidFilter, setIsPaidFilter] = useState<boolean | undefined>(undefined);
   const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebounceValue(search, 300);
 
@@ -318,6 +379,8 @@ export default function Pipeline() {
             }}
           />
 
+          <PaymentStatusFilter value={isPaidFilter} onChange={setIsPaidFilter} />
+
           <Button
             size="sm"
             className="h-8 gap-1.5 text-xs"
@@ -341,6 +404,7 @@ export default function Pipeline() {
               dateFrom={dateFrom}
               dateTo={dateTo}
               search={debouncedSearch}
+              isPaid={isPaidFilter}
               onAddDeal={handleAddDealInStage}
             />
           </div>
@@ -351,6 +415,7 @@ export default function Pipeline() {
               dateFrom={dateFrom}
               dateTo={dateTo}
               search={debouncedSearch}
+              isPaid={isPaidFilter}
             />
           </div>
         )}

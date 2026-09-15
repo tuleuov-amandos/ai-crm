@@ -10,6 +10,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { PaymentStatusBadge } from "@/components/ui/PaymentStatusBadge";
+import { useMe } from "@/hooks/useAuth";
+import { useUpdateDealPaymentStatus } from "@/hooks/useDeals";
 
 interface Props {
   deal: Deal;
@@ -52,6 +55,10 @@ export function DealCard({ deal, onEdit, onDelete }: Props) {
 
   const [hovered, setHovered] = useState(false);
   const isWon = deal.stage === "CLOSED_WON";
+
+  const { data: me } = useMe();
+  const canTogglePayment = me?.role === "ADMIN" || me?.role === "MANAGER";
+  const updatePaymentStatus = useUpdateDealPaymentStatus(deal.id);
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -157,10 +164,27 @@ export function DealCard({ deal, onEdit, onDelete }: Props) {
 
       <p
         className="text-muted-foreground"
-        style={{ fontSize: 12, marginBottom: 10 }}
+        style={{ fontSize: 12, marginBottom: 6 }}
       >
         {deal.contact.name}
       </p>
+
+      <div
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        style={{ marginBottom: 10 }}
+      >
+        <PaymentStatusBadge
+          isPaid={deal.isPaid}
+          disabled={updatePaymentStatus.isPending}
+          onToggle={
+            canTogglePayment
+              ? () =>
+                  updatePaymentStatus.mutate({ isPaid: !deal.isPaid })
+              : undefined
+          }
+        />
+      </div>
 
       <div className="flex items-center justify-between">
         <span

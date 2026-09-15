@@ -227,7 +227,10 @@
       "searchPlaceholder": "Search deal, contact, company...",
       "allReps": "All reps",
       "noReps": "No employees",
-      "addDeal": "Add deal"
+      "addDeal": "Add deal",
+      "paymentStatusAll": "All",
+      "paymentStatusPaid": "Paid",
+      "paymentStatusUnpaid": "Unpaid"
     },
     "units": {
       "billion": "B",
@@ -262,6 +265,7 @@
       "colOwner": "Owner",
       "colValue": "Value",
       "colStage": "Stage",
+      "colPaymentStatus": "Payment",
       "colCloseDate": "Close date",
       "colActions": "Actions"
     },
@@ -373,7 +377,14 @@
       "updateError": "Couldn't update deal",
       "stageError": "Couldn't move deal",
       "deleteSuccess": "Deal deleted",
-      "deleteError": "Couldn't delete deal"
+      "deleteError": "Couldn't delete deal",
+      "paymentStatusSuccess": "Payment status updated",
+      "paymentStatusError": "Couldn't update payment status"
+    },
+    "paymentStatus": {
+      "paid": "Paid",
+      "unpaid": "Unpaid",
+      "toggleHint": "Toggle payment status"
     }
   },
   "contacts": {
