@@ -193,51 +193,64 @@ export function CreateDealSheet({
             <FormField
               control={form.control}
               name="contactId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel style={{ fontSize: 12 }}>
-                    {t("contactLabel")} <span className="text-destructive">*</span>
-                  </FormLabel>
-                  <Select
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    disabled={contactsLoading || isPending}
-                  >
-                    <FormControl>
-                      <SelectTrigger size="sm" style={{ fontSize: 13 }} className="bg-[#F8F8F7] dark:bg-card border-[#E8E7E2] dark:border-border text-foreground">
-                        <SelectValue
-                          placeholder={
-                            contactsLoading ? tCommon("loading") : t("selectContact")
-                          }
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent className="bg-background border-border">
-                      {contacts.map((contact) => (
-                        <SelectItem
-                          key={contact.id}
-                          value={contact.id}
-                          style={{ fontSize: 13 }}
-                        >
-                          {contact.name}
-                          {contact.company ? ` - ${contact.company}` : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-7 px-2 text-xs text-primary bg-[#F8F8F7] dark:bg-muted hover:bg-gray-100 dark:hover:bg-muted/80 border border-[#E8E7E2] dark:border-border mt-1.5"
-                    disabled={isPending}
-                    onClick={() => setContactDialogOpen(true)}
-                  >
-                    {t("createContact")}
-                  </Button>
-                  <FormMessage style={{ fontSize: 11 }} />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                const selectedContact = contacts.find(
+                  (contact) => contact.id === field.value,
+                );
+                return (
+                  <FormItem>
+                    <FormLabel style={{ fontSize: 12 }}>
+                      {t("contactLabel")} <span className="text-destructive">*</span>
+                    </FormLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={contactsLoading || isPending}
+                    >
+                      <FormControl>
+                        <SelectTrigger size="sm" style={{ fontSize: 13 }} className="bg-[#F8F8F7] dark:bg-card border-[#E8E7E2] dark:border-border text-foreground">
+                          <SelectValue
+                            placeholder={
+                              contactsLoading ? tCommon("loading") : t("selectContact")
+                            }
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="bg-background border-border">
+                        {contacts.map((contact) => (
+                          <SelectItem
+                            key={contact.id}
+                            value={contact.id}
+                            style={{ fontSize: 13 }}
+                          >
+                            {contact.name}
+                            {contact.company ? ` - ${contact.company}` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedContact?.address && (
+                      <p
+                        className="text-muted-foreground mt-1"
+                        style={{ fontSize: 12 }}
+                      >
+                        {t("contactAddress")} {selectedContact.address}
+                      </p>
+                    )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2 text-xs text-primary bg-[#F8F8F7] dark:bg-muted hover:bg-gray-100 dark:hover:bg-muted/80 border border-[#E8E7E2] dark:border-border mt-1.5"
+                      disabled={isPending}
+                      onClick={() => setContactDialogOpen(true)}
+                    >
+                      {t("createContact")}
+                    </Button>
+                    <FormMessage style={{ fontSize: 11 }} />
+                  </FormItem>
+                );
+              }}
             />
             <FormField
               control={form.control}

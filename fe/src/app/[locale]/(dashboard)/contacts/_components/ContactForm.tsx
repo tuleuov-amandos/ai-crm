@@ -52,6 +52,7 @@ const buildContactFormSchema = (tv: (key: string) => string) =>
         .regex(/^\+?[0-9\s\-()]{7,20}$/, tv("phoneInvalid")),
       company: z.string().optional().nullable(),
       position: z.string().optional().nullable(),
+      address: z.string().optional().nullable(),
       channel: z
         .enum(Object.values(ContactChannelConst) as [string, ...string[]])
         .optional()
@@ -108,6 +109,7 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
       phone: defaultValues?.phone ?? "",
       company: defaultValues?.company ?? "",
       position: defaultValues?.position ?? "",
+      address: defaultValues?.address ?? "",
       channel: defaultValues?.channel ?? null,
       tags: defaultValues?.tags ?? [],
     },
@@ -120,6 +122,7 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
       phone: defaultValues?.phone ?? "",
       company: defaultValues?.company ?? "",
       position: defaultValues?.position ?? "",
+      address: defaultValues?.address ?? "",
       channel: defaultValues?.channel ?? null,
       tags: defaultValues?.tags ?? [],
     });
@@ -232,6 +235,28 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
                 id="form-rhf-contact-position"
                 aria-invalid={fieldState.invalid}
                 placeholder={t("positionPlaceholder")}
+                autoComplete="off"
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
+
+        {/* Address */}
+        <Controller
+          name="address"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="form-rhf-contact-address">
+                {t("addressLabel")}
+              </FieldLabel>
+              <Input
+                {...field}
+                value={field.value ?? ""}
+                id="form-rhf-contact-address"
+                aria-invalid={fieldState.invalid}
+                placeholder={t("addressPlaceholder")}
                 autoComplete="off"
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}

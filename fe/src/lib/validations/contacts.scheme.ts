@@ -39,6 +39,7 @@ const ContactBaseSchema = z.object({
   phone: z.string().optional().nullable(),
   company: z.string().optional().nullable(),
   position: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
   tags: z.array(z.enum([
     ContactTagConst.Enterprise,
     ContactTagConst.Vip,
@@ -62,6 +63,7 @@ export const CreateContactBodySchema = ContactBaseSchema.pick({
   phone: true,
   company: true,
   position: true,
+  address: true,
   tags: true,
   channel: true,
 }).strict();
