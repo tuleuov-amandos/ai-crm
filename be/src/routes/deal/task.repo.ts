@@ -13,6 +13,7 @@ export class TaskRepository {
         tenantId,
         title: data.title,
         dueDate: data.dueDate ?? null,
+        assigneeId: data.assigneeId ?? null,
       },
     })
   }
@@ -34,10 +35,12 @@ export class TaskRepository {
       title: string
       done: boolean
       dueDate: Date | null
+      assigneeId: string | null
     }> = {}
     if (data.title !== undefined) updateData.title = data.title
     if (data.done !== undefined) updateData.done = data.done
     if (data.dueDate !== undefined) updateData.dueDate = data.dueDate
+    if (data.assigneeId !== undefined) updateData.assigneeId = data.assigneeId
 
     return this.prismaService.task.update({
       where: { id: taskId, dealId },
@@ -48,6 +51,13 @@ export class TaskRepository {
   async delete(dealId: string, taskId: string) {
     return this.prismaService.task.delete({
       where: { id: taskId, dealId },
+    })
+  }
+
+  // Verify a candidate assignee belongs to the same tenant as the task
+  findAssigneeInTenant(tenantId: string, userId: string) {
+    return this.prismaService.user.findFirst({
+      where: { id: userId, tenantId },
     })
   }
 }

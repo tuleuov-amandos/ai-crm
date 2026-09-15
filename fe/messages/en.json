@@ -286,6 +286,8 @@
       "newTaskNamePlaceholder": "New task name…",
       "pickDueDate": "Pick a due date",
       "noDueDate": "No due date",
+      "selectAssignee": "Select assignee",
+      "unassigned": "Unassigned",
       "tasksCompleted": "{done}/{total} tasks completed",
       "toasts": {
         "taskStatusError": "Failed to update task status.",
@@ -673,6 +675,21 @@
       "updateError": "Couldn't update activity",
       "deleteSuccess": "Activity deleted",
       "deleteError": "Couldn't delete activity"
+    }
+  },
+  "tasks": {
+    "title": "My Tasks",
+    "subtitle": "Tasks assigned to you across all deals",
+    "table": {
+      "colTask": "Task",
+      "colDeal": "Deal",
+      "colDueDate": "Due date",
+      "noDueDate": "No due date",
+      "empty": "You have no assigned tasks"
+    },
+    "pageOf": "Page {page} of {total}",
+    "toasts": {
+      "updateError": "Failed to update task."
     }
   },
   "reports": {
@@ -1175,6 +1192,7 @@
       "sales": "Sales",
       "pipeline": "Pipeline",
       "contacts": "Contacts",
+      "tasks": "My Tasks",
       "activities": "Activities",
       "reports": "Reports",
       "administration": "Administration",
@@ -1436,6 +1454,8 @@
     "DEAL_MEETING_NOTE_REQUIRED": "A meeting note is required.",
     "CONTACT_NOT_FOUND": "Contact not found.",
     "CONTACT_FORBIDDEN_LIST": "You do not have permission to view contacts.",
+    "TASK_FORBIDDEN_ASSIGN": "Only Admin or Manager can assign tasks.",
+    "TASK_ASSIGNEE_NOT_FOUND": "Assignee not found in this workspace.",
     "DASHBOARD_FORBIDDEN": "You do not have permission to access the dashboard.",
     "MEMBER_NOT_FOUND": "Member not found.",
     "USER_CANNOT_CHANGE_OWN_ROLE": "You cannot change your own role.",

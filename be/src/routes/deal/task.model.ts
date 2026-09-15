@@ -10,6 +10,7 @@ export const TaskBaseSchema = z.object({
   done: z.boolean().default(false),
   dueDate: zIsoDatetime.nullable().optional(),
   createdAt: zIsoDatetime,
+  assigneeId: z.string().nullable().optional(),
 })
 
 // CREATE
@@ -18,6 +19,7 @@ export const CreateTaskBodySchema = TaskBaseSchema.pick({
 })
   .extend({
     dueDate: zIsoDatetime.nullable().optional(),
+    assigneeId: z.string().nullable().optional(),
   })
   .strict()
 
@@ -34,6 +36,7 @@ export const UpdateTaskBodySchema = z
     title: z.string().min(1).max(200).optional(),
     done: z.boolean().optional(),
     dueDate: zIsoDatetime.nullable().optional(),
+    assigneeId: z.string().nullable().optional(),
   })
   .strict()
   .refine((data) => Object.keys(data).length > 0, {

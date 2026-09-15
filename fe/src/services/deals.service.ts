@@ -47,8 +47,13 @@ export const dealsService = {
     return res.data;
   },
 
-  createTask: async (dealId: string, title: string, dueDate?: string | null): Promise<any> => {
-    const res = await axiosInstance.post(`deals/${dealId}/tasks`, { title, dueDate });
+  createTask: async (
+    dealId: string,
+    title: string,
+    dueDate?: string | null,
+    assigneeId?: string | null,
+  ): Promise<any> => {
+    const res = await axiosInstance.post(`deals/${dealId}/tasks`, { title, dueDate, assigneeId });
     return res.data;
   },
 
@@ -57,7 +62,11 @@ export const dealsService = {
     return res.data;
   },
 
-  updateTask: async (dealId: string, taskId: string, data: { title?: string; done?: boolean; dueDate?: string | null }): Promise<any> => {
+  updateTask: async (
+    dealId: string,
+    taskId: string,
+    data: { title?: string; done?: boolean; dueDate?: string | null; assigneeId?: string | null },
+  ): Promise<any> => {
     const res = await axiosInstance.patch(`deals/${dealId}/tasks/${taskId}`, data);
     return res.data;
   },

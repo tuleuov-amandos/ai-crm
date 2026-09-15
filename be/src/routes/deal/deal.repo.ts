@@ -58,7 +58,10 @@ export class DealRepository {
       include: {
         contact: true,
         owner: { select: { id: true, name: true, email: true } },
-        tasks: { orderBy: { createdAt: 'asc' } },
+        tasks: {
+          orderBy: { createdAt: 'asc' },
+          include: { assignee: { select: { id: true, name: true, email: true } } },
+        },
         activities: { orderBy: { date: 'desc' }, take: 20 },
         aiSuggestions: { orderBy: { createdAt: 'desc' } },
       },

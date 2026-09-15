@@ -54,6 +54,7 @@ model User {
   activities    Activity[]
   ownedContacts Contact[]      @relation("ContactOwner")
   ownedDeals    Deal[]         @relation("DealOwner")
+  assignedTasks Task[]         @relation("TaskAssignee")
   kpiTargets    KpiTarget[]
   refreshTokens RefreshToken[]
   tenant        Tenant         @relation(fields: [tenantId], references: [id])
@@ -183,17 +184,20 @@ model Activity {
 }
 
 model Task {
-  id        String    @id @default(cuid())
-  dealId    String
-  title     String
-  done      Boolean   @default(false)
-  dueDate   DateTime?
-  createdAt DateTime  @default(now())
-  tenantId  String
-  deal      Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  id         String    @id @default(cuid())
+  dealId     String
+  title      String
+  done       Boolean   @default(false)
+  dueDate    DateTime?
+  createdAt  DateTime  @default(now())
+  tenantId   String
+  assigneeId String?
+  deal       Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  assignee   User?     @relation("TaskAssignee", fields: [assigneeId], references: [id])
 
   @@index([tenantId])
   @@index([tenantId, dealId])
+  @@index([tenantId, assigneeId])
 }
 
 model AiSuggestion {

@@ -127,6 +127,14 @@ export const GetDealResSchema = DealBaseSchema.omit({ deletedAt: true }).extend(
       done: z.boolean(),
       dueDate: zDate.nullable(),
       createdAt: zDate,
+      assigneeId: z.string().nullable(),
+      assignee: z
+        .object({
+          id: z.string(),
+          name: z.string(),
+          email: z.string(),
+        })
+        .nullable(),
     }),
   ),
   activities: z.array(

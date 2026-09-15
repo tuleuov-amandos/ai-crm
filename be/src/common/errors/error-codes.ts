@@ -36,6 +36,13 @@ export enum ContactErrorCode {
   NOT_FOUND = 'CONTACT_NOT_FOUND',
 }
 
+export enum TaskErrorCode {
+  /** Only Admin/Manager may set or change a task's assignee. */
+  FORBIDDEN_ASSIGN = 'TASK_FORBIDDEN_ASSIGN',
+  /** assigneeId does not belong to a user in this tenant. */
+  ASSIGNEE_NOT_FOUND = 'TASK_ASSIGNEE_NOT_FOUND',
+}
+
 export enum DashboardErrorCode {
   FORBIDDEN = 'DASHBOARD_FORBIDDEN',
 }
@@ -150,6 +157,7 @@ export type AppErrorCode =
   | AuthErrorCode
   | DealErrorCode
   | ContactErrorCode
+  | TaskErrorCode
   | DashboardErrorCode
   | UserErrorCode
   | RoleErrorCode

@@ -18,6 +18,7 @@ import {
   LogOut,
   FileText,
   Shield,
+  ListTodo,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -53,6 +54,7 @@ const navGroups = [
     items: [
       { icon: GitBranch, key: "pipeline", path: "/pipeline" },
       { icon: Users, key: "contacts", path: "/contacts" },
+      { icon: ListTodo, key: "tasks", path: "/tasks" },
     ],
   },
   {
