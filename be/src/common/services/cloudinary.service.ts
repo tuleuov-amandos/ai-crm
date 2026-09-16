@@ -17,6 +17,11 @@ export const AVATAR_ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp'] as 
 export const LOGO_MAX_BYTES = 2 * 1024 * 1024
 export const LOGO_ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp'] as const
 
+// Activity attachment: exactly one file per activity — a PDF, JPEG or PNG.
+// HEIC/HEIF is explicitly rejected by the caller (not auto-converted).
+export const ACTIVITY_ATTACHMENT_MAX_BYTES = 10 * 1024 * 1024
+export const ACTIVITY_ATTACHMENT_ALLOWED_MIME = ['application/pdf', 'image/jpeg', 'image/png'] as const
+
 @Injectable()
 export class CloudinaryService {
   /**
@@ -127,5 +132,51 @@ export class CloudinaryService {
   /** Best-effort removal of a workspace's logo asset. Never throws. */
   async deleteTenantLogo(tenantId: string): Promise<void> {
     await this.destroy(`tenants/tenant_${tenantId}`, 'cloudinary.tenant_logo_deleted', { tenantId })
+  }
+
+  /**
+   * Uploads (overwriting any previous one) the given buffer as the single
+   * attachment for `activityId` and returns its CDN URL and public_id.
+   *
+   * Unlike avatars/logos this is not always an image — PDFs must go through
+   * unchanged, so `resource_type: 'auto'` is used and NO transformation is
+   * applied (Cloudinary would otherwise try to treat the PDF as an image and
+   * corrupt it, or a transform pipeline could re-encode it).
+   *
+   * IMPORTANT (ops): Cloudinary's "Restrict PDF and ZIP files delivery"
+   * security setting blocks PDF delivery from the CDN by default. The
+   * workspace owner must disable it in Cloudinary Dashboard → Settings →
+   * Security, or uploaded PDFs will 401 even though the upload succeeded.
+   * This cannot be worked around from the API.
+   */
+  async uploadActivityAttachment(
+    buffer: Buffer,
+    activityId: string,
+    mimeType: string,
+  ): Promise<{ url: string; publicId: string }> {
+    this.assertConfigured()
+
+    // No `transformation` and no `format` here — unlike uploadAvatar /
+    // uploadTenantLogo, this upload must preserve the file exactly as sent.
+    const result = await this.uploadBuffer(buffer, {
+      folder: 'activity-attachments',
+      public_id: `activity_${activityId}`,
+      overwrite: true,
+      invalidate: true,
+      resource_type: 'auto',
+    })
+
+    log.info({
+      event: 'cloudinary.activity_attachment_uploaded',
+      activityId,
+      bytes: buffer.length,
+      isPdf: mimeType === 'application/pdf',
+    })
+    return { url: result.secure_url, publicId: result.public_id }
+  }
+
+  /** Best-effort removal of an activity's attachment asset by public_id. Never throws. */
+  async deleteActivityAttachment(publicId: string): Promise<void> {
+    await this.destroy(publicId, 'cloudinary.activity_attachment_deleted', { publicId })
   }
 }

@@ -78,6 +78,14 @@ export enum ActivityErrorCode {
   NOT_FOUND = 'ACTIVITY_NOT_FOUND',
   FORBIDDEN_UPDATE = 'ACTIVITY_FORBIDDEN_UPDATE',
   FORBIDDEN_DELETE = 'ACTIVITY_FORBIDDEN_DELETE',
+  /** Uploaded attachment is not an accepted file type (PDF, JPEG, PNG). */
+  ATTACHMENT_INVALID_TYPE = 'ACTIVITY_ATTACHMENT_INVALID_TYPE',
+  /** Uploaded attachment is a HEIC/HEIF image — not supported, convert to JPEG/PDF. */
+  ATTACHMENT_HEIC_NOT_SUPPORTED = 'ACTIVITY_ATTACHMENT_HEIC_NOT_SUPPORTED',
+  /** Uploaded attachment file exceeds the size limit. */
+  ATTACHMENT_TOO_LARGE = 'ACTIVITY_ATTACHMENT_TOO_LARGE',
+  /** No file was sent with the attachment upload request. */
+  ATTACHMENT_FILE_MISSING = 'ACTIVITY_ATTACHMENT_FILE_MISSING',
 }
 
 export enum ReportErrorCode {

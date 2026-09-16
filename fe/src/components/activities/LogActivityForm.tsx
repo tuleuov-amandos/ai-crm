@@ -14,16 +14,23 @@ import {
   Clock,
   ChevronDown,
   Send,
+  Paperclip,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { toast } from "sonner";
+import {
+  ACTIVITY_ATTACHMENT_ACCEPT,
+  validateActivityAttachmentFile,
+} from "@/lib/activity-attachment";
 
 export type ActivityTab = ActivityType;
 
@@ -45,7 +52,11 @@ const buildLogActivitySchema = (tv: (key: string) => string) =>
     .strict();
 
 interface LogActivityFormProps {
-  onSubmit: (data: CreateActivityForContactBodyType, reset: () => void) => void;
+  onSubmit: (
+    data: CreateActivityForContactBodyType,
+    file: File | null,
+    reset: () => void,
+  ) => void;
   isPending?: boolean;
   entityType?: "contact" | "deal";
 }
@@ -53,6 +64,7 @@ interface LogActivityFormProps {
 function LogActivityForm({ onSubmit, isPending, entityType = "contact" }: LogActivityFormProps) {
   const t = useTranslations("activities.log");
   const tType = useTranslations("activities.types");
+  const tAttachment = useTranslations("activities.attachment");
   const logActivitySchema = useMemo(
     () => buildLogActivitySchema((key) => t(`validation.${key}`)),
     [t],
@@ -60,6 +72,8 @@ function LogActivityForm({ onSubmit, isPending, entityType = "contact" }: LogAct
   const [activeTab, setActiveTab] = useState<ActivityTab>(
     ActivityType.CALL,
   );
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm({
     resolver: zodResolver(logActivitySchema),
@@ -85,15 +99,29 @@ function LogActivityForm({ onSubmit, isPending, entityType = "contact" }: LogAct
     });
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    e.target.value = "";
+    if (!file) return;
+    const error = validateActivityAttachmentFile(file);
+    if (error) {
+      toast.error(tAttachment(`errors.${error}`));
+      return;
+    }
+    setAttachment(file);
+  };
+
   const handleSubmit = (data: CreateActivityForContactBodyType) => {
-    const reset = () =>
+    const reset = () => {
       form.reset({ title: "", note: "", date: new Date(), type: activeTab });
-    
+      setAttachment(null);
+    };
+
     const payload = {
       ...data,
       title: data.title?.trim() ? data.title.trim() : null,
     };
-    onSubmit(payload, reset);
+    onSubmit(payload, attachment, reset);
   };
 
   const PLACEHOLDER: Record<ActivityTab, string> = {
@@ -156,6 +184,38 @@ function LogActivityForm({ onSubmit, isPending, entityType = "contact" }: LogAct
             className="bg-[#F8F8F7] dark:bg-card border-[#E8E7E2] dark:border-border text-foreground text-sm resize-none"
             style={{ fontSize: 13, lineHeight: 1.6 }}
           />
+        </div>
+
+        {/* Attachment picker */}
+        <div className="px-4 pb-2 flex items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={ACTIVITY_ATTACHMENT_ACCEPT}
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-1 px-2.5 py-1 text-[11px] rounded-md border border-border bg-background text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            <Paperclip size={11} />
+            {attachment ? tAttachment("change") : tAttachment("add")}
+          </button>
+          {attachment && (
+            <span className="flex items-center gap-1 text-[11px] text-muted-foreground truncate max-w-[180px]">
+              {attachment.name}
+              <button
+                type="button"
+                onClick={() => setAttachment(null)}
+                className="text-muted-foreground hover:text-foreground bg-transparent border-0 cursor-pointer p-0"
+                aria-label={tAttachment("remove")}
+              >
+                <X size={11} />
+              </button>
+            </span>
+          )}
         </div>
 
         {/* Form footer */}

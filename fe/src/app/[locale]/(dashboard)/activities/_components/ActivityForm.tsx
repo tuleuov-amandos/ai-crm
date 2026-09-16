@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, Paperclip, X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { z } from "zod";
+import {
+  ACTIVITY_ATTACHMENT_ACCEPT,
+  validateActivityAttachmentFile,
+} from "@/lib/activity-attachment";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -42,7 +47,9 @@ import {
   useCreateActivity,
   useCreateContactActivity,
   useCreateDealActivity,
+  useDeleteActivityAttachment,
   useUpdateActivity,
+  useUploadActivityAttachment,
 } from "@/hooks/useActivities";
 
 import type { ActivityItem } from "./types";
@@ -108,6 +115,7 @@ export function ActivityForm({
 }: ActivityFormProps) {
   const t = useTranslations("activities.form");
   const tType = useTranslations("activities.types");
+  const tAttachment = useTranslations("activities.attachment");
   const tCommon = useTranslations("common");
   const activityFormSchema = useMemo(
     () => buildActivityFormSchema((key) => t(`validation.${key}`)),
@@ -129,13 +137,41 @@ export function ActivityForm({
   const createForDeal = useCreateDealActivity(dealId);
   const createGlobal = useCreateActivity();
   const updateActivity = useUpdateActivity();
+  const uploadAttachment = useUploadActivityAttachment();
+  const deleteAttachment = useDeleteActivityAttachment();
 
   // isPending of active mutation
   const isPending =
     createForContact.isPending ||
     createForDeal.isPending ||
     createGlobal.isPending ||
-    updateActivity.isPending;
+    updateActivity.isPending ||
+    uploadAttachment.isPending;
+
+  // ── Attachment — newly picked file (uploaded after the activity is saved) ──
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Reset the picked file whenever the dialog (re)opens — done during render
+  // (not in an Effect) per React's "adjusting state based on a prop change"
+  // pattern, since it must run before this render commits.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setPendingFile(null);
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    e.target.value = "";
+    if (!file) return;
+    const error = validateActivityAttachmentFile(file);
+    if (error) {
+      toast.error(tAttachment(`errors.${error}`));
+      return;
+    }
+    setPendingFile(file);
+  };
 
   // ── Form setup ──────────────────────────────────────────────────────────
   const form = useForm<ActivityFormValues>({
@@ -181,19 +217,28 @@ export function ActivityForm({
     };
 
     try {
+      let activityId = activity?.id;
+
       if (isEditMode && activity) {
         // Edit mode — PATCH /activities/:id
         await updateActivity.mutateAsync({ id: activity.id, body: payload });
       } else {
         // Create mode — select endpoint according to context
+        let created;
         if (context.type === "contact") {
-          await createForContact.mutateAsync(payload);
+          created = await createForContact.mutateAsync(payload);
         } else if (context.type === "deal") {
-          await createForDeal.mutateAsync(payload);
+          created = await createForDeal.mutateAsync(payload);
         } else {
-          await createGlobal.mutateAsync(payload);
+          created = await createGlobal.mutateAsync(payload);
         }
+        activityId = created.id;
       }
+
+      if (pendingFile && activityId) {
+        await uploadAttachment.mutateAsync({ id: activityId, file: pendingFile });
+      }
+
       // Success -> close form
       onOpenChange(false);
     } catch {
@@ -328,6 +373,73 @@ export function ActivityForm({
                 </FormItem>
               )}
             />
+
+            {/* Attachment — optional, at most one file per activity */}
+            <FormItem>
+              <FormLabel style={{ fontSize: 12 }}>{tAttachment("label")}</FormLabel>
+              <div className="flex flex-col gap-1.5">
+                {isEditMode && activity?.attachmentUrl && !pendingFile && (
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={activity.attachmentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-primary hover:underline"
+                      style={{ fontSize: 12, textDecoration: "none" }}
+                    >
+                      <Paperclip size={12} />
+                      {tAttachment("view")}
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => deleteAttachment.mutate(activity.id)}
+                      disabled={deleteAttachment.isPending || isPending}
+                      className="text-muted-foreground hover:text-destructive bg-transparent border-0 cursor-pointer p-0"
+                      aria-label={tAttachment("remove")}
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                )}
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={ACTIVITY_ATTACHMENT_ACCEPT}
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 gap-1.5 text-xs"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isPending}
+                  >
+                    <Paperclip size={12} />
+                    {pendingFile ? tAttachment("change") : tAttachment("add")}
+                  </Button>
+                  {pendingFile && (
+                    <span className="flex items-center gap-1 text-muted-foreground truncate" style={{ fontSize: 12 }}>
+                      {pendingFile.name}
+                      <button
+                        type="button"
+                        onClick={() => setPendingFile(null)}
+                        className="text-muted-foreground hover:text-foreground bg-transparent border-0 cursor-pointer p-0"
+                        aria-label={tAttachment("remove")}
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  )}
+                </div>
+                <span className="text-muted-foreground" style={{ fontSize: 11 }}>
+                  {tAttachment("hint")}
+                </span>
+              </div>
+            </FormItem>
 
             <DialogFooter className="mt-2">
               <Button

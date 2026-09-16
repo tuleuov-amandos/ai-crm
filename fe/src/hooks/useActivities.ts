@@ -204,6 +204,48 @@ export const useDeleteActivity = () => {
 };
 
 // ─────────────────────────────────────────
+// UPLOAD ATTACHMENT — replaces any previous one
+// ─────────────────────────────────────────
+export const useUploadActivityAttachment = () => {
+  const queryClient = useQueryClient();
+  const t = useTranslations("activities.toasts");
+  const getApiError = useApiError();
+
+  return useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File }) =>
+      activitiesService.uploadAttachment(id, file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: activityKeys.all });
+      toast.success(t("attachmentUploadSuccess"));
+    },
+    onError: (error: ApiError) => {
+      toast.error(getApiError(error, t("attachmentUploadError")));
+    },
+  });
+};
+
+// ─────────────────────────────────────────
+// DELETE ATTACHMENT
+// ─────────────────────────────────────────
+export const useDeleteActivityAttachment = () => {
+  const queryClient = useQueryClient();
+  const t = useTranslations("activities.toasts");
+  const getApiError = useApiError();
+
+  return useMutation({
+    mutationFn: (activityId: string) =>
+      activitiesService.deleteAttachment(activityId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: activityKeys.all });
+      toast.success(t("attachmentDeleteSuccess"));
+    },
+    onError: (error: ApiError) => {
+      toast.error(getApiError(error, t("attachmentDeleteError")));
+    },
+  });
+};
+
+// ─────────────────────────────────────────
 // Re-export ActivityType enum to use in components
 // without importing again from validations
 // ─────────────────────────────────────────

@@ -1,7 +1,7 @@
 import { DealAiAnalyzer } from "./DealAiAnalyzer";
 import ActivityTimeline from "@/components/activities/ActivityTimeline";
 import { ActivityItem, CreateActivityForContactBodyType } from "@/lib/validations/activities.scheme";
-import { useCreateDealActivity } from "@/hooks/useActivities";
+import { useCreateDealActivity, useUploadActivityAttachment } from "@/hooks/useActivities";
 
 interface DealRightPanelProps {
   dealId: string;
@@ -10,11 +10,19 @@ interface DealRightPanelProps {
 
 export function DealRightPanel({ dealId, activities }: DealRightPanelProps) {
   const createActivity = useCreateDealActivity(dealId);
+  const uploadAttachment = useUploadActivityAttachment();
 
-  const handleSubmitActivity = (data: CreateActivityForContactBodyType, reset: () => void) => {
+  const handleSubmitActivity = (
+    data: CreateActivityForContactBodyType,
+    file: File | null,
+    reset: () => void,
+  ) => {
     createActivity.mutate(data, {
-      onSuccess: () => {
+      onSuccess: (created) => {
         reset();
+        if (file) {
+          uploadAttachment.mutate({ id: created.id, file });
+        }
       },
     });
   };

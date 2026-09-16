@@ -685,7 +685,26 @@
       "updateSuccess": "Активность обновлена",
       "updateError": "Не удалось обновить активность",
       "deleteSuccess": "Активность удалена",
-      "deleteError": "Не удалось удалить активность"
+      "deleteError": "Не удалось удалить активность",
+      "attachmentUploadSuccess": "Файл загружен",
+      "attachmentUploadError": "Не удалось загрузить файл",
+      "attachmentDeleteSuccess": "Файл удалён",
+      "attachmentDeleteError": "Не удалось удалить файл"
+    },
+    "attachment": {
+      "label": "Вложение",
+      "add": "Прикрепить файл",
+      "change": "Заменить файл",
+      "remove": "Удалить",
+      "removing": "Удаление…",
+      "uploading": "Загрузка…",
+      "view": "Открыть вложение",
+      "hint": "PDF, JPEG или PNG, до 10 МБ",
+      "errors": {
+        "heic": "HEIC не поддерживается, сконвертируйте файл в JPEG или PDF",
+        "invalidType": "Разрешены только файлы PDF, JPEG или PNG",
+        "tooLarge": "Файл слишком большой (максимум 10 МБ)"
+      }
     }
   },
   "tasks": {
@@ -1484,6 +1503,10 @@
     "ACTIVITY_FORBIDDEN_LIST": "У вас нет прав на просмотр активностей.",
     "ACTIVITY_FORBIDDEN_UPDATE": "У вас нет прав на изменение этой активности.",
     "ACTIVITY_FORBIDDEN_DELETE": "У вас нет прав на удаление этой активности.",
+    "ACTIVITY_ATTACHMENT_INVALID_TYPE": "Разрешены только файлы PDF, JPEG или PNG.",
+    "ACTIVITY_ATTACHMENT_HEIC_NOT_SUPPORTED": "HEIC не поддерживается, сконвертируйте файл в JPEG или PDF.",
+    "ACTIVITY_ATTACHMENT_TOO_LARGE": "Файл вложения слишком большой (максимум 10 МБ).",
+    "ACTIVITY_ATTACHMENT_FILE_MISSING": "Файл не выбран.",
     "REPORT_FORBIDDEN_OVERVIEW": "У вас нет прав на просмотр сводного отчёта.",
     "REPORT_FORBIDDEN_TEAM": "У вас нет прав на просмотр отчёта по эффективности команды.",
     "REPORT_FORBIDDEN_PIPELINE": "У вас нет прав на просмотр отчёта по воронке продаж.",

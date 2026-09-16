@@ -9,8 +9,11 @@ import {
   ActivityBaseType,
 } from './activities.model'
 
-// ActivityWithRelations matches ActivityBaseType (with nested user, contact, deal)
-export type ActivityWithRelations = ActivityBaseType
+// ActivityWithRelations matches ActivityBaseType (with nested user, contact, deal).
+// `attachmentPublicId` is not part of the public response schema (internal-only,
+// used to delete the Cloudinary asset) but is present on every Prisma read, so
+// it's added here for callers that need it (see ActivitiesService.replace/clear).
+export type ActivityWithRelations = ActivityBaseType & { attachmentPublicId: string | null }
 
 @Injectable()
 export class ActivitiesRepository {
@@ -135,6 +138,32 @@ export class ActivitiesRepository {
   async hardDelete(activityId: string): Promise<void> {
     await this.prisma.activity.delete({
       where: { id: activityId },
+    })
+  }
+
+  // Store the uploaded attachment's URL + public_id (replaces any previous one)
+  setAttachment(activityId: string, attachmentUrl: string, attachmentPublicId: string): Promise<ActivityWithRelations> {
+    return this.prisma.activity.update({
+      where: { id: activityId },
+      data: { attachmentUrl, attachmentPublicId },
+      include: {
+        user: { select: { id: true, name: true } },
+        contact: { select: { id: true, name: true, company: true } },
+        deal: { select: { id: true, title: true } },
+      },
+    })
+  }
+
+  // Clear the attachment fields (Cloudinary asset is removed separately)
+  clearAttachment(activityId: string): Promise<ActivityWithRelations> {
+    return this.prisma.activity.update({
+      where: { id: activityId },
+      data: { attachmentUrl: null, attachmentPublicId: null },
+      include: {
+        user: { select: { id: true, name: true } },
+        contact: { select: { id: true, name: true, company: true } },
+        deal: { select: { id: true, title: true } },
+      },
     })
   }
 }
