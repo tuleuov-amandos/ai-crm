@@ -88,6 +88,12 @@ export enum ActivityErrorCode {
   ATTACHMENT_FILE_MISSING = 'ACTIVITY_ATTACHMENT_FILE_MISSING',
 }
 
+export enum ChatErrorCode {
+  CHANNEL_NOT_FOUND = 'CHAT_CHANNEL_NOT_FOUND',
+  /** Only the channel's creator or an Admin may delete it. */
+  FORBIDDEN_DELETE_CHANNEL = 'CHAT_FORBIDDEN_DELETE_CHANNEL',
+}
+
 export enum ReportErrorCode {
   FORBIDDEN_OVERVIEW = 'REPORT_FORBIDDEN_OVERVIEW',
   FORBIDDEN_TEAM = 'REPORT_FORBIDDEN_TEAM',
@@ -170,6 +176,7 @@ export type AppErrorCode =
   | UserErrorCode
   | RoleErrorCode
   | ActivityErrorCode
+  | ChatErrorCode
   | ReportErrorCode
   | InvitationErrorCode
   | TenantErrorCode

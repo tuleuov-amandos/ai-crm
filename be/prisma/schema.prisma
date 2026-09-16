@@ -37,6 +37,8 @@ model Tenant {
   kpiTargets  KpiTarget[]
   users       User[]
   auditLogs   AuditLog[]
+  channels    Channel[]
+  messages    Message[]
 }
 
 model User {
@@ -59,6 +61,12 @@ model User {
   refreshTokens RefreshToken[]
   tenant        Tenant         @relation(fields: [tenantId], references: [id])
   auditLog      AuditLog[]
+
+  // ── Chat (Settings → internal team chat) ──────────────────────────────────
+  createdChannels    Channel[]       @relation("ChannelCreator")
+  channelMemberships ChannelMember[]
+  sentMessages       Message[]
+
   @@index([tenantId])
   @@index([roleId])
 }
@@ -207,6 +215,54 @@ model Task {
   @@index([tenantId])
   @@index([tenantId, dealId])
   @@index([tenantId, assigneeId])
+}
+
+// ── Chat (internal team chat — schema + REST API only; no WebSocket/realtime,
+// no attachments, no frontend in this branch, see planned follow-ups) ────────
+//
+// Channels are created/removed by any user (Slack-style), never a fixed admin
+// list. Every channel is visible tenant-wide — there is no per-channel read
+// access control. ChannelMember exists purely for membership metadata (future
+// unread counters / "who's in this channel"), not for gating access.
+model Channel {
+  id          String          @id @default(cuid())
+  tenantId    String
+  name        String
+  createdById String
+  createdAt   DateTime        @default(now())
+  createdBy   User            @relation("ChannelCreator", fields: [createdById], references: [id])
+  tenant      Tenant          @relation(fields: [tenantId], references: [id])
+  members     ChannelMember[]
+  messages    Message[]
+
+  @@index([tenantId])
+}
+
+model ChannelMember {
+  id        String   @id @default(cuid())
+  channelId String
+  userId    String
+  joinedAt  DateTime @default(now())
+  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([channelId, userId])
+  @@index([channelId])
+}
+
+model Message {
+  id        String    @id @default(cuid())
+  channelId String
+  tenantId  String
+  senderId  String
+  content   String
+  createdAt DateTime  @default(now())
+  editedAt  DateTime?
+  channel   Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  sender    User      @relation(fields: [senderId], references: [id])
+
+  @@index([tenantId, channelId, createdAt])
 }
 
 model AiSuggestion {
