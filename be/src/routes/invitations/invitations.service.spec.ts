@@ -1,5 +1,3 @@
-jest.mock('uuid', () => ({ v4: jest.fn(() => 'mocked-uuid') }))
-
 import { Test, TestingModule } from '@nestjs/testing'
 import { HttpException, HttpStatus } from '@nestjs/common'
 import { InvitationErrorCode } from 'src/common/errors'
