@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { v2 as cloudinary, type UploadApiOptions, type UploadApiResponse } from 'cloudinary'
-import { v4 as uuidv4 } from 'uuid'
+import { randomUUID } from 'crypto'
 import { AppException, UserErrorCode } from '../errors'
 import envConfig from '../config'
 import { rootLogger } from '../logger/root-logger'
@@ -200,7 +200,7 @@ export class CloudinaryService {
 
     const result = await this.uploadBuffer(buffer, {
       folder: 'chat-attachments',
-      public_id: `message_${messageId}_${uuidv4()}`,
+      public_id: `message_${messageId}_${randomUUID()}`,
       resource_type: 'auto',
     })
 
