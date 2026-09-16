@@ -36,6 +36,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
               'Invitation',
               'KpiTarget',
               'AuditLog',
+              'Channel',
+              'Message',
             ]
 
             if (tenantModels.includes(model)) {
