@@ -7,7 +7,7 @@ import { RedisService } from 'src/common/services/redis.service'
 import { SharedUserRepository } from 'src/common/repositories/shared-user.repo'
 import { InvitationRepository } from './invitation.repo'
 import { CreateInvitationType, AcceptInvitationType, UpdateInvitationType } from './invitations.model'
-import { v4 as uuidv4 } from 'uuid'
+import { randomUUID } from 'crypto'
 import envConfig from 'src/common/config'
 import { PrismaService } from 'src/common/services/prisma.service'
 import { getRoleWeight, getRequesterRoleWeight } from 'src/common/constants/role-hierarchy.constant'
@@ -70,7 +70,7 @@ export class InvitationsService {
       )
     }
     await this.invitationRepo.deleteManyByEmail(body.email)
-    const token = uuidv4()
+    const token = randomUUID()
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + 7)
     const invitation = await this.invitationRepo.create({
@@ -240,7 +240,7 @@ export class InvitationsService {
       email?: string
       roleId?: string
     } = {
-      token: uuidv4(),
+      token: randomUUID(),
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     }
     if (body.email && body.email !== invitation.email) {

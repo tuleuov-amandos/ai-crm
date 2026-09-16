@@ -1,6 +1,6 @@
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common'
 import { aiQueue } from './ai.queue'
-import { v4 as uuidv4 } from 'uuid'
+import { randomUUID } from 'crypto'
 import { PrismaService } from '../../common/services/prisma.service'
 import { aiClient } from './ai.client'
 
@@ -22,7 +22,7 @@ export class AiService {
   }
 
   async enqueueAnalysis(opts: EnqueueOpts) {
-    const jobId = uuidv4()
+    const jobId = randomUUID()
 
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: opts.tenantId },
