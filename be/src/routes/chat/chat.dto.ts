@@ -22,3 +22,6 @@ export class MessageResDto extends createZodDto(MessageResSchema) {}
 export class GetMessagesQueryDto extends createZodDto(GetMessagesQuerySchema) {}
 
 export class GetMessagesPaginatedResDto extends createZodDto(GetMessagesPaginatedResSchema) {}
+
+// POST /chat/messages/:id/attachments — returns the message with its attachments.
+export class UploadMessageAttachmentsResDto extends createZodDto(MessageResSchema) {}

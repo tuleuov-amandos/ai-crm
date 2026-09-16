@@ -10,6 +10,7 @@ const channelInclude = {
 
 const messageInclude = {
   sender: { select: { id: true, name: true, avatarUrl: true } },
+  attachments: { orderBy: { createdAt: 'asc' } },
 } satisfies Prisma.MessageInclude
 
 @Injectable()
@@ -68,6 +69,28 @@ export class ChatRepository {
   createMessage(channelId: string, senderId: string, content: string): Promise<MessageBaseType> {
     return this.prisma.message.create({
       data: { channelId, senderId, content } as Prisma.MessageUncheckedCreateInput,
+      include: messageInclude,
+    })
+  }
+
+  findMessageById(messageId: string): Promise<MessageBaseType | null> {
+    return this.prisma.message.findFirst({
+      where: { id: messageId },
+      include: messageInclude,
+    })
+  }
+
+  // Creates all attachment rows for one upload in a single insert, then
+  // re-reads the message so the response includes the freshly attached files.
+  async addAttachments(
+    messageId: string,
+    files: { url: string; publicId: string; fileName: string; mimeType: string }[],
+  ): Promise<MessageBaseType> {
+    await this.prisma.messageAttachment.createMany({
+      data: files.map((file) => ({ messageId, ...file })),
+    })
+    return this.prisma.message.findFirstOrThrow({
+      where: { id: messageId },
       include: messageInclude,
     })
   }

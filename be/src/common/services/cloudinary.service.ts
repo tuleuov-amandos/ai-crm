@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { v2 as cloudinary, type UploadApiOptions, type UploadApiResponse } from 'cloudinary'
+import { v4 as uuidv4 } from 'uuid'
 import { AppException, UserErrorCode } from '../errors'
 import envConfig from '../config'
 import { rootLogger } from '../logger/root-logger'
@@ -178,5 +179,37 @@ export class CloudinaryService {
   /** Best-effort removal of an activity's attachment asset by public_id. Never throws. */
   async deleteActivityAttachment(publicId: string): Promise<void> {
     await this.destroy(publicId, 'cloudinary.activity_attachment_deleted', { publicId })
+  }
+
+  /**
+   * Uploads one file of a chat message's attachments and returns its CDN URL
+   * and public_id. A message can carry several attachments (unlike an
+   * Activity's single attachment), so — unlike `uploadActivityAttachment` —
+   * `public_id` includes a random suffix per file instead of being derived
+   * solely from the owning record, and uploads are never `overwrite`s.
+   *
+   * Same format constraints and no-transformation handling as
+   * `uploadActivityAttachment` (`resource_type: 'auto'`, PDF/JPEG/PNG only).
+   */
+  async uploadChatAttachment(
+    buffer: Buffer,
+    messageId: string,
+    mimeType: string,
+  ): Promise<{ url: string; publicId: string }> {
+    this.assertConfigured()
+
+    const result = await this.uploadBuffer(buffer, {
+      folder: 'chat-attachments',
+      public_id: `message_${messageId}_${uuidv4()}`,
+      resource_type: 'auto',
+    })
+
+    log.info({
+      event: 'cloudinary.chat_attachment_uploaded',
+      messageId,
+      bytes: buffer.length,
+      isPdf: mimeType === 'application/pdf',
+    })
+    return { url: result.secure_url, publicId: result.public_id }
   }
 }

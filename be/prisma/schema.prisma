@@ -251,18 +251,32 @@ model ChannelMember {
 }
 
 model Message {
-  id        String    @id @default(cuid())
-  channelId String
-  tenantId  String
-  senderId  String
-  content   String
-  createdAt DateTime  @default(now())
-  editedAt  DateTime?
-  channel   Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  tenant    Tenant    @relation(fields: [tenantId], references: [id])
-  sender    User      @relation(fields: [senderId], references: [id])
+  id          String               @id @default(cuid())
+  channelId   String
+  tenantId    String
+  senderId    String
+  content     String
+  createdAt   DateTime             @default(now())
+  editedAt    DateTime?
+  channel     Channel              @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  tenant      Tenant               @relation(fields: [tenantId], references: [id])
+  sender      User                 @relation(fields: [senderId], references: [id])
+  attachments MessageAttachment[]
 
   @@index([tenantId, channelId, createdAt])
+}
+
+model MessageAttachment {
+  id        String   @id @default(cuid())
+  messageId String
+  url       String
+  publicId  String
+  fileName  String
+  mimeType  String
+  createdAt DateTime @default(now())
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
 }
 
 model AiSuggestion {

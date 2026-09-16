@@ -92,6 +92,15 @@ export enum ChatErrorCode {
   CHANNEL_NOT_FOUND = 'CHAT_CHANNEL_NOT_FOUND',
   /** Only the channel's creator or an Admin may delete it. */
   FORBIDDEN_DELETE_CHANNEL = 'CHAT_FORBIDDEN_DELETE_CHANNEL',
+  MESSAGE_NOT_FOUND = 'CHAT_MESSAGE_NOT_FOUND',
+  /** No file was sent with the attachment upload request. */
+  ATTACHMENT_FILE_MISSING = 'CHAT_ATTACHMENT_FILE_MISSING',
+  /** Uploaded attachment is not an accepted file type (PDF, JPEG, PNG). */
+  ATTACHMENT_INVALID_TYPE = 'CHAT_ATTACHMENT_INVALID_TYPE',
+  /** Uploaded attachment is a HEIC/HEIF image — not supported, convert to JPEG/PDF. */
+  ATTACHMENT_HEIC_NOT_SUPPORTED = 'CHAT_ATTACHMENT_HEIC_NOT_SUPPORTED',
+  /** Uploaded attachment file exceeds the size limit. */
+  ATTACHMENT_TOO_LARGE = 'CHAT_ATTACHMENT_TOO_LARGE',
 }
 
 export enum ReportErrorCode {
