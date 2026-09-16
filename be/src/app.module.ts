@@ -27,9 +27,11 @@ import { HealthModule } from './routes/health/health.module'
 import { InternalModule } from './routes/internal/internal.module'
 import { PlatformAdminModule } from './routes/platform-admin/platform-admin.module'
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
+import { EventEmitterModule } from '@nestjs/event-emitter'
 @Module({
   imports: [
     LoggerModule.forRoot({ pinoHttp: pinoHttpOptions }),
+    EventEmitterModule.forRoot(),
     CommonModule,
     AuthModule,
     PlatformAdminModule,

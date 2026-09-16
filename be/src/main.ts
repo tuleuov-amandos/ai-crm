@@ -12,6 +12,7 @@ import helmet from 'helmet'
 import { json, urlencoded } from 'express'
 import { initAiSseBridge } from './routes/ai/ai.sse'
 import { Sentry } from './instrument'
+import { corsOriginValidator } from './common/utils/cors-origin.util'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true, bodyParser: false })
@@ -42,23 +43,7 @@ async function bootstrap() {
   app.use(helmet())
   app.use(cookieParser())
   app.enableCors({
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-      // No Origin header (curl, server-to-server, mobile) — allow.
-      if (!origin) return callback(null, true)
-
-      const allowedOrigins = [envConfig.FRONTEND_URL, 'http://localhost:3000'].filter(Boolean)
-      if (allowedOrigins.includes(origin)) return callback(null, true)
-
-      // Allow this project's Vercel preview deployments (unique subdomain per
-      // branch/PR), scoped to VERCEL_PREVIEW_PREFIX so we don't accidentally
-      // trust arbitrary vercel.app sites (CORS here has credentials: true).
-      if (envConfig.VERCEL_PREVIEW_PREFIX) {
-        const previewPattern = new RegExp(`^https://${envConfig.VERCEL_PREVIEW_PREFIX}-[\\w-]+\\.vercel\\.app$`)
-        if (previewPattern.test(origin)) return callback(null, true)
-      }
-
-      callback(new Error(`Origin ${origin} not allowed by CORS`))
-    },
+    origin: corsOriginValidator,
     credentials: true,
   })
 
