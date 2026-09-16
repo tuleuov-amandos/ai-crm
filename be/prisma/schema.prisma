@@ -180,6 +180,14 @@ model Activity {
   tenant    Tenant       @relation(fields: [tenantId], references: [id])
   user      User         @relation(fields: [userId], references: [id])
 
+  // ── Attachment (Settings → Activity attachment) ───────────────────────────
+  // At most one file per activity: a PDF, JPEG or PNG uploaded via
+  // CloudinaryService.uploadActivityAttachment. `attachmentPublicId` is the
+  // Cloudinary public_id, kept so we can delete the asset when the attachment
+  // is replaced or the activity is removed.
+  attachmentUrl      String?
+  attachmentPublicId String?
+
   @@index([tenantId, contactId])
   @@index([tenantId, dealId])
 }

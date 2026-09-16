@@ -16,7 +16,11 @@ import { cn } from "@/lib/utils";
 import { useGetContact, useUpdateContact } from "@/hooks/useContacts";
 import { useGetUsers } from "@/hooks/useUsers";
 import { useParams } from "next/navigation";
-import { useContactActivities, useCreateContactActivity } from "@/hooks/useActivities";
+import {
+  useContactActivities,
+  useCreateContactActivity,
+  useUploadActivityAttachment,
+} from "@/hooks/useActivities";
 
 import { CreateActivityForContactBodyType } from "@/lib/validations/activities.scheme";
 
@@ -115,6 +119,7 @@ export default function ContactDetailPage() {
   const getContactDetail = useGetContact(id);
   const activites = useContactActivities(id);
   const createActivity = useCreateContactActivity(id);
+  const uploadAttachment = useUploadActivityAttachment();
 
   if (getContactDetail.isLoading) {
     return <ContactDetailSkeleton />;
@@ -123,10 +128,17 @@ export default function ContactDetailPage() {
   const contact = getContactDetail.data;
   const activities = activites?.data || [];
 
-  const handleSubmitActivity = (data: CreateActivityForContactBodyType, reset: () => void) => {
+  const handleSubmitActivity = (
+    data: CreateActivityForContactBodyType,
+    file: File | null,
+    reset: () => void,
+  ) => {
     createActivity.mutate(data, {
-      onSuccess: () => {
+      onSuccess: (created) => {
         reset();
+        if (file) {
+          uploadAttachment.mutate({ id: created.id, file });
+        }
       },
     });
   };

@@ -31,6 +31,7 @@ export const ActivityBaseSchema = z.object({
   type: ActivityTypeEnum,
   note: z.string(),
   date: zIsoDatetime,
+  attachmentUrl: z.string().nullable(),
   user: z.object({
     id: z.string(),
     name: z.string(),

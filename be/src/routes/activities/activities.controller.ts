@@ -1,11 +1,25 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common'
-import { ApiTags, ApiOkResponse } from '@nestjs/swagger'
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+  UseInterceptors,
+  UploadedFile,
+} from '@nestjs/common'
+import { FileInterceptor } from '@nestjs/platform-express'
+import { ApiTags, ApiOkResponse, ApiConsumes } from '@nestjs/swagger'
 import { ZodSerializerDto } from 'nestjs-zod'
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard'
 import { TenantStatusGuard } from 'src/common/guards/tenant-status.guard'
 import { CurrentUser } from 'src/common/decorators/current-user.decorator'
 import { AccessTokenPayload } from 'src/common/types/jwt.type'
 import { MessageDto } from 'src/common/dto/message.dto'
+import { ACTIVITY_ATTACHMENT_MAX_BYTES } from 'src/common/services/cloudinary.service'
 import { ActivitiesService } from './activities.service'
 import {
   ActivityResDto,
@@ -116,5 +130,33 @@ export class ActivitiesController {
   @ZodSerializerDto(MessageDto)
   deleteActivity(@CurrentUser() user: AccessTokenPayload, @Param('id') activityId: string) {
     return this.activitiesService.deleteActivity(activityId, user.tenantId, user)
+  }
+
+  // PATCH /activities/:id/attachment — upload (or replace) the activity's single attachment
+  @Patch(':id/attachment')
+  @ApiConsumes('multipart/form-data')
+  @ApiOkResponse({ type: ActivityResDto })
+  @ZodSerializerDto(ActivityResDto)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      // Hard cap so an oversized body is dropped before buffering the whole
+      // file in memory; the service re-checks and returns a localizable error.
+      limits: { fileSize: ACTIVITY_ATTACHMENT_MAX_BYTES },
+    }),
+  )
+  uploadAttachment(
+    @CurrentUser() user: AccessTokenPayload,
+    @Param('id') activityId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.activitiesService.uploadAttachment(activityId, user.tenantId, file, user)
+  }
+
+  // DELETE /activities/:id/attachment
+  @Delete(':id/attachment')
+  @ApiOkResponse({ type: ActivityResDto })
+  @ZodSerializerDto(ActivityResDto)
+  removeAttachment(@CurrentUser() user: AccessTokenPayload, @Param('id') activityId: string) {
+    return this.activitiesService.removeAttachment(activityId, user.tenantId, user)
   }
 }

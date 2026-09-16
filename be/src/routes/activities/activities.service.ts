@@ -16,6 +16,13 @@ import { DealRepository } from '../deal/deal.repo'
 import { RedisService } from 'src/common/services/redis.service'
 import { CaslAbilityFactory } from 'src/common/casl/casl-ability.factory'
 import { subject } from '@casl/ability'
+import {
+  ACTIVITY_ATTACHMENT_ALLOWED_MIME,
+  ACTIVITY_ATTACHMENT_MAX_BYTES,
+  CloudinaryService,
+} from 'src/common/services/cloudinary.service'
+
+const HEIC_MIME_TYPES = ['image/heic', 'image/heif']
 
 @Injectable()
 export class ActivitiesService {
@@ -25,6 +32,7 @@ export class ActivitiesService {
     private readonly dealRepo: DealRepository,
     private readonly redisService: RedisService,
     private readonly caslAbilityFactory: CaslAbilityFactory,
+    private readonly cloudinary: CloudinaryService,
   ) {}
 
   async create(tenantId: string, userId: string, body: CreateActivityBodyType): Promise<ActivityWithRelations> {
@@ -194,5 +202,79 @@ export class ActivitiesService {
       }
       throw error
     }
+  }
+
+  async uploadAttachment(
+    activityId: string,
+    tenantId: string,
+    file: Express.Multer.File | undefined,
+    user: { userId: string; role: string; tenantId: string },
+  ): Promise<ActivityWithRelations> {
+    const existing = await this.activitiesRepo.findOne(activityId)
+    if (!existing) throw AppException.notFound(ActivityErrorCode.NOT_FOUND, 'Activity not found')
+
+    const ability = await this.caslAbilityFactory.createForUser(user)
+    if (ability.cannot('update', subject('Activity', existing as any))) {
+      throw AppException.forbidden(
+        ActivityErrorCode.FORBIDDEN_UPDATE,
+        'You do not have permission to edit this activity',
+      )
+    }
+
+    if (!file || !file.buffer?.length) {
+      throw AppException.badRequest(ActivityErrorCode.ATTACHMENT_FILE_MISSING, 'No attachment file was uploaded')
+    }
+    if (HEIC_MIME_TYPES.includes(file.mimetype)) {
+      throw AppException.unprocessable(
+        ActivityErrorCode.ATTACHMENT_HEIC_NOT_SUPPORTED,
+        'HEIC is not supported, convert the file to JPEG/PDF',
+      )
+    }
+    if (
+      !ACTIVITY_ATTACHMENT_ALLOWED_MIME.includes(file.mimetype as (typeof ACTIVITY_ATTACHMENT_ALLOWED_MIME)[number])
+    ) {
+      throw AppException.unprocessable(
+        ActivityErrorCode.ATTACHMENT_INVALID_TYPE,
+        'Attachment must be a PDF, JPEG or PNG file',
+      )
+    }
+    if (file.size > ACTIVITY_ATTACHMENT_MAX_BYTES) {
+      throw AppException.unprocessable(ActivityErrorCode.ATTACHMENT_TOO_LARGE, 'Attachment file is too large')
+    }
+
+    // Only one file per activity — replace whatever was there before.
+    if (existing.attachmentPublicId) {
+      await this.cloudinary.deleteActivityAttachment(existing.attachmentPublicId)
+    }
+
+    const { url, publicId } = await this.cloudinary.uploadActivityAttachment(file.buffer, activityId, file.mimetype)
+    const activity = await this.activitiesRepo.setAttachment(activityId, url, publicId)
+    await this.redisService.invalidateTenantCache(tenantId)
+    return activity
+  }
+
+  async removeAttachment(
+    activityId: string,
+    tenantId: string,
+    user: { userId: string; role: string; tenantId: string },
+  ): Promise<ActivityWithRelations> {
+    const existing = await this.activitiesRepo.findOne(activityId)
+    if (!existing) throw AppException.notFound(ActivityErrorCode.NOT_FOUND, 'Activity not found')
+
+    const ability = await this.caslAbilityFactory.createForUser(user)
+    if (ability.cannot('update', subject('Activity', existing as any))) {
+      throw AppException.forbidden(
+        ActivityErrorCode.FORBIDDEN_UPDATE,
+        'You do not have permission to edit this activity',
+      )
+    }
+
+    if (existing.attachmentPublicId) {
+      await this.cloudinary.deleteActivityAttachment(existing.attachmentPublicId)
+    }
+
+    const activity = await this.activitiesRepo.clearAttachment(activityId)
+    await this.redisService.invalidateTenantCache(tenantId)
+    return activity
   }
 }

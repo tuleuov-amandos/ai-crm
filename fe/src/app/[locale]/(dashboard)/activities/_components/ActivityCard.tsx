@@ -6,11 +6,13 @@ import {
   FileText,
   Mail,
   MoreHorizontal,
+  Paperclip,
   Pencil,
   Phone,
   Sparkles,
   Trash2,
   Users,
+  X,
 } from "lucide-react";
 
 import { useTranslations, useLocale } from "next-intl";
@@ -24,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useDeleteActivityAttachment } from "@/hooks/useActivities";
 
 import { ActivityItem, ActivityType, TYPE_META } from "./types";
 
@@ -76,9 +79,11 @@ export function ActivityCard({
 }: ActivityCardProps) {
   const t = useTranslations("activities.card");
   const tType = useTranslations("activities.types");
+  const tAttachment = useTranslations("activities.attachment");
   const tCommon = useTranslations("common");
   const locale = useLocale();
   const [expanded, setExpanded] = useState(false);
+  const deleteAttachment = useDeleteActivityAttachment();
   const meta = TYPE_META[activity.type];
   const typeLabel = tType(activity.type.toLowerCase() as Lowercase<ActivityType>);
   const isLong = activity.note.length > NOTE_MAX_LEN;
@@ -222,6 +227,31 @@ export function ActivityCard({
               </button>
             )}
           </p>
+
+          {/* Attachment */}
+          {activity.attachmentUrl && (
+            <div className="flex items-center gap-1.5 mb-2">
+              <a
+                href={activity.attachmentUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-primary hover:underline"
+                style={{ fontSize: 12, textDecoration: "none" }}
+              >
+                <Paperclip size={12} />
+                {tAttachment("view")}
+              </a>
+              <button
+                type="button"
+                onClick={() => deleteAttachment.mutate(activity.id)}
+                disabled={deleteAttachment.isPending}
+                className="text-muted-foreground hover:text-destructive bg-transparent border-0 cursor-pointer p-0"
+                aria-label={tAttachment("remove")}
+              >
+                <X size={12} />
+              </button>
+            </div>
+          )}
 
           {/* AI badge — display when activity has dealId (req 13.4) */}
           {activity.dealId && (

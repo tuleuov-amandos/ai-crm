@@ -685,7 +685,26 @@
       "updateSuccess": "Activity updated",
       "updateError": "Couldn't update activity",
       "deleteSuccess": "Activity deleted",
-      "deleteError": "Couldn't delete activity"
+      "deleteError": "Couldn't delete activity",
+      "attachmentUploadSuccess": "Attachment uploaded",
+      "attachmentUploadError": "Couldn't upload attachment",
+      "attachmentDeleteSuccess": "Attachment removed",
+      "attachmentDeleteError": "Couldn't remove attachment"
+    },
+    "attachment": {
+      "label": "Attachment",
+      "add": "Attach file",
+      "change": "Replace file",
+      "remove": "Remove",
+      "removing": "Removing…",
+      "uploading": "Uploading…",
+      "view": "View attachment",
+      "hint": "PDF, JPEG or PNG, up to 10 MB",
+      "errors": {
+        "heic": "HEIC is not supported, convert the file to JPEG or PDF",
+        "invalidType": "Only PDF, JPEG or PNG files are allowed",
+        "tooLarge": "The file is too large (10 MB max)"
+      }
     }
   },
   "tasks": {
@@ -1484,6 +1503,10 @@
     "ACTIVITY_FORBIDDEN_LIST": "You do not have permission to view activities.",
     "ACTIVITY_FORBIDDEN_UPDATE": "You do not have permission to edit this activity.",
     "ACTIVITY_FORBIDDEN_DELETE": "You do not have permission to delete this activity.",
+    "ACTIVITY_ATTACHMENT_INVALID_TYPE": "Only PDF, JPEG or PNG files are allowed.",
+    "ACTIVITY_ATTACHMENT_HEIC_NOT_SUPPORTED": "HEIC is not supported, convert the file to JPEG or PDF.",
+    "ACTIVITY_ATTACHMENT_TOO_LARGE": "The attachment file is too large (10 MB max).",
+    "ACTIVITY_ATTACHMENT_FILE_MISSING": "No file was selected.",
     "REPORT_FORBIDDEN_OVERVIEW": "You do not have permission to view the overview report.",
     "REPORT_FORBIDDEN_TEAM": "You do not have permission to view the team performance report.",
     "REPORT_FORBIDDEN_PIPELINE": "You do not have permission to view the sales pipeline report.",

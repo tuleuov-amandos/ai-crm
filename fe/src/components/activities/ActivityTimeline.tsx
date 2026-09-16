@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { Phone, Mail, Users, FileText, Clock } from "lucide-react";
+import { Phone, Mail, Users, FileText, Clock, Paperclip, X } from "lucide-react";
 import {
   ActivityType,
   ActivityItem,
@@ -10,12 +10,17 @@ import {
 import LogActivityForm from "./LogActivityForm";
 import { formatDate } from "@/lib/helper";
 import { useRelativeTime } from "@/lib/format";
+import { useDeleteActivityAttachment } from "@/hooks/useActivities";
 
 export type ActivityTab = ActivityType;
 
 interface ActivityTimelineProps {
   activities: ActivityItem[];
-  onSubmitActivity: (data: CreateActivityForContactBodyType, reset: () => void) => void;
+  onSubmitActivity: (
+    data: CreateActivityForContactBodyType,
+    file: File | null,
+    reset: () => void,
+  ) => void;
   isPendingSubmit?: boolean;
   entityType?: "contact" | "deal";
 }
@@ -54,9 +59,11 @@ export default function ActivityTimeline({
 }: ActivityTimelineProps) {
   const t = useTranslations("activities.timeline");
   const tType = useTranslations("activities.types");
+  const tAttachment = useTranslations("activities.attachment");
   const locale = useLocale();
   const relativeTime = useRelativeTime();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const deleteAttachment = useDeleteActivityAttachment();
 
   const toggleExpand = (id: string) =>
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -173,6 +180,31 @@ export default function ActivityTimeline({
                   >
                     {isExpanded ? t("collapse") : t("expand")}
                   </button>
+                )}
+
+                {/* Attachment */}
+                {item.attachmentUrl && (
+                  <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-border">
+                    <a
+                      href={item.attachmentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-primary hover:underline"
+                      style={{ fontSize: 11, textDecoration: "none" }}
+                    >
+                      <Paperclip size={11} />
+                      {tAttachment("view")}
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => deleteAttachment.mutate(item.id)}
+                      disabled={deleteAttachment.isPending}
+                      className="text-muted-foreground hover:text-destructive bg-transparent border-0 cursor-pointer p-0"
+                      aria-label={tAttachment("remove")}
+                    >
+                      <X size={11} />
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

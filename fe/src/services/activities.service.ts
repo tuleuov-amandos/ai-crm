@@ -74,4 +74,27 @@ export const activitiesService = {
     const res = await axiosInstance.delete(`activities/${activityId}`);
     return res.data;
   },
+
+  // PATCH /activities/:id/attachment — upload (or replace) the single attachment
+  uploadAttachment: async (
+    activityId: string,
+    file: File,
+  ): Promise<ActivityItem> => {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await axiosInstance.patch(
+      `activities/${activityId}/attachment`,
+      form,
+      { headers: { "Content-Type": "multipart/form-data" }, timeout: 30_000 },
+    );
+    return res.data;
+  },
+
+  // DELETE /activities/:id/attachment
+  deleteAttachment: async (activityId: string): Promise<ActivityItem> => {
+    const res = await axiosInstance.delete(
+      `activities/${activityId}/attachment`,
+    );
+    return res.data;
+  },
 };
