@@ -1,12 +1,25 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common'
-import { ApiTags, ApiOkResponse } from '@nestjs/swagger'
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+  UseInterceptors,
+  UploadedFiles,
+} from '@nestjs/common'
+import { FilesInterceptor } from '@nestjs/platform-express'
+import { ApiTags, ApiOkResponse, ApiConsumes } from '@nestjs/swagger'
 import { ZodSerializerDto } from 'nestjs-zod'
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard'
 import { TenantStatusGuard } from 'src/common/guards/tenant-status.guard'
 import { CurrentUser } from 'src/common/decorators/current-user.decorator'
 import { AccessTokenPayload } from 'src/common/types/jwt.type'
 import { MessageDto } from 'src/common/dto/message.dto'
-import { ChatService } from './chat.service'
+import { ACTIVITY_ATTACHMENT_MAX_BYTES } from 'src/common/services/cloudinary.service'
+import { ChatService, CHAT_ATTACHMENTS_MAX_COUNT } from './chat.service'
 import {
   ChannelResDto,
   CreateChannelBodyDto,
@@ -15,6 +28,7 @@ import {
   GetMessagesPaginatedResDto,
   GetMessagesQueryDto,
   MessageResDto,
+  UploadMessageAttachmentsResDto,
 } from './chat.dto'
 
 // All roles are equal in chat (channels are created/removed by their own
@@ -90,5 +104,36 @@ export class ChatController {
     @Body() body: CreateMessageBodyDto,
   ) {
     return this.chatService.createMessage(user.tenantId, channelId, user.userId, body.content)
+  }
+}
+
+// Attachments hang off a message id directly (a message already carries its
+// own tenantId — see ChatService.uploadAttachments), so this sits on its own
+// `chat/messages` path instead of nesting under `chat/channels/:id`.
+@ApiTags('Chat')
+@Controller('chat/messages')
+@UseGuards(JwtAuthGuard, TenantStatusGuard)
+export class ChatMessagesController {
+  constructor(private readonly chatService: ChatService) {}
+
+  // POST /chat/messages/:id/attachments — attach up to CHAT_ATTACHMENTS_MAX_COUNT
+  // files (PDF/JPEG/PNG) to an existing message. Files always go through this
+  // REST endpoint, never the WS gateway (multipart isn't representable over
+  // Socket.io), regardless of how the message itself was created.
+  @Post(':id/attachments')
+  @ApiConsumes('multipart/form-data')
+  @ApiOkResponse({ type: UploadMessageAttachmentsResDto })
+  @ZodSerializerDto(UploadMessageAttachmentsResDto)
+  @UseInterceptors(
+    FilesInterceptor('files', CHAT_ATTACHMENTS_MAX_COUNT, {
+      limits: { fileSize: ACTIVITY_ATTACHMENT_MAX_BYTES },
+    }),
+  )
+  uploadAttachments(
+    @CurrentUser() user: AccessTokenPayload,
+    @Param('id') messageId: string,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    return this.chatService.uploadAttachments(messageId, user.tenantId, files)
   }
 }

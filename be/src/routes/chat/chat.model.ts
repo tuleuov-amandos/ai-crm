@@ -36,6 +36,19 @@ export type GetChannelsResType = z.infer<typeof GetChannelsResSchema>
 
 // ─── MESSAGE ───────────────────────────────────────────────────────────────
 
+// `publicId` (the Cloudinary asset id) is intentionally NOT part of this
+// schema — same convention as Activity.attachmentPublicId — so
+// ZodSerializerDto strips it from every response that embeds attachments.
+export const MessageAttachmentSchema = z.object({
+  id: z.string(),
+  url: z.string(),
+  fileName: z.string(),
+  mimeType: z.string(),
+  createdAt: zIsoDatetime,
+})
+
+export type MessageAttachmentType = z.infer<typeof MessageAttachmentSchema>
+
 export const MessageBaseSchema = z.object({
   id: z.string(),
   channelId: z.string(),
@@ -49,6 +62,7 @@ export const MessageBaseSchema = z.object({
     name: z.string(),
     avatarUrl: z.string().nullable(),
   }),
+  attachments: z.array(MessageAttachmentSchema),
 })
 
 export type MessageBaseType = z.infer<typeof MessageBaseSchema>
