@@ -19,6 +19,7 @@ import {
   FileText,
   Shield,
   ListTodo,
+  MessageSquare,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -61,6 +62,11 @@ const navGroups = [
     key: "activities",
     path: "/activities",
     icon: CalendarCheck,
+  },
+  {
+    key: "chat",
+    path: "/chat",
+    icon: MessageSquare,
   },
   {
     key: "reports",

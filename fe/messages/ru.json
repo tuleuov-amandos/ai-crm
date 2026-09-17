@@ -707,6 +707,42 @@
       }
     }
   },
+  "chat": {
+    "title": "Чат",
+    "selectChannel": "Выберите канал, чтобы начать общение",
+    "channels": {
+      "title": "Каналы",
+      "namePlaceholder": "Название канала",
+      "empty": "Пока нет каналов",
+      "deleteTitle": "Удалить канал",
+      "deleteDescription": "Удалить канал «{name}»? Все сообщения в этом канале будут удалены без возможности восстановления."
+    },
+    "messages": {
+      "empty": "Пока нет сообщений. Напишите первым!",
+      "loadMore": "Загрузить ещё"
+    },
+    "composer": {
+      "placeholder": "Написать сообщение…"
+    },
+    "toasts": {
+      "createChannelSuccess": "Канал создан",
+      "createChannelError": "Не удалось создать канал",
+      "deleteChannelSuccess": "Канал удалён",
+      "deleteChannelError": "Не удалось удалить канал",
+      "sendMessageError": "Не удалось отправить сообщение",
+      "uploadAttachmentsError": "Не удалось загрузить вложения",
+      "connectionLost": "Соединение потеряно, переподключение…"
+    },
+    "attachment": {
+      "remove": "Удалить",
+      "errors": {
+        "heic": "HEIC не поддерживается, сконвертируйте файл в JPEG или PDF",
+        "invalidType": "Разрешены только файлы PDF, JPEG или PNG",
+        "tooLarge": "Файл слишком большой (максимум 10 МБ)",
+        "tooMany": "Можно прикрепить не более 5 файлов"
+      }
+    }
+  },
   "tasks": {
     "title": "Мои задачи",
     "subtitle": "Задачи, назначенные на вас, по всем сделкам",
@@ -1224,6 +1260,7 @@
       "contacts": "Контакты",
       "tasks": "Мои задачи",
       "activities": "Активности",
+      "chat": "Чат",
       "reports": "Отчёты",
       "administration": "Администрирование",
       "roles": "Roles",
