@@ -707,6 +707,42 @@
       }
     }
   },
+  "chat": {
+    "title": "Chat",
+    "selectChannel": "Select a channel to start chatting",
+    "channels": {
+      "title": "Channels",
+      "namePlaceholder": "Channel name",
+      "empty": "No channels yet",
+      "deleteTitle": "Delete channel",
+      "deleteDescription": "Are you sure you want to delete \"{name}\"? All messages in this channel will be deleted permanently."
+    },
+    "messages": {
+      "empty": "No messages yet. Say hello!",
+      "loadMore": "Load more"
+    },
+    "composer": {
+      "placeholder": "Write a message…"
+    },
+    "toasts": {
+      "createChannelSuccess": "Channel created",
+      "createChannelError": "Couldn't create channel",
+      "deleteChannelSuccess": "Channel deleted",
+      "deleteChannelError": "Couldn't delete channel",
+      "sendMessageError": "Couldn't send message",
+      "uploadAttachmentsError": "Couldn't upload attachments",
+      "connectionLost": "Connection lost, reconnecting…"
+    },
+    "attachment": {
+      "remove": "Remove",
+      "errors": {
+        "heic": "HEIC is not supported, convert the file to JPEG or PDF",
+        "invalidType": "Only PDF, JPEG or PNG files are allowed",
+        "tooLarge": "The file is too large (10 MB max)",
+        "tooMany": "You can attach up to 5 files"
+      }
+    }
+  },
   "tasks": {
     "title": "My Tasks",
     "subtitle": "Tasks assigned to you across all deals",
@@ -1224,6 +1260,7 @@
       "contacts": "Contacts",
       "tasks": "My Tasks",
       "activities": "Activities",
+      "chat": "Chat",
       "reports": "Reports",
       "administration": "Administration",
       "roles": "Roles",
