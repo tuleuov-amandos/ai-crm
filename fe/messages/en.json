@@ -346,6 +346,7 @@
       "namePlaceholder": "Deal name",
       "contactLabel": "Contact",
       "selectContact": "Select a contact",
+      "contactsNotFound": "No contacts found",
       "createContact": "+ Create new contact",
       "contactAddress": "Address:",
       "ownerLabel": "Owner",

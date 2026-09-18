@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useDebounceValue } from "usehooks-ts";
 
 import {
   Dialog,
@@ -40,6 +41,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const buildCreateDealSchema = (tv: (key: string) => string) =>
   z.object({
@@ -72,9 +74,15 @@ export function CreateDealSheet({
   const tCommon = useTranslations("common");
   const createDealFormSchema = useMemo(() => buildCreateDealSchema(tv), [tv]);
   const createDeal = useCreateDeal();
-  const contactsQuery = useGetContacts({ limit: 100 });
+  const [contactSearch, setContactSearch] = useState("");
+  const [debouncedContactSearch] = useDebounceValue(contactSearch, 300);
+  const contactsQuery = useGetContacts({
+    limit: 100,
+    search: debouncedContactSearch,
+  });
   const usersQuery = useGetUsers();
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
+  const [contactPopoverOpen, setContactPopoverOpen] = useState(false);
   const [createdContacts, setCreatedContacts] = useState<Contact[]>([]);
 
   const fetchedContacts = useMemo(
@@ -202,33 +210,83 @@ export function CreateDealSheet({
                     <FormLabel style={{ fontSize: 12 }}>
                       {t("contactLabel")} <span className="text-destructive">*</span>
                     </FormLabel>
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      disabled={contactsLoading || isPending}
+                    <Popover
+                      open={contactPopoverOpen}
+                      onOpenChange={(nextOpen) => {
+                        setContactPopoverOpen(nextOpen);
+                        if (!nextOpen) {
+                          setContactSearch("");
+                        }
+                      }}
                     >
-                      <FormControl>
-                        <SelectTrigger size="sm" style={{ fontSize: 13 }} className="bg-[#F8F8F7] dark:bg-card border-[#E8E7E2] dark:border-border text-foreground">
-                          <SelectValue
-                            placeholder={
-                              contactsLoading ? tCommon("loading") : t("selectContact")
-                            }
-                          />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="bg-background border-border">
-                        {contacts.map((contact) => (
-                          <SelectItem
-                            key={contact.id}
-                            value={contact.id}
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            disabled={contactsLoading || isPending}
                             style={{ fontSize: 13 }}
+                            className="w-full h-8 justify-between font-normal bg-[#F8F8F7] dark:bg-card border-[#E8E7E2] dark:border-border text-foreground hover:bg-gray-100 dark:hover:bg-muted"
                           >
-                            {contact.name}
-                            {contact.company ? ` - ${contact.company}` : ""}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                            <span
+                              className={cn(
+                                "truncate text-left",
+                                !selectedContact && "text-muted-foreground",
+                              )}
+                            >
+                              {selectedContact
+                                ? `${selectedContact.name}${
+                                    selectedContact.company
+                                      ? ` - ${selectedContact.company}`
+                                      : ""
+                                  }`
+                                : contactsLoading
+                                  ? tCommon("loading")
+                                  : t("selectContact")}
+                            </span>
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-[--radix-popover-trigger-width] p-2 bg-background border-border"
+                        align="start"
+                      >
+                        <Input
+                          autoFocus
+                          value={contactSearch}
+                          onChange={(event) => setContactSearch(event.target.value)}
+                          placeholder={t("selectContact")}
+                          style={{ fontSize: 13 }}
+                          className="mb-2 bg-[#F8F8F7] dark:bg-card border-[#E8E7E2] dark:border-border text-foreground"
+                        />
+                        <div className="max-h-[250px] overflow-y-auto">
+                          {contacts.length === 0 ? (
+                            <p
+                              className="text-muted-foreground px-2 py-1.5"
+                              style={{ fontSize: 13 }}
+                            >
+                              {t("contactsNotFound")}
+                            </p>
+                          ) : (
+                            contacts.map((contact) => (
+                              <button
+                                key={contact.id}
+                                type="button"
+                                onClick={() => {
+                                  field.onChange(contact.id);
+                                  setContactPopoverOpen(false);
+                                }}
+                                style={{ fontSize: 13 }}
+                                className="w-full text-left rounded-sm px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-muted text-foreground"
+                              >
+                                {contact.name}
+                                {contact.company ? ` - ${contact.company}` : ""}
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                     {selectedContact?.address && (
                       <p
                         className="text-muted-foreground mt-1"
