@@ -17,6 +17,11 @@ export class ContactsRepository {
         company: data.company ?? null,
         position: data.position ?? null,
         address: data.address ?? null,
+        city: data.city ?? null,
+        bin: data.bin ?? null,
+        legalAddress: data.legalAddress ?? null,
+        bankAccount: data.bankAccount ?? null,
+        bik: data.bik ?? null,
         tags: data.tags ?? [],
         channel: data.channel ?? null,
       } as Prisma.ContactUncheckedCreateInput,
@@ -31,6 +36,7 @@ export class ContactsRepository {
         ...(query.tag && {
           tags: { has: query.tag },
         }),
+        ...(query.city && { city: query.city }),
         OR: query.search
           ? [
               { name: { contains: query.search, mode: 'insensitive' } },

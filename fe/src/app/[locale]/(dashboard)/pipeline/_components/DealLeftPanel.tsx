@@ -6,6 +6,7 @@ import {
   Mail,
   User,
   Building2,
+  MapPin,
   Plus,
   ChevronRight,
   Edit2,
@@ -433,6 +434,16 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
               {deal.contact.phone}
             </span>
           </a>
+          {deal.contact.city && (
+            <div className="flex items-center gap-2.5">
+              <div className="size-[26px] rounded-[7px] bg-secondary/60 flex items-center justify-center shrink-0">
+                <MapPin size={11} className="text-primary" />
+              </div>
+              <span className="text-muted-foreground" style={{ fontSize: 12 }}>
+                {deal.contact.city}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

@@ -8,6 +8,9 @@ import {
   Building2,
   Briefcase,
   MapPin,
+  Building,
+  Landmark,
+  Hash,
   Calendar,
   ChevronRight,
   Edit2,
@@ -93,6 +96,35 @@ export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
       label: t("infoAddress"),
       value: contact.address || "",
     },
+    ...(contact.city
+      ? [{ key: "city", icon: Building, label: t("infoCity"), value: contact.city }]
+      : []),
+    ...(contact.bin
+      ? [{ key: "bin", icon: Hash, label: t("infoBin"), value: contact.bin }]
+      : []),
+    ...(contact.legalAddress
+      ? [
+          {
+            key: "legalAddress",
+            icon: MapPin,
+            label: t("infoLegalAddress"),
+            value: contact.legalAddress,
+          },
+        ]
+      : []),
+    ...(contact.bankAccount
+      ? [
+          {
+            key: "bankAccount",
+            icon: Landmark,
+            label: t("infoBankAccount"),
+            value: contact.bankAccount,
+          },
+        ]
+      : []),
+    ...(contact.bik
+      ? [{ key: "bik", icon: Hash, label: t("infoBik"), value: contact.bik }]
+      : []),
     {
       key: "createdAt",
       icon: Calendar,
