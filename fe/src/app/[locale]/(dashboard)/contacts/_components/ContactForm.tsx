@@ -338,7 +338,8 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent
-                    className="w-[--radix-popover-trigger-width] p-2"
+                    matchTriggerWidth
+                    className="p-2"
                     align="start"
                   >
                     <Input
