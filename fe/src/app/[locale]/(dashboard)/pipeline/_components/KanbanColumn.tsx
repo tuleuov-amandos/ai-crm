@@ -51,28 +51,40 @@ export function KanbanColumn({
     <div className="flex flex-col flex-1 min-w-[220px] group/col h-full overflow-hidden">
       {/* ── Column header ─────────────────────────────────────────────── */}
       <div className="pb-3 pl-0.5">
-        <div className="flex items-center gap-2">
-          <div
-            className="size-2 rounded-full shrink-0"
-            style={{ background: config.dot }}
-          />
-          <span
-            className="text-foreground"
-            style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.2 }}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div
+              className="size-2 rounded-full shrink-0"
+              style={{ background: config.dot }}
+            />
+            <span
+              className="text-foreground truncate"
+              style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.2 }}
+            >
+              {tStages(stage)}
+            </span>
+            <span
+              className="rounded-full px-1.5 tabular-nums shrink-0"
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: config.badgeColor,
+                background: config.badgeBg,
+              }}
+            >
+              {deals.length}
+            </span>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-6 shrink-0 text-muted-foreground hover:text-primary hover:bg-primary/8"
+            title={t("column.addDeal")}
+            aria-label={t("column.addDeal")}
+            onClick={() => onAddDeal(stage)}
           >
-            {tStages(stage)}
-          </span>
-          <span
-            className="rounded-full px-1.5 tabular-nums"
-            style={{
-              fontSize: 11,
-              fontWeight: 600,
-              color: config.badgeColor,
-              background: config.badgeBg,
-            }}
-          >
-            {deals.length}
-          </span>
+            <Plus size={14} />
+          </Button>
         </div>
         <p
           className="pl-4 mt-0.5 text-muted-foreground tabular-nums"
