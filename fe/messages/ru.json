@@ -346,6 +346,7 @@
       "namePlaceholder": "Название сделки",
       "contactLabel": "Контакт",
       "selectContact": "Выберите контакт",
+      "contactsNotFound": "Контакты не найдены",
       "createContact": "+ Создать контакт",
       "contactAddress": "Адрес:",
       "ownerLabel": "Ответственный",
