@@ -40,7 +40,7 @@ import { Contact } from "@/lib/validations/contacts.scheme";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const buildCreateDealSchema = (tv: (key: string) => string) =>
@@ -72,6 +72,7 @@ export function CreateDealSheet({
   const t = useTranslations("pipeline.form");
   const tv = useTranslations("pipeline.form.validation");
   const tCommon = useTranslations("common");
+  const tContact = useTranslations("contacts.form");
   const createDealFormSchema = useMemo(() => buildCreateDealSchema(tv), [tv]);
   const createDeal = useCreateDeal();
   const [contactSearch, setContactSearch] = useState("");
@@ -83,6 +84,7 @@ export function CreateDealSheet({
   const usersQuery = useGetUsers();
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
   const [contactPopoverOpen, setContactPopoverOpen] = useState(false);
+  const [isContactRequisitesOpen, setIsContactRequisitesOpen] = useState(false);
   const [createdContacts, setCreatedContacts] = useState<Contact[]>([]);
 
   const fetchedContacts = useMemo(
@@ -288,14 +290,67 @@ export function CreateDealSheet({
                         </div>
                       </PopoverContent>
                     </Popover>
-                    {selectedContact?.address && (
+                    {(selectedContact?.address || selectedContact?.city) && (
                       <p
                         className="text-muted-foreground mt-1"
                         style={{ fontSize: 12 }}
                       >
-                        {t("contactAddress")} {selectedContact.address}
+                        {selectedContact?.address && `${t("contactAddress")} `}
+                        {[selectedContact?.address, selectedContact?.city]
+                          .filter(Boolean)
+                          .join(" · ")}
                       </p>
                     )}
+                    {selectedContact &&
+                      (selectedContact.bin ||
+                        selectedContact.legalAddress ||
+                        selectedContact.bankAccount ||
+                        selectedContact.bik) && (
+                        <div className="mt-1">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setIsContactRequisitesOpen((isOpen) => !isOpen)
+                            }
+                            className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                            style={{ fontSize: 12 }}
+                          >
+                            {tContact("requisitesHeading")}
+                            {isContactRequisitesOpen ? (
+                              <ChevronUp className="h-3 w-3" />
+                            ) : (
+                              <ChevronDown className="h-3 w-3" />
+                            )}
+                          </button>
+                          {isContactRequisitesOpen && (
+                            <div
+                              className="mt-1 space-y-0.5 text-muted-foreground"
+                              style={{ fontSize: 12 }}
+                            >
+                              {selectedContact.bin && (
+                                <p>
+                                  {tContact("binLabel")}: {selectedContact.bin}
+                                </p>
+                              )}
+                              {selectedContact.legalAddress && (
+                                <p>
+                                  {tContact("legalAddressLabel")}: {selectedContact.legalAddress}
+                                </p>
+                              )}
+                              {selectedContact.bankAccount && (
+                                <p>
+                                  {tContact("bankAccountLabel")}: {selectedContact.bankAccount}
+                                </p>
+                              )}
+                              {selectedContact.bik && (
+                                <p>
+                                  {tContact("bikLabel")}: {selectedContact.bik}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     <Button
                       type="button"
                       variant="outline"
