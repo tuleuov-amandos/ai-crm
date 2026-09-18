@@ -69,6 +69,7 @@ export const DealDetailSchema = DealCardSchema.extend({
     phone: z.string().nullable(),
     company: z.string().nullable(),
     position: z.string().nullable(),
+    city: z.string().nullable(),
   }),
   owner: z.object({
     id: z.string(),

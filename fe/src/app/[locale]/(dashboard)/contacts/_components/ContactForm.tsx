@@ -6,8 +6,9 @@ import {
   ContactTagType,
   ContactChannelConst,
 } from "@/lib/validations/contacts.scheme";
+import { KZ_CITIES } from "@/lib/kz-cities";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { z } from "zod";
 import {
@@ -15,6 +16,8 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
+  FieldLegend,
+  FieldSet,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -31,7 +34,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronDown, Tag } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ChevronDown, ChevronUp, Tag } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const buildContactFormSchema = (tv: (key: string) => string) =>
   z
@@ -53,6 +58,11 @@ const buildContactFormSchema = (tv: (key: string) => string) =>
       company: z.string().optional().nullable(),
       position: z.string().optional().nullable(),
       address: z.string().optional().nullable(),
+      city: z.string().optional().nullable(),
+      bin: z.string().optional().nullable(),
+      legalAddress: z.string().optional().nullable(),
+      bankAccount: z.string().optional().nullable(),
+      bik: z.string().optional().nullable(),
       channel: z
         .enum(Object.values(ContactChannelConst) as [string, ...string[]])
         .optional()
@@ -101,6 +111,17 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
     [ContactChannelConst.Wholesale]: tChannels("WHOLESALE"),
     [ContactChannelConst.Retail]: tChannels("RETAIL"),
   };
+  const [isRequisitesOpen, setIsRequisitesOpen] = useState(() =>
+    Boolean(
+      defaultValues?.bin ||
+        defaultValues?.legalAddress ||
+        defaultValues?.bankAccount ||
+        defaultValues?.bik,
+    ),
+  );
+  const [cityPopoverOpen, setCityPopoverOpen] = useState(false);
+  const [citySearch, setCitySearch] = useState("");
+
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
     defaultValues: {
@@ -110,6 +131,11 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
       company: defaultValues?.company ?? "",
       position: defaultValues?.position ?? "",
       address: defaultValues?.address ?? "",
+      city: defaultValues?.city ?? "",
+      bin: defaultValues?.bin ?? "",
+      legalAddress: defaultValues?.legalAddress ?? "",
+      bankAccount: defaultValues?.bankAccount ?? "",
+      bik: defaultValues?.bik ?? "",
       channel: defaultValues?.channel ?? null,
       tags: defaultValues?.tags ?? [],
     },
@@ -123,6 +149,11 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
       company: defaultValues?.company ?? "",
       position: defaultValues?.position ?? "",
       address: defaultValues?.address ?? "",
+      city: defaultValues?.city ?? "",
+      bin: defaultValues?.bin ?? "",
+      legalAddress: defaultValues?.legalAddress ?? "",
+      bankAccount: defaultValues?.bankAccount ?? "",
+      bik: defaultValues?.bik ?? "",
       channel: defaultValues?.channel ?? null,
       tags: defaultValues?.tags ?? [],
     });
@@ -264,6 +295,114 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
           )}
         />
 
+        {/* City (combobox: pick from KZ cities or type a custom value) */}
+        <Controller
+          name="city"
+          control={form.control}
+          render={({ field, fieldState }) => {
+            const filteredCities = KZ_CITIES.filter((city) =>
+              city.toLowerCase().includes(citySearch.trim().toLowerCase()),
+            );
+            const trimmedSearch = citySearch.trim();
+            const hasExactMatch = KZ_CITIES.some(
+              (city) => city.toLowerCase() === trimmedSearch.toLowerCase(),
+            );
+
+            return (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="form-rhf-contact-city">{t("cityLabel")}</FieldLabel>
+                <Popover
+                  open={cityPopoverOpen}
+                  onOpenChange={(nextOpen) => {
+                    setCityPopoverOpen(nextOpen);
+                    if (!nextOpen) setCitySearch("");
+                  }}
+                >
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      id="form-rhf-contact-city"
+                      aria-invalid={fieldState.invalid}
+                      className="w-full h-9 justify-between font-normal"
+                    >
+                      <span
+                        className={cn(
+                          "truncate text-left",
+                          !field.value && "text-muted-foreground",
+                        )}
+                      >
+                        {field.value || t("cityPlaceholder")}
+                      </span>
+                      <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-[--radix-popover-trigger-width] p-2"
+                    align="start"
+                  >
+                    <Input
+                      autoFocus
+                      value={citySearch}
+                      onChange={(event) => setCitySearch(event.target.value)}
+                      placeholder={t("cityPlaceholder")}
+                      className="mb-2"
+                    />
+                    <div className="max-h-[220px] overflow-y-auto">
+                      {trimmedSearch && !hasExactMatch && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            field.onChange(trimmedSearch);
+                            setCityPopoverOpen(false);
+                            setCitySearch("");
+                          }}
+                          className="w-full text-left rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+                        >
+                          {t("cityUseCustom", { value: trimmedSearch })}
+                        </button>
+                      )}
+                      {filteredCities.map((city) => (
+                        <button
+                          key={city}
+                          type="button"
+                          onClick={() => {
+                            field.onChange(city);
+                            setCityPopoverOpen(false);
+                            setCitySearch("");
+                          }}
+                          className="w-full text-left rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+                        >
+                          {city}
+                        </button>
+                      ))}
+                      {filteredCities.length === 0 && !trimmedSearch && (
+                        <p className="px-2 py-1.5 text-sm text-muted-foreground">
+                          {t("cityNotFound")}
+                        </p>
+                      )}
+                    </div>
+                    {field.value && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          field.onChange("");
+                          setCityPopoverOpen(false);
+                          setCitySearch("");
+                        }}
+                        className="w-full text-left rounded-sm px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent mt-1 border-t border-border pt-2"
+                      >
+                        {t("cityClear")}
+                      </button>
+                    )}
+                  </PopoverContent>
+                </Popover>
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
+            );
+          }}
+        />
+
         {/* Channel (single-select) */}
         <Controller
           name="channel"
@@ -352,6 +491,109 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
           />
         </div>
       </FieldGroup>
+
+      {/* Requisites (БИН/ИИН, юр. адрес, расчётный счёт, БИК) — collapsed by default */}
+      <FieldSet className="border-t border-border pt-4">
+        <button
+          type="button"
+          onClick={() => setIsRequisitesOpen((open) => !open)}
+          className="flex items-center justify-between w-full cursor-pointer"
+        >
+          <FieldLegend variant="label" className="mb-0">
+            {t("requisitesHeading")}
+          </FieldLegend>
+          {isRequisitesOpen ? (
+            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          )}
+        </button>
+
+        {isRequisitesOpen && (
+          <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Controller
+              name="bin"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="form-rhf-contact-bin">{t("binLabel")}</FieldLabel>
+                  <Input
+                    {...field}
+                    value={field.value ?? ""}
+                    id="form-rhf-contact-bin"
+                    aria-invalid={fieldState.invalid}
+                    placeholder={t("binPlaceholder")}
+                    autoComplete="off"
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="legalAddress"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="form-rhf-contact-legalAddress">
+                    {t("legalAddressLabel")}
+                  </FieldLabel>
+                  <Input
+                    {...field}
+                    value={field.value ?? ""}
+                    id="form-rhf-contact-legalAddress"
+                    aria-invalid={fieldState.invalid}
+                    placeholder={t("legalAddressPlaceholder")}
+                    autoComplete="off"
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="bankAccount"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="form-rhf-contact-bankAccount">
+                    {t("bankAccountLabel")}
+                  </FieldLabel>
+                  <Input
+                    {...field}
+                    value={field.value ?? ""}
+                    id="form-rhf-contact-bankAccount"
+                    aria-invalid={fieldState.invalid}
+                    placeholder={t("bankAccountPlaceholder")}
+                    autoComplete="off"
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+
+            <Controller
+              name="bik"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="form-rhf-contact-bik">{t("bikLabel")}</FieldLabel>
+                  <Input
+                    {...field}
+                    value={field.value ?? ""}
+                    id="form-rhf-contact-bik"
+                    aria-invalid={fieldState.invalid}
+                    placeholder={t("bikPlaceholder")}
+                    autoComplete="off"
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+          </FieldGroup>
+        )}
+      </FieldSet>
+
       <div className="flex items-center justify-end gap-2 pt-4 border-t border-border mt-6">
         <Button
           type="button"

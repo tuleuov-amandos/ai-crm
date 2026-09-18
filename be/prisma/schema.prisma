@@ -123,28 +123,34 @@ model Account {
 }
 
 model Contact {
-  id         String     @id @default(cuid())
-  tenantId   String
-  name       String
-  email      String?
-  phone      String?
-  company    String?
-  position   String?
-  address    String?
-  tags       String[]
-  channel    String?
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  deletedAt  DateTime?
-  ownerId    String
-  activities Activity[]
-  owner      User       @relation("ContactOwner", fields: [ownerId], references: [id])
-  tenant     Tenant     @relation(fields: [tenantId], references: [id])
-  deals      Deal[]
+  id           String     @id @default(cuid())
+  tenantId     String
+  name         String
+  email        String?
+  phone        String?
+  company      String?
+  position     String?
+  address      String?
+  city         String?
+  bin          String? // БИН/ИИН
+  legalAddress String? // юр. адрес
+  bankAccount  String? // расчётный счёт
+  bik          String? // БИК банка
+  tags         String[]
+  channel      String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  deletedAt    DateTime?
+  ownerId      String
+  activities   Activity[]
+  owner        User       @relation("ContactOwner", fields: [ownerId], references: [id])
+  tenant       Tenant     @relation(fields: [tenantId], references: [id])
+  deals        Deal[]
 
   @@index([tenantId])
   @@index([tenantId, ownerId])
   @@index([tenantId, name])
+  @@index([tenantId, city])
 }
 
 model Deal {

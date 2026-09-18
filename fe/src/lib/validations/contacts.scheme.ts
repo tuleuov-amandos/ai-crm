@@ -40,6 +40,11 @@ const ContactBaseSchema = z.object({
   company: z.string().optional().nullable(),
   position: z.string().optional().nullable(),
   address: z.string().optional().nullable(),
+  city: z.string().optional().nullable(),
+  bin: z.string().optional().nullable(),
+  legalAddress: z.string().optional().nullable(),
+  bankAccount: z.string().optional().nullable(),
+  bik: z.string().optional().nullable(),
   tags: z.array(z.enum([
     ContactTagConst.Enterprise,
     ContactTagConst.Vip,
@@ -64,6 +69,11 @@ export const CreateContactBodySchema = ContactBaseSchema.pick({
   company: true,
   position: true,
   address: true,
+  city: true,
+  bin: true,
+  legalAddress: true,
+  bankAccount: true,
+  bik: true,
   tags: true,
   channel: true,
 }).strict();
@@ -142,6 +152,7 @@ export const GetContactsQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(10),
   search: z.string().optional(),
   tag: z.string().optional(),
+  city: z.string().optional(),
 });
 
 export const GetContactsResSchema = z.object({

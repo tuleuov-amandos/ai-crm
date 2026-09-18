@@ -10,6 +10,7 @@ import { useState } from "react";
 import { useGetContacts } from "@/hooks/useContacts";
 import ContactTable from "@/app/[locale]/(dashboard)/contacts/_components/ContactTable";
 import { Contact, ContactTagConst } from "@/lib/validations/contacts.scheme";
+import { KZ_CITIES } from "@/lib/kz-cities";
 import ContactDialog from "@/app/[locale]/(dashboard)/contacts/_components/ContactDialog";
 import ImportExcelDialog from "@/app/[locale]/(dashboard)/contacts/_components/ImportExcelDialog";
 import {
@@ -23,6 +24,7 @@ const ContactsPage = () => {
   const t = useTranslations("contacts");
   const [search, setSearch] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | undefined>(undefined);
+  const [selectedCity, setSelectedCity] = useState<string | undefined>(undefined);
   const router = useRouter();
   const [debouncedSearch] = useDebounceValue(search, 300);
   const [dialog, setDialog] = useState<{
@@ -32,7 +34,12 @@ const ContactsPage = () => {
   const [isImportOpen, setIsImportOpen] = useState(false);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
-    useGetContacts({ limit: 10, search: debouncedSearch, tag: selectedTag });
+    useGetContacts({
+      limit: 10,
+      search: debouncedSearch,
+      tag: selectedTag,
+      city: selectedCity,
+    });
 
   const contacts = data?.pages.flatMap((page) => page.data) ?? [];
 
@@ -97,6 +104,36 @@ const ContactsPage = () => {
                       onClick={() => setSelectedTag(tag)}
                     >
                       {tag}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1 border-border text-muted-foreground hover:text-foreground text-xs cursor-pointer"
+                  >
+                    {selectedCity ? t("cityPrefix", { city: selectedCity }) : t("allCities")}
+                    <ChevronDown size={12} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="max-h-[300px] overflow-y-auto">
+                  <DropdownMenuItem
+                    className="cursor-pointer text-xs"
+                    onClick={() => setSelectedCity(undefined)}
+                  >
+                    {t("allCities")}
+                  </DropdownMenuItem>
+                  {KZ_CITIES.map((city) => (
+                    <DropdownMenuItem
+                      key={city}
+                      className="cursor-pointer text-xs"
+                      onClick={() => setSelectedCity(city)}
+                    >
+                      {city}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
