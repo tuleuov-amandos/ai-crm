@@ -262,7 +262,11 @@ export function CreateDealSheet({
                           style={{ fontSize: 13 }}
                           className="mb-2 bg-[#F8F8F7] dark:bg-card border-[#E8E7E2] dark:border-border text-foreground"
                         />
-                        <div className="max-h-[250px] overflow-y-auto">
+                        <div
+                          className="max-h-[250px] overflow-y-auto"
+                          onWheel={(event) => event.stopPropagation()}
+                          onTouchMove={(event) => event.stopPropagation()}
+                        >
                           {contacts.length === 0 ? (
                             <p
                               className="text-muted-foreground px-2 py-1.5"

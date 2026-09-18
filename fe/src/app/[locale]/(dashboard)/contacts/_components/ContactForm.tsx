@@ -336,7 +336,11 @@ function ContactForm({ onSubmit, isPending, defaultValues }: ContactFormProps) {
                       placeholder={t("cityPlaceholder")}
                       className="mb-2"
                     />
-                    <div className="max-h-[220px] overflow-y-auto">
+                    <div
+                      className="max-h-[220px] overflow-y-auto"
+                      onWheel={(event) => event.stopPropagation()}
+                      onTouchMove={(event) => event.stopPropagation()}
+                    >
                       {trimmedSearch && !hasExactMatch && (
                         <button
                           type="button"
