@@ -248,7 +248,8 @@ export function CreateDealSheet({
                         </FormControl>
                       </PopoverTrigger>
                       <PopoverContent
-                        className="w-[--radix-popover-trigger-width] p-2 bg-background border-border"
+                        matchTriggerWidth
+                        className="p-2 bg-background border-border"
                         align="start"
                       >
                         <Input
