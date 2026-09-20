@@ -63,7 +63,7 @@ export default function MessageComposer({ channelId }: MessageComposerProps) {
 
   const handleSubmit = async () => {
     const trimmed = content.trim();
-    if (!trimmed || isPending) return;
+    if ((!trimmed && pendingFiles.length === 0) || isPending) return;
 
     try {
       const message = await sendMessage.mutateAsync(trimmed);
@@ -71,7 +71,17 @@ export default function MessageComposer({ channelId }: MessageComposerProps) {
       const files = pendingFiles;
       setPendingFiles([]);
       if (files.length > 0) {
-        await uploadAttachments.mutateAsync({ messageId: message.id, files });
+        // If this fails, `message` was already created (possibly with empty
+        // content) and now has no attachments either — a dead message the
+        // user can't see a reason for. useUploadAttachments shows a tailored
+        // toast for that case (isAttachmentOnlyMessage), but the message itself is not
+        // cleaned up automatically; there's no dedicated endpoint for that
+        // today, so the user has to notice and re-attach manually.
+        await uploadAttachments.mutateAsync({
+          messageId: message.id,
+          files,
+          isAttachmentOnlyMessage: !trimmed,
+        });
       }
     } catch {
       // failure toast already shown inside the mutation hooks
@@ -145,7 +155,7 @@ export default function MessageComposer({ channelId }: MessageComposerProps) {
           size="icon"
           className="size-9 shrink-0"
           onClick={handleSubmit}
-          disabled={isPending || !content.trim()}
+          disabled={isPending || (!content.trim() && pendingFiles.length === 0)}
         >
           {isPending ? (
             <Loader2 size={14} className="animate-spin" />
