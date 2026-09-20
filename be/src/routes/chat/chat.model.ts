@@ -7,6 +7,7 @@ export const ChannelBaseSchema = z.object({
   id: z.string(),
   tenantId: z.string(),
   name: z.string(),
+  isPrivate: z.boolean(),
   createdById: z.string(),
   createdAt: zIsoDatetime,
   createdBy: z.object({
@@ -21,10 +22,24 @@ export type ChannelBaseType = z.infer<typeof ChannelBaseSchema>
 export const CreateChannelBodySchema = z
   .object({
     name: z.string().min(1).max(80),
+    isPrivate: z.boolean().optional().default(false),
+    // User ids of the tenant to add as initial members, besides the creator
+    // (who is always added — see ChatRepository.createChannel). Only
+    // meaningful when isPrivate is true, but accepted either way.
+    memberIds: z.array(z.string()).optional(),
   })
   .strict()
 
 export type CreateChannelBodyType = z.infer<typeof CreateChannelBodySchema>
+
+// POST /chat/channels/:id/members
+export const AddChannelMembersBodySchema = z
+  .object({
+    userIds: z.array(z.string()).min(1),
+  })
+  .strict()
+
+export type AddChannelMembersBodyType = z.infer<typeof AddChannelMembersBodySchema>
 
 export const ChannelResSchema = ChannelBaseSchema
 

@@ -44,7 +44,7 @@ export class ChatService {
   // Shared by createMessage/getMessages (REST + gateway) so the
   // "does this channel belong to the caller's tenant" check lives in one
   // place instead of being copy-pasted at each call site.
-  async getChannelForTenant(tenantId: string, channelId: string): Promise<ChannelBaseType> {
+  async getChannelForTenant(tenantId: string, channelId: string, userId: string): Promise<ChannelBaseType> {
     const channel = await this.chatRepo.findChannelById(channelId)
     // findChannelById is already tenant-scoped via the Prisma extension (CLS
     // tenantId) on the REST path, so this can only be false there if that
@@ -55,11 +55,55 @@ export class ChatService {
     if (!channel || channel.tenantId !== tenantId) {
       throw AppException.notFound(ChatErrorCode.CHANNEL_NOT_FOUND, 'Channel not found')
     }
+    // Public channels (isPrivate: false) keep their existing tenant-wide
+    // access — nothing below runs for them.
+    if (channel.isPrivate) {
+      const isMember = await this.chatRepo.isMember(channelId, userId)
+      if (!isMember) {
+        throw AppException.forbidden(
+          ChatErrorCode.FORBIDDEN_PRIVATE_CHANNEL_ACCESS,
+          'You are not a member of this channel',
+        )
+      }
+    }
     return channel
   }
 
-  async createChannel(userId: string, name: string): Promise<ChannelBaseType> {
-    return this.chatRepo.createChannel(userId, name)
+  // isPrivate channels may only be created by an Admin. memberIds are added
+  // as ChannelMember alongside the creator, in the same transaction that
+  // creates the channel — see ChatRepository.createChannel.
+  async createChannel(
+    user: CurrentUser,
+    name: string,
+    isPrivate: boolean,
+    memberIds: string[],
+  ): Promise<ChannelBaseType> {
+    if (isPrivate && user.role !== ROLE.ADMIN) {
+      throw AppException.forbidden(
+        ChatErrorCode.FORBIDDEN_CREATE_PRIVATE_CHANNEL,
+        'Only an Admin can create a private channel',
+      )
+    }
+    return this.chatRepo.createChannel(user.userId, name, isPrivate, memberIds)
+  }
+
+  // Only the channel's creator or an Admin may add members — same ownership
+  // check as deleteChannel below.
+  async addChannelMembers(channelId: string, userIds: string[], user: CurrentUser): Promise<{ message: string }> {
+    const channel = await this.chatRepo.findChannelById(channelId)
+    if (!channel) throw AppException.notFound(ChatErrorCode.CHANNEL_NOT_FOUND, 'Channel not found')
+
+    const isOwner = channel.createdById === user.userId
+    const isAdmin = user.role === ROLE.ADMIN
+    if (!isOwner && !isAdmin) {
+      throw AppException.forbidden(
+        ChatErrorCode.FORBIDDEN_ADD_MEMBERS,
+        'Only the channel creator or an Admin can add members to this channel',
+      )
+    }
+
+    await this.chatRepo.addMembers(channelId, userIds)
+    return { message: 'Members added successfully' }
   }
 
   async listChannels(tenantId: string, userId: string): Promise<{ data: ChannelWithUnreadType[] }> {
@@ -72,9 +116,7 @@ export class ChatService {
     return { message: 'Channel marked as read' }
   }
 
-  // Only the channel's creator or an Admin may delete it. All other roles are
-  // equal in chat (see JoinChannel/LeaveChannel/CreateMessage below), so this
-  // is the one place chat has an ownership check at all.
+  // Only the channel's creator or an Admin may delete it.
   async deleteChannel(channelId: string, user: CurrentUser): Promise<{ message: string }> {
     const channel = await this.chatRepo.findChannelById(channelId)
     if (!channel) throw AppException.notFound(ChatErrorCode.CHANNEL_NOT_FOUND, 'Channel not found')
@@ -92,9 +134,20 @@ export class ChatService {
     return { message: 'Channel deleted successfully' }
   }
 
+  // Self-service join is only for public channels. A private channel's
+  // membership is invite-only (see addChannelMembers above) — without this
+  // check any tenant user could add themselves to a private channel's
+  // ChannelMember just by knowing/guessing its id, bypassing that entirely.
   async joinChannel(channelId: string, userId: string): Promise<{ message: string }> {
     const channel = await this.chatRepo.findChannelById(channelId)
     if (!channel) throw AppException.notFound(ChatErrorCode.CHANNEL_NOT_FOUND, 'Channel not found')
+
+    if (channel.isPrivate) {
+      throw AppException.forbidden(
+        ChatErrorCode.FORBIDDEN_PRIVATE_CHANNEL_ACCESS,
+        'You are not a member of this channel',
+      )
+    }
 
     await this.chatRepo.addMember(channelId, userId)
     return { message: 'Joined channel successfully' }
@@ -114,7 +167,7 @@ export class ChatService {
     senderId: string,
     content: string,
   ): Promise<MessageBaseType> {
-    await this.getChannelForTenant(tenantId, channelId)
+    await this.getChannelForTenant(tenantId, channelId, senderId)
 
     const message = await this.chatRepo.createMessage(channelId, senderId, content)
     this.eventEmitter.emit(MESSAGE_CREATED_EVENT, message)
@@ -124,9 +177,10 @@ export class ChatService {
   async getMessages(
     tenantId: string,
     channelId: string,
+    userId: string,
     query: GetMessagesQueryType,
   ): Promise<GetMessagesPaginatedResType> {
-    await this.getChannelForTenant(tenantId, channelId)
+    await this.getChannelForTenant(tenantId, channelId, userId)
 
     const { data, total } = await this.chatRepo.findMessages(channelId, query)
     return { data, total, page: query.page, limit: query.limit }

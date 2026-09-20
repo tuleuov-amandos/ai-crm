@@ -7,9 +7,12 @@ import {
   MessageResSchema,
   GetMessagesQuerySchema,
   GetMessagesPaginatedResSchema,
+  AddChannelMembersBodySchema,
 } from './chat.model'
 
 export class CreateChannelBodyDto extends createZodDto(CreateChannelBodySchema) {}
+
+export class AddChannelMembersBodyDto extends createZodDto(AddChannelMembersBodySchema) {}
 
 export class ChannelResDto extends createZodDto(ChannelResSchema) {}
 

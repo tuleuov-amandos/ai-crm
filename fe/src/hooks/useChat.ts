@@ -41,13 +41,43 @@ export const useCreateChannel = () => {
   const getApiError = useApiError();
 
   return useMutation({
-    mutationFn: (name: string) => chatService.createChannel(name),
+    mutationFn: (params: {
+      name: string;
+      isPrivate?: boolean;
+      memberIds?: string[];
+    }) => chatService.createChannel(params),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: chatKeys.channels() });
       toast.success(t("createChannelSuccess"));
     },
     onError: (error: ApiError) => {
       toast.error(getApiError(error, t("createChannelError")));
+    },
+  });
+};
+
+// POST /chat/channels/:id/members — adds members to an existing (private)
+// channel. Invalidates the channels list so the new members' clients (on
+// their next fetch) and the current user's own cache stay in sync.
+export const useAddChannelMembers = () => {
+  const queryClient = useQueryClient();
+  const t = useTranslations("chat.toasts");
+  const getApiError = useApiError();
+
+  return useMutation({
+    mutationFn: ({
+      channelId,
+      userIds,
+    }: {
+      channelId: string;
+      userIds: string[];
+    }) => chatService.addChannelMembers(channelId, userIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: chatKeys.channels() });
+      toast.success(t("addMembersSuccess"));
+    },
+    onError: (error: ApiError) => {
+      toast.error(getApiError(error, t("addMembersError")));
     },
   });
 };

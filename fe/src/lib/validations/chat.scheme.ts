@@ -10,6 +10,7 @@ export const ChannelSchema = z.object({
   id: z.string(),
   tenantId: z.string(),
   name: z.string(),
+  isPrivate: z.boolean(),
   createdById: z.string(),
   createdAt: z.string(),
   createdBy: z.object({
@@ -24,10 +25,23 @@ export type Channel = z.infer<typeof ChannelSchema>;
 export const CreateChannelBodySchema = z
   .object({
     name: z.string().min(1).max(80),
+    isPrivate: z.boolean().optional(),
+    memberIds: z.array(z.string()).optional(),
   })
   .strict();
 
 export type CreateChannelBodyType = z.infer<typeof CreateChannelBodySchema>;
+
+// POST /chat/channels/:id/members
+export const AddChannelMembersBodySchema = z
+  .object({
+    userIds: z.array(z.string()).min(1),
+  })
+  .strict();
+
+export type AddChannelMembersBodyType = z.infer<
+  typeof AddChannelMembersBodySchema
+>;
 
 // GET /chat/channels only — unreadCount depends on the requesting user, so it
 // isn't part of the base ChannelSchema (create/join/leave responses don't

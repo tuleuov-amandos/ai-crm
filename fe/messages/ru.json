@@ -737,7 +737,17 @@
       "namePlaceholder": "Название канала",
       "empty": "Пока нет каналов",
       "deleteTitle": "Удалить канал",
-      "deleteDescription": "Удалить канал «{name}»? Все сообщения в этом канале будут удалены без возможности восстановления."
+      "deleteDescription": "Удалить канал «{name}»? Все сообщения в этом канале будут удалены без возможности восстановления.",
+      "private": "Приватный",
+      "membersLabel": "Участники",
+      "membersPlaceholder": "Выбрать участников",
+      "membersSelected": "Выбрано: {count}",
+      "noUsers": "В рабочем пространстве больше нет пользователей",
+      "addMembersAction": "Добавить участников",
+      "addMembersTitle": "Добавить участников",
+      "addMembersDescription": "Добавить участников в «{name}»",
+      "addMembersEmpty": "Все пользователи рабочего пространства уже участники",
+      "addMembersSubmit": "Добавить"
     },
     "messages": {
       "empty": "Пока нет сообщений. Напишите первым!",
@@ -756,7 +766,9 @@
       "sendMessageError": "Не удалось отправить сообщение",
       "uploadAttachmentsError": "Не удалось загрузить вложения",
       "uploadAttachmentsAfterEmptyMessageError": "Сообщение отправлено, но не удалось прикрепить файлы. Попробуйте прикрепить их заново.",
-      "connectionLost": "Соединение потеряно, переподключение…"
+      "connectionLost": "Соединение потеряно, переподключение…",
+      "addMembersSuccess": "Участники добавлены",
+      "addMembersError": "Не удалось добавить участников"
     },
     "attachment": {
       "remove": "Удалить",
