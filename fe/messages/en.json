@@ -741,7 +741,9 @@
     },
     "messages": {
       "empty": "No messages yet. Say hello!",
-      "loadMore": "Load more"
+      "loadMore": "Load more",
+      "today": "Today",
+      "yesterday": "Yesterday"
     },
     "composer": {
       "placeholder": "Write a message…"

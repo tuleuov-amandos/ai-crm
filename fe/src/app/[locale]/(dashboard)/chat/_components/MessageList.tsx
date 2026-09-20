@@ -1,9 +1,11 @@
 "use client";
 
 import { useLayoutEffect, useMemo, useRef } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useFormatter } from "next-intl";
+import { isToday, isYesterday, isSameDay } from "date-fns";
 import { Loader2, Paperclip } from "lucide-react";
 import { useMessages } from "@/hooks/useChat";
+import { useMe } from "@/hooks/useAuth";
 import { useRelativeTime } from "@/lib/format";
 import { getAvatarColors, getInitials } from "@/lib/helper";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -20,6 +22,8 @@ interface MessageListProps {
 export default function MessageList({ channelId }: MessageListProps) {
   const t = useTranslations("chat.messages");
   const relativeTime = useRelativeTime();
+  const format = useFormatter();
+  const { data: me } = useMe();
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
     useMessages(channelId);
 
@@ -73,6 +77,12 @@ export default function MessageList({ channelId }: MessageListProps) {
     fetchNextPage();
   };
 
+  const formatDayLabel = (date: Date): string => {
+    if (isToday(date)) return t("today");
+    if (isYesterday(date)) return t("yesterday");
+    return format.dateTime(date, { day: "numeric", month: "long", year: "numeric" });
+  };
+
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center text-muted-foreground">
@@ -107,9 +117,32 @@ export default function MessageList({ channelId }: MessageListProps) {
           {t("empty")}
         </div>
       ) : (
-        messages.map((message) => (
-          <MessageRow key={message.id} message={message} relativeTime={relativeTime} />
-        ))
+        messages.map((message, index) => {
+          const prevMessage = messages[index - 1];
+          const showDateSeparator =
+            !prevMessage ||
+            !isSameDay(new Date(prevMessage.createdAt), new Date(message.createdAt));
+
+          return (
+            <div key={message.id} className="flex flex-col gap-3">
+              {showDateSeparator && (
+                <div className="flex justify-center">
+                  <span
+                    className="bg-muted text-muted-foreground rounded-full px-3 py-1"
+                    style={{ fontSize: 11 }}
+                  >
+                    {formatDayLabel(new Date(message.createdAt))}
+                  </span>
+                </div>
+              )}
+              <MessageRow
+                message={message}
+                relativeTime={relativeTime}
+                isOwn={message.senderId === me?.id}
+              />
+            </div>
+          );
+        })
       )}
     </div>
   );
@@ -118,11 +151,66 @@ export default function MessageList({ channelId }: MessageListProps) {
 function MessageRow({
   message,
   relativeTime,
+  isOwn,
 }: {
   message: Message;
   relativeTime: (date?: string | Date | null) => string;
+  isOwn: boolean;
 }) {
   const colors = getAvatarColors(message.senderId);
+
+  const attachments = message.attachments.length > 0 && (
+    <div className="flex flex-wrap gap-2 mt-1.5">
+      {message.attachments.map((attachment) =>
+        attachment.mimeType.startsWith("image/") ? (
+          <a key={attachment.id} href={attachment.url} target="_blank" rel="noopener noreferrer">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={attachment.url}
+              alt={attachment.fileName}
+              className="max-h-32 rounded-md border border-border object-cover"
+            />
+          </a>
+        ) : (
+          <a
+            key={attachment.id}
+            href={attachment.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={
+              isOwn
+                ? "flex items-center gap-1.5 text-primary-foreground hover:underline"
+                : "flex items-center gap-1.5 text-primary hover:underline"
+            }
+            style={{ fontSize: 12, textDecoration: "none" }}
+          >
+            <Paperclip size={12} />
+            {attachment.fileName}
+          </a>
+        ),
+      )}
+    </div>
+  );
+
+  if (isOwn) {
+    return (
+      <div className="flex items-start justify-end gap-2.5">
+        <div className="flex flex-col items-end max-w-[75%]">
+          <div className="bg-primary text-primary-foreground rounded-2xl px-3 py-2 min-w-0">
+            {message.content && (
+              <p className="whitespace-pre-wrap break-words" style={{ fontSize: 13 }}>
+                {message.content}
+              </p>
+            )}
+            {attachments}
+          </div>
+          <span className="text-muted-foreground mt-1" style={{ fontSize: 11 }}>
+            {relativeTime(message.createdAt)}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-start gap-2.5">
@@ -138,7 +226,7 @@ function MessageRow({
         </AvatarFallback>
       </Avatar>
 
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 max-w-[75%]">
         <div className="flex items-baseline gap-2">
           <span className="text-foreground" style={{ fontSize: 13, fontWeight: 500 }}>
             {message.sender.name}
@@ -147,45 +235,15 @@ function MessageRow({
             {relativeTime(message.createdAt)}
           </span>
         </div>
-        {message.content && (
-          <p className="text-foreground whitespace-pre-wrap break-words" style={{ fontSize: 13 }}>
-            {message.content}
-          </p>
-        )}
 
-        {message.attachments.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-1.5">
-            {message.attachments.map((attachment) =>
-              attachment.mimeType.startsWith("image/") ? (
-                <a
-                  key={attachment.id}
-                  href={attachment.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={attachment.url}
-                    alt={attachment.fileName}
-                    className="max-h-32 rounded-md border border-border object-cover"
-                  />
-                </a>
-              ) : (
-                <a
-                  key={attachment.id}
-                  href={attachment.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-primary hover:underline"
-                  style={{ fontSize: 12, textDecoration: "none" }}
-                >
-                  <Paperclip size={12} />
-                  {attachment.fileName}
-                </a>
-              ),
-            )}
-          </div>
-        )}
+        <div className="bg-muted rounded-2xl px-3 py-2 mt-1 min-w-0 inline-block">
+          {message.content && (
+            <p className="text-foreground whitespace-pre-wrap break-words" style={{ fontSize: 13 }}>
+              {message.content}
+            </p>
+          )}
+          {attachments}
+        </div>
       </div>
     </div>
   );
