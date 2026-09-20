@@ -753,6 +753,7 @@
       "deleteChannelError": "Не удалось удалить канал",
       "sendMessageError": "Не удалось отправить сообщение",
       "uploadAttachmentsError": "Не удалось загрузить вложения",
+      "uploadAttachmentsAfterEmptyMessageError": "Сообщение отправлено, но не удалось прикрепить файлы. Попробуйте прикрепить их заново.",
       "connectionLost": "Соединение потеряно, переподключение…"
     },
     "attachment": {

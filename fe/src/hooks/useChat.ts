@@ -115,9 +115,17 @@ export const useUploadAttachments = () => {
     }: {
       messageId: string;
       files: File[];
+      // True when the message this upload targets has no text of its own,
+      // i.e. the attachments ARE the message — the generic error toast would
+      // leave the user thinking nothing happened, when in fact an empty
+      // message was already created and now has no attachments either.
+      isAttachmentOnlyMessage?: boolean;
     }) => chatService.uploadAttachments(messageId, files),
-    onError: (error: ApiError) => {
-      toast.error(getApiError(error, t("uploadAttachmentsError")));
+    onError: (error: ApiError, variables) => {
+      const fallback = variables.isAttachmentOnlyMessage
+        ? t("uploadAttachmentsAfterEmptyMessageError")
+        : t("uploadAttachmentsError");
+      toast.error(getApiError(error, fallback));
     },
   });
 };

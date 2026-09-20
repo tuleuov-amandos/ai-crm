@@ -753,6 +753,7 @@
       "deleteChannelError": "Couldn't delete channel",
       "sendMessageError": "Couldn't send message",
       "uploadAttachmentsError": "Couldn't upload attachments",
+      "uploadAttachmentsAfterEmptyMessageError": "Message sent, but the attachments couldn't be uploaded. Please attach the files again.",
       "connectionLost": "Connection lost, reconnecting…"
     },
     "attachment": {

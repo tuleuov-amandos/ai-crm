@@ -147,9 +147,11 @@ function MessageRow({
             {relativeTime(message.createdAt)}
           </span>
         </div>
-        <p className="text-foreground whitespace-pre-wrap break-words" style={{ fontSize: 13 }}>
-          {message.content}
-        </p>
+        {message.content && (
+          <p className="text-foreground whitespace-pre-wrap break-words" style={{ fontSize: 13 }}>
+            {message.content}
+          </p>
+        )}
 
         {message.attachments.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-1.5">

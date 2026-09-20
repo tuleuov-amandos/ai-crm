@@ -70,7 +70,9 @@ export type MessageBaseType = z.infer<typeof MessageBaseSchema>
 // POST /chat/channels/:id/messages
 export const CreateMessageBodySchema = z
   .object({
-    content: z.string().min(1).max(5000),
+    // Empty content is valid: attachments are uploaded in a separate request
+    // against the message id, so a "files only" message is created with no text.
+    content: z.string().max(5000),
   })
   .strict()
 
