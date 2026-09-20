@@ -28,8 +28,21 @@ export type CreateChannelBodyType = z.infer<typeof CreateChannelBodySchema>
 
 export const ChannelResSchema = ChannelBaseSchema
 
+// GET /chat/channels only — unreadCount depends on the requesting user, so it
+// isn't part of ChannelBaseSchema (createChannel/findChannelById don't
+// compute it).
+export const ChannelWithUnreadSchema = ChannelBaseSchema.extend({
+  // Messages in this channel created after the current user's
+  // ChannelMember.lastReadAt (or joinedAt, if never marked read) — see
+  // ChatRepository.findAllChannels. Always 0 for a channel the current user
+  // hasn't joined.
+  unreadCount: z.number().int().nonnegative(),
+})
+
+export type ChannelWithUnreadType = z.infer<typeof ChannelWithUnreadSchema>
+
 export const GetChannelsResSchema = z.object({
-  data: z.array(ChannelBaseSchema),
+  data: z.array(ChannelWithUnreadSchema),
 })
 
 export type GetChannelsResType = z.infer<typeof GetChannelsResSchema>

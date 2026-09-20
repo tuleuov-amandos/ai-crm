@@ -7,7 +7,11 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/api";
 import { chatKeys } from "@/hooks/useChat";
-import { GetMessagesPaginatedResType, Message } from "@/lib/validations/chat.scheme";
+import {
+  GetChannelsResType,
+  GetMessagesPaginatedResType,
+  Message,
+} from "@/lib/validations/chat.scheme";
 
 const CONNECTION_TOAST_ID = "chat-connection-lost";
 
@@ -18,16 +22,27 @@ const CONNECTION_TOAST_ID = "chat-connection-lost";
  *
  * `activeChannelId` is read through a ref inside the socket handler so the
  * effect that opens the connection never has to re-run when it changes.
+ *
+ * `markChannelRead` comes from the page via useMarkChannelRead — this is a
+ * hook, not a component, so it can't call that mutation itself. It's used
+ * for the active channel only, to re-mark it read when a new message arrives
+ * while the user is already looking at it (otherwise that message would sit
+ * as unread until the channel is reopened).
  */
-export function useChatSocket(activeChannelId: string | undefined) {
+export function useChatSocket(
+  activeChannelId: string | undefined,
+  markChannelRead: (channelId: string) => void,
+) {
   const queryClient = useQueryClient();
   const t = useTranslations("chat.toasts");
   const socketRef = useRef<Socket | null>(null);
   const activeChannelIdRef = useRef(activeChannelId);
   const tRef = useRef(t);
+  const markChannelReadRef = useRef(markChannelRead);
 
   activeChannelIdRef.current = activeChannelId;
   tRef.current = t;
+  markChannelReadRef.current = markChannelRead;
 
   useEffect(() => {
     const socket = io(`${API_BASE_URL}/chat`, { withCredentials: true });
@@ -55,9 +70,26 @@ export function useChatSocket(activeChannelId: string | undefined) {
     });
 
     socket.on("newMessage", (message: Message) => {
-      // Ignore messages for a channel that isn't currently open — no unread
-      // badges in this version, so there's nothing else to do with them.
-      if (message.channelId !== activeChannelIdRef.current) return;
+      // A message for a channel that isn't currently open bumps that
+      // channel's unread count in the channel-list cache instead of
+      // touching its (unmounted) message list.
+      if (message.channelId !== activeChannelIdRef.current) {
+        queryClient.setQueryData<GetChannelsResType>(
+          chatKeys.channels(),
+          (old) => {
+            if (!old) return old;
+            return {
+              ...old,
+              data: old.data.map((channel) =>
+                channel.id === message.channelId
+                  ? { ...channel, unreadCount: channel.unreadCount + 1 }
+                  : channel,
+              ),
+            };
+          },
+        );
+        return;
+      }
 
       queryClient.setQueryData<InfiniteData<GetMessagesPaginatedResType>>(
         chatKeys.messages(message.channelId),
@@ -86,6 +118,10 @@ export function useChatSocket(activeChannelId: string | undefined) {
           return { ...old, pages: [updatedFirst, ...rest] };
         },
       );
+
+      // The user is already looking at this channel — a message arriving
+      // for it shouldn't be able to accumulate as unread.
+      markChannelReadRef.current(message.channelId);
     });
 
     return () => {

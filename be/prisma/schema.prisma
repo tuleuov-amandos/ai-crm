@@ -245,12 +245,16 @@ model Channel {
 }
 
 model ChannelMember {
-  id        String   @id @default(cuid())
-  channelId String
-  userId    String
-  joinedAt  DateTime @default(now())
-  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id])
+  id         String    @id @default(cuid())
+  channelId  String
+  userId     String
+  joinedAt   DateTime  @default(now())
+  // NULL means "unread since joinedAt" — new members get no default value here
+  // (see the add_channel_member_last_read_at migration for why existing rows
+  // are backfilled to now() instead of being left NULL).
+  lastReadAt DateTime?
+  channel    Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id])
 
   @@unique([channelId, userId])
   @@index([channelId])

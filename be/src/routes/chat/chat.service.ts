@@ -8,7 +8,13 @@ import {
   CloudinaryService,
 } from 'src/common/services/cloudinary.service'
 import { ChatRepository } from './chat.repo'
-import { ChannelBaseType, GetMessagesPaginatedResType, GetMessagesQueryType, MessageBaseType } from './chat.model'
+import {
+  ChannelBaseType,
+  ChannelWithUnreadType,
+  GetMessagesPaginatedResType,
+  GetMessagesQueryType,
+  MessageBaseType,
+} from './chat.model'
 
 type CurrentUser = { userId: string; role: string; tenantId: string }
 
@@ -56,9 +62,14 @@ export class ChatService {
     return this.chatRepo.createChannel(userId, name)
   }
 
-  async listChannels(): Promise<{ data: ChannelBaseType[] }> {
-    const data = await this.chatRepo.findAllChannels()
+  async listChannels(tenantId: string, userId: string): Promise<{ data: ChannelWithUnreadType[] }> {
+    const data = await this.chatRepo.findAllChannels(tenantId, userId)
     return { data }
+  }
+
+  async markChannelRead(channelId: string, userId: string): Promise<{ message: string }> {
+    await this.chatRepo.markChannelRead(channelId, userId)
+    return { message: 'Channel marked as read' }
   }
 
   // Only the channel's creator or an Admin may delete it. All other roles are

@@ -38,6 +38,12 @@ export const chatService = {
     return res.data;
   },
 
+  // POST /chat/channels/:id/read
+  markChannelRead: async (channelId: string): Promise<{ message: string }> => {
+    const res = await axiosInstance.post(`chat/channels/${channelId}/read`);
+    return res.data;
+  },
+
   // GET /chat/channels/:id/messages
   getMessages: async (
     channelId: string,

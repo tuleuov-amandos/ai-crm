@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/common/services/prisma.service'
 import { Prisma } from '../../../generated/prisma-client/client'
 import { PrismaClientKnownRequestError } from '../../../generated/prisma-client/internal/prismaNamespace'
-import { ChannelBaseType, GetMessagesQueryType, MessageBaseType } from './chat.model'
+import { ChannelBaseType, ChannelWithUnreadType, GetMessagesQueryType, MessageBaseType } from './chat.model'
 
 const channelInclude = {
   createdBy: { select: { id: true, name: true } },
@@ -32,10 +32,48 @@ export class ChatRepository {
   }
 
   // All channels are visible tenant-wide — no membership filter here.
-  findAllChannels(): Promise<ChannelBaseType[]> {
-    return this.prisma.channel.findMany({
-      orderBy: { createdAt: 'asc' },
-      include: channelInclude,
+  // unreadCount is computed separately in one aggregate query (instead of
+  // per-channel) so this stays a single extra round-trip regardless of how
+  // many channels the tenant has.
+  async findAllChannels(tenantId: string, userId: string): Promise<ChannelWithUnreadType[]> {
+    const [channels, unreadRows] = await Promise.all([
+      this.prisma.channel.findMany({
+        orderBy: { createdAt: 'asc' },
+        include: channelInclude,
+      }),
+      // $queryRaw bypasses the tenant-isolation Prisma extension (it only
+      // wraps model operations), so tenantId is filtered explicitly here.
+      // For a channel the user hasn't joined, the LEFT JOIN to ChannelMember
+      // has no row, cm.id is NULL, and the FILTER clause excludes every
+      // message — unreadCount comes out 0 rather than the channel's full
+      // history.
+      this.prisma.$queryRaw<{ channelId: string; unreadCount: bigint }[]>(Prisma.sql`
+        SELECT c.id AS "channelId",
+               COUNT(m.id) FILTER (
+                 WHERE cm.id IS NOT NULL AND m."createdAt" > COALESCE(cm."lastReadAt", cm."joinedAt")
+               ) AS "unreadCount"
+        FROM "Channel" c
+        LEFT JOIN "ChannelMember" cm ON cm."channelId" = c.id AND cm."userId" = ${userId}
+        LEFT JOIN "Message" m ON m."channelId" = c.id
+        WHERE c."tenantId" = ${tenantId}
+        GROUP BY c.id
+      `),
+    ])
+
+    const unreadByChannel = new Map(unreadRows.map((row) => [row.channelId, Number(row.unreadCount)]))
+    return channels.map((channel) => ({
+      ...channel,
+      unreadCount: unreadByChannel.get(channel.id) ?? 0,
+    }))
+  }
+
+  // Idempotent no-op if the caller isn't a member of the channel — mirrors
+  // addMember/removeMember below rather than throwing, since "mark read"
+  // failing silently is harmless and simpler for callers than a 404.
+  async markChannelRead(channelId: string, userId: string): Promise<void> {
+    await this.prisma.channelMember.updateMany({
+      where: { channelId, userId },
+      data: { lastReadAt: new Date() },
     })
   }
 

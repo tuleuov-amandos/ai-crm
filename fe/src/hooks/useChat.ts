@@ -11,6 +11,7 @@ import {
 } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { GetChannelsResType } from "@/lib/validations/chat.scheme";
 
 // ─────────────────────────────────────────
 // QUERY KEYS
@@ -64,6 +65,34 @@ export const useDeleteChannel = () => {
     },
     onError: (error: ApiError) => {
       toast.error(getApiError(error, t("deleteChannelError")));
+    },
+  });
+};
+
+// POST /chat/channels/:id/read — silent background action (triggered on
+// channel open and on receiving a new message while already viewing it), so
+// failures aren't surfaced as a toast. Zeroes unreadCount for this channel
+// locally instead of waiting on an invalidation/refetch round-trip.
+export const useMarkChannelRead = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (channelId: string) => chatService.markChannelRead(channelId),
+    onSuccess: (_data, channelId) => {
+      queryClient.setQueryData<GetChannelsResType>(
+        chatKeys.channels(),
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            data: old.data.map((channel) =>
+              channel.id === channelId
+                ? { ...channel, unreadCount: 0 }
+                : channel,
+            ),
+          };
+        },
+      );
     },
   });
 };

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Hash, Plus, Trash2, X } from "lucide-react";
 import { useMe } from "@/hooks/useAuth";
 import { useChannels, useCreateChannel, useDeleteChannel } from "@/hooks/useChat";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -145,6 +146,15 @@ export default function ChannelList({
                 >
                   {channel.name}
                 </span>
+                {channel.unreadCount > 0 && (
+                  <Badge
+                    variant="default"
+                    className="h-[18px] min-w-[18px] px-1 justify-center rounded-full border-0 shrink-0"
+                    style={{ fontSize: 10 }}
+                  >
+                    {channel.unreadCount > 99 ? "99+" : channel.unreadCount}
+                  </Badge>
+                )}
                 {canDelete(channel.createdById) && (
                   <button
                     type="button"
