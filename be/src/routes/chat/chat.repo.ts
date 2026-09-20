@@ -67,13 +67,16 @@ export class ChatRepository {
     }))
   }
 
-  // Idempotent no-op if the caller isn't a member of the channel — mirrors
-  // addMember/removeMember below rather than throwing, since "mark read"
-  // failing silently is harmless and simpler for callers than a 404.
+  // Upserts rather than updateMany: there's no explicit join flow from the UI
+  // (only a socket join for the realtime room), so most members never get a
+  // ChannelMember row via addMember. The first markChannelRead call implicitly
+  // joins the channel; joinedAt is only set on create so it isn't reset on
+  // subsequent reads.
   async markChannelRead(channelId: string, userId: string): Promise<void> {
-    await this.prisma.channelMember.updateMany({
-      where: { channelId, userId },
-      data: { lastReadAt: new Date() },
+    await this.prisma.channelMember.upsert({
+      where: { channelId_userId: { channelId, userId } },
+      create: { channelId, userId, joinedAt: new Date(), lastReadAt: new Date() },
+      update: { lastReadAt: new Date() },
     })
   }
 
