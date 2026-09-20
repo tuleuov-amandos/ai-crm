@@ -21,6 +21,7 @@ import { MessageDto } from 'src/common/dto/message.dto'
 import { ACTIVITY_ATTACHMENT_MAX_BYTES } from 'src/common/services/cloudinary.service'
 import { ChatService, CHAT_ATTACHMENTS_MAX_COUNT } from './chat.service'
 import {
+  AddChannelMembersBodyDto,
   ChannelResDto,
   CreateChannelBodyDto,
   CreateMessageBodyDto,
@@ -31,11 +32,12 @@ import {
   UploadMessageAttachmentsResDto,
 } from './chat.dto'
 
-// All roles are equal in chat (channels are created/removed by their own
-// users, Slack-style, and every channel is visible tenant-wide — there is no
-// per-channel read access control), so no @Roles guard here. The one
-// exception is DELETE /chat/channels/:id, gated in ChatService to the
-// channel's creator or an Admin.
+// All roles are equal in chat for public channels (created/removed by their
+// own users, Slack-style, visible tenant-wide, no per-channel read access
+// control), so no @Roles guard here. Exceptions, all gated in ChatService:
+// DELETE /chat/channels/:id (creator or Admin), creating a private channel
+// (Admin only), POST /chat/channels/:id/members (creator or Admin), and
+// reading/posting into a private channel at all (members only).
 @ApiTags('Chat')
 @Controller('chat/channels')
 @UseGuards(JwtAuthGuard, TenantStatusGuard)
@@ -55,7 +57,19 @@ export class ChatController {
   @ApiOkResponse({ type: ChannelResDto })
   @ZodSerializerDto(ChannelResDto)
   createChannel(@CurrentUser() user: AccessTokenPayload, @Body() body: CreateChannelBodyDto) {
-    return this.chatService.createChannel(user.userId, body.name)
+    return this.chatService.createChannel(user, body.name, body.isPrivate, body.memberIds ?? [])
+  }
+
+  // POST /chat/channels/:id/members
+  @Post(':id/members')
+  @ApiOkResponse({ type: MessageDto })
+  @ZodSerializerDto(MessageDto)
+  addChannelMembers(
+    @CurrentUser() user: AccessTokenPayload,
+    @Param('id') channelId: string,
+    @Body() body: AddChannelMembersBodyDto,
+  ) {
+    return this.chatService.addChannelMembers(channelId, body.userIds, user)
   }
 
   // DELETE /chat/channels/:id
@@ -100,7 +114,7 @@ export class ChatController {
     @Param('id') channelId: string,
     @Query() query: GetMessagesQueryDto,
   ) {
-    return this.chatService.getMessages(user.tenantId, channelId, query)
+    return this.chatService.getMessages(user.tenantId, channelId, user.userId, query)
   }
 
   // POST /chat/channels/:id/messages

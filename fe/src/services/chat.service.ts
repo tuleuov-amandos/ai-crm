@@ -15,8 +15,24 @@ export const chatService = {
   },
 
   // POST /chat/channels
-  createChannel: async (name: string): Promise<Channel> => {
-    const res = await axiosInstance.post("chat/channels", { name });
+  createChannel: async (params: {
+    name: string;
+    isPrivate?: boolean;
+    memberIds?: string[];
+  }): Promise<Channel> => {
+    const res = await axiosInstance.post("chat/channels", params);
+    return res.data;
+  },
+
+  // POST /chat/channels/:id/members
+  addChannelMembers: async (
+    channelId: string,
+    userIds: string[],
+  ): Promise<{ message: string }> => {
+    const res = await axiosInstance.post(
+      `chat/channels/${channelId}/members`,
+      { userIds },
+    );
     return res.data;
   },
 

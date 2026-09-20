@@ -737,7 +737,17 @@
       "namePlaceholder": "Channel name",
       "empty": "No channels yet",
       "deleteTitle": "Delete channel",
-      "deleteDescription": "Are you sure you want to delete \"{name}\"? All messages in this channel will be deleted permanently."
+      "deleteDescription": "Are you sure you want to delete \"{name}\"? All messages in this channel will be deleted permanently.",
+      "private": "Private",
+      "membersLabel": "Members",
+      "membersPlaceholder": "Select members",
+      "membersSelected": "{count} selected",
+      "noUsers": "No other users in this workspace",
+      "addMembersAction": "Add members",
+      "addMembersTitle": "Add members",
+      "addMembersDescription": "Add members to \"{name}\"",
+      "addMembersEmpty": "Everyone in the workspace is already a member",
+      "addMembersSubmit": "Add"
     },
     "messages": {
       "empty": "No messages yet. Say hello!",
@@ -756,7 +766,9 @@
       "sendMessageError": "Couldn't send message",
       "uploadAttachmentsError": "Couldn't upload attachments",
       "uploadAttachmentsAfterEmptyMessageError": "Message sent, but the attachments couldn't be uploaded. Please attach the files again.",
-      "connectionLost": "Connection lost, reconnecting…"
+      "connectionLost": "Connection lost, reconnecting…",
+      "addMembersSuccess": "Members added",
+      "addMembersError": "Couldn't add members"
     },
     "attachment": {
       "remove": "Remove",

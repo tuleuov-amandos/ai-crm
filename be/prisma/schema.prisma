@@ -234,6 +234,10 @@ model Channel {
   id          String          @id @default(cuid())
   tenantId    String
   name        String
+  // Defaults false so every existing channel stays tenant-wide-visible as-is.
+  // true restricts visibility/access to ChannelMember rows — see
+  // ChatRepository.findAllChannels and ChatService.getChannelForTenant.
+  isPrivate   Boolean         @default(false)
   createdById String
   createdAt   DateTime        @default(now())
   createdBy   User            @relation("ChannelCreator", fields: [createdById], references: [id])

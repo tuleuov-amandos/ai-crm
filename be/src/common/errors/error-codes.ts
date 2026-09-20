@@ -92,6 +92,12 @@ export enum ChatErrorCode {
   CHANNEL_NOT_FOUND = 'CHAT_CHANNEL_NOT_FOUND',
   /** Only the channel's creator or an Admin may delete it. */
   FORBIDDEN_DELETE_CHANNEL = 'CHAT_FORBIDDEN_DELETE_CHANNEL',
+  /** Only an Admin may create a private channel. */
+  FORBIDDEN_CREATE_PRIVATE_CHANNEL = 'CHAT_FORBIDDEN_CREATE_PRIVATE_CHANNEL',
+  /** Caller is not a member of this private channel. */
+  FORBIDDEN_PRIVATE_CHANNEL_ACCESS = 'CHAT_FORBIDDEN_PRIVATE_CHANNEL_ACCESS',
+  /** Only the channel's creator or an Admin may add members to it. */
+  FORBIDDEN_ADD_MEMBERS = 'CHAT_FORBIDDEN_ADD_MEMBERS',
   MESSAGE_NOT_FOUND = 'CHAT_MESSAGE_NOT_FOUND',
   /** No file was sent with the attachment upload request. */
   ATTACHMENT_FILE_MISSING = 'CHAT_ATTACHMENT_FILE_MISSING',

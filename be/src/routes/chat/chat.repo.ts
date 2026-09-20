@@ -17,27 +17,36 @@ const messageInclude = {
 export class ChatRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Creates the Channel and enrolls the creator as its first ChannelMember.
-  createChannel(userId: string, name: string): Promise<ChannelBaseType> {
+  // Creates the Channel and enrolls the creator plus any initial memberIds
+  // (deduped against the creator) as ChannelMember, all in one transaction.
+  createChannel(userId: string, name: string, isPrivate: boolean, memberIds: string[] = []): Promise<ChannelBaseType> {
     return this.prisma.$transaction(async (tx) => {
       const channel = await tx.channel.create({
-        data: { name, createdById: userId } as Prisma.ChannelUncheckedCreateInput,
+        data: { name, isPrivate, createdById: userId } as Prisma.ChannelUncheckedCreateInput,
         include: channelInclude,
       })
-      await tx.channelMember.create({
-        data: { channelId: channel.id, userId },
+      const initialMemberIds = [...new Set([userId, ...memberIds])]
+      await tx.channelMember.createMany({
+        data: initialMemberIds.map((id) => ({ channelId: channel.id, userId: id })),
       })
       return channel
     })
   }
 
-  // All channels are visible tenant-wide — no membership filter here.
+  // Public channels are visible tenant-wide, as before. A private channel is
+  // only included when the requesting user has a ChannelMember row for it —
+  // filtered at the query level so it's fully absent from the list rather
+  // than merely inaccessible once opened (see ChatService.getChannelForTenant
+  // for the corresponding per-channel access check).
   // unreadCount is computed separately in one aggregate query (instead of
   // per-channel) so this stays a single extra round-trip regardless of how
   // many channels the tenant has.
   async findAllChannels(tenantId: string, userId: string): Promise<ChannelWithUnreadType[]> {
     const [channels, unreadRows] = await Promise.all([
       this.prisma.channel.findMany({
+        where: {
+          OR: [{ isPrivate: false }, { isPrivate: true, members: { some: { userId } } }],
+        },
         orderBy: { createdAt: 'asc' },
         include: channelInclude,
       }),
@@ -105,6 +114,22 @@ export class ChatRepository {
   // Idempotent — leaving a channel you're not in is a no-op.
   async removeMember(channelId: string, userId: string): Promise<void> {
     await this.prisma.channelMember.deleteMany({ where: { channelId, userId } })
+  }
+
+  isMember(channelId: string, userId: string): Promise<boolean> {
+    return this.prisma.channelMember
+      .findUnique({ where: { channelId_userId: { channelId, userId } } })
+      .then((member) => member !== null)
+  }
+
+  // Idempotent bulk add — skipDuplicates covers ids already in the channel
+  // (e.g. re-adding a current member), same intent as addMember's P2002 catch.
+  async addMembers(channelId: string, userIds: string[]): Promise<void> {
+    if (userIds.length === 0) return
+    await this.prisma.channelMember.createMany({
+      data: userIds.map((userId) => ({ channelId, userId })),
+      skipDuplicates: true,
+    })
   }
 
   createMessage(channelId: string, senderId: string, content: string): Promise<MessageBaseType> {

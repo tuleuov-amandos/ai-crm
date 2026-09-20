@@ -71,7 +71,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       // Without this check any authenticated user of any tenant could join
       // `tenant_<other>_channel_<id>` just by knowing/guessing a channel id.
-      await this.chatService.getChannelForTenant(user.tenantId, channelId)
+      // For a private channel this also enforces membership, so a
+      // non-member can't join the realtime room either.
+      await this.chatService.getChannelForTenant(user.tenantId, channelId, user.userId)
     } catch (error) {
       return this.emitError(client, error)
     }
