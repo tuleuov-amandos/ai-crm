@@ -29,9 +29,18 @@ export const CreateChannelBodySchema = z
 
 export type CreateChannelBodyType = z.infer<typeof CreateChannelBodySchema>;
 
+// GET /chat/channels only — unreadCount depends on the requesting user, so it
+// isn't part of the base ChannelSchema (create/join/leave responses don't
+// have it). Mirrors be/.../chat.model.ts ChannelWithUnreadSchema.
+export const ChannelWithUnreadSchema = ChannelSchema.extend({
+  unreadCount: z.number().int().nonnegative(),
+});
+
+export type ChannelWithUnread = z.infer<typeof ChannelWithUnreadSchema>;
+
 // GET /chat/channels
 export const GetChannelsResSchema = z.object({
-  data: z.array(ChannelSchema),
+  data: z.array(ChannelWithUnreadSchema),
 });
 
 export type GetChannelsResType = z.infer<typeof GetChannelsResSchema>;

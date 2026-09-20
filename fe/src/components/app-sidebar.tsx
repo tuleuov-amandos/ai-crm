@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "./ui/badge";
 import { useLogout, useMe } from "@/hooks/useAuth";
 import { useWorkspace } from "@/hooks/useWorkspace";
+import { useChannels } from "@/hooks/useChat";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 
 const capitalize = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
@@ -91,8 +92,12 @@ export function AppSidebar() {
   const { mutate: logout } = useLogout();
   const { data: me } = useMe();
   const { data: workspace } = useWorkspace();
+  const { data: channels } = useChannels();
   const pathName = usePathname();
   const t = useTranslations("sidebar");
+
+  const totalUnread =
+    channels?.reduce((sum, channel) => sum + channel.unreadCount, 0) ?? 0;
 
   const handleLogout = () => {
     logout();
@@ -167,7 +172,16 @@ export function AppSidebar() {
                     )}
                   >
                     <Icon size={16} />
-                    <span>{t(`nav.${group.key}`)}</span>
+                    <span className="flex-1 min-w-0 truncate">{t(`nav.${group.key}`)}</span>
+                    {group.key === "chat" && totalUnread > 0 && (
+                      <Badge
+                        variant="default"
+                        className="h-[18px] min-w-[18px] px-1 justify-center rounded-full border-0 shrink-0"
+                        style={{ fontSize: 10 }}
+                      >
+                        {totalUnread > 99 ? "99+" : totalUnread}
+                      </Badge>
+                    )}
                   </Link>
                 </div>
               );

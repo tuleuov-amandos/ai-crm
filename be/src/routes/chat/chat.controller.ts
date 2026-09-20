@@ -46,8 +46,8 @@ export class ChatController {
   @Get()
   @ApiOkResponse({ type: GetChannelsResDto })
   @ZodSerializerDto(GetChannelsResDto)
-  listChannels() {
-    return this.chatService.listChannels()
+  listChannels(@CurrentUser() user: AccessTokenPayload) {
+    return this.chatService.listChannels(user.tenantId, user.userId)
   }
 
   // POST /chat/channels
@@ -80,6 +80,15 @@ export class ChatController {
   @ZodSerializerDto(MessageDto)
   leaveChannel(@CurrentUser() user: AccessTokenPayload, @Param('id') channelId: string) {
     return this.chatService.leaveChannel(channelId, user.userId)
+  }
+
+  // POST /chat/channels/:id/read — marks the channel read for the current
+  // user (ChannelMember.lastReadAt = now()), resetting its unreadCount to 0.
+  @Post(':id/read')
+  @ApiOkResponse({ type: MessageDto })
+  @ZodSerializerDto(MessageDto)
+  markChannelRead(@CurrentUser() user: AccessTokenPayload, @Param('id') channelId: string) {
+    return this.chatService.markChannelRead(channelId, user.userId)
   }
 
   // GET /chat/channels/:id/messages?page=&limit=

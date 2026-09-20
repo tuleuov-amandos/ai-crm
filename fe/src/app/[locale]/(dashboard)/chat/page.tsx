@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useChannels } from "@/hooks/useChat";
+import { useChannels, useMarkChannelRead } from "@/hooks/useChat";
 import { useChatSocket } from "@/hooks/useChatSocket";
 import ChannelList from "./_components/ChannelList";
 import MessageList from "./_components/MessageList";
@@ -14,7 +14,11 @@ export default function ChatPage() {
   const [selectedChannelId, setSelectedChannelId] = useState<string | undefined>(
     undefined,
   );
-  const { joinChannel, leaveChannel } = useChatSocket(selectedChannelId);
+  const markChannelRead = useMarkChannelRead();
+  const { joinChannel, leaveChannel } = useChatSocket(
+    selectedChannelId,
+    (channelId) => markChannelRead.mutate(channelId),
+  );
 
   // Default to the first channel once the list loads, if nothing picked yet.
   useEffect(() => {
@@ -26,7 +30,9 @@ export default function ChatPage() {
   useEffect(() => {
     if (!selectedChannelId) return;
     joinChannel(selectedChannelId);
+    markChannelRead.mutate(selectedChannelId);
     return () => leaveChannel(selectedChannelId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChannelId, joinChannel, leaveChannel]);
 
   const selectedChannel = channels?.find((c) => c.id === selectedChannelId);
