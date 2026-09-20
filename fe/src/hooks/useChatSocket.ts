@@ -37,7 +37,10 @@ export function useChatSocket(activeChannelId: string | undefined) {
       toast.dismiss(CONNECTION_TOAST_ID);
     });
 
-    socket.on("disconnect", () => {
+    socket.on("disconnect", (reason: Socket.DisconnectReason) => {
+      // "io client disconnect" means we called socket.disconnect() ourselves
+      // (e.g. unmounting on navigation) — not a real connection loss.
+      if (reason === "io client disconnect") return;
       toast.error(tRef.current("connectionLost"), { id: CONNECTION_TOAST_ID });
     });
 
