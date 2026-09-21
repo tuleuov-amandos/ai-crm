@@ -753,7 +753,11 @@
       "empty": "Пока нет сообщений. Напишите первым!",
       "loadMore": "Загрузить ещё",
       "today": "Сегодня",
-      "yesterday": "Вчера"
+      "yesterday": "Вчера",
+      "readStatus": "Прочитано: {count} из {total}",
+      "readByTitle": "Кто прочитал",
+      "read": "Прочитано",
+      "unread": "Не прочитано"
     },
     "composer": {
       "placeholder": "Написать сообщение…"

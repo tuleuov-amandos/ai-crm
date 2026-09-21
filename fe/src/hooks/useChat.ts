@@ -21,6 +21,8 @@ export const chatKeys = {
   channels: () => [...chatKeys.all, "channels"] as const,
   messages: (channelId: string) =>
     [...chatKeys.all, "channel", channelId, "messages"] as const,
+  members: (channelId: string) =>
+    [...chatKeys.all, "channel", channelId, "members"] as const,
 };
 
 const MESSAGES_PAGE_LIMIT = 30;
@@ -124,6 +126,19 @@ export const useMarkChannelRead = () => {
         },
       );
     },
+  });
+};
+
+// GET /chat/channels/:id/members — powers read receipts under own messages.
+// Kept live via the socket's "channelRead" event (see useChatSocket) instead
+// of polling, so this only needs to be as fresh as any other chat query.
+export const useChannelMembers = (channelId: string | undefined) => {
+  return useQuery({
+    queryKey: chatKeys.members(channelId ?? ""),
+    queryFn: () => chatService.getChannelMembers(channelId as string),
+    enabled: !!channelId,
+    staleTime: 15_000,
+    select: (data) => data.data,
   });
 };
 

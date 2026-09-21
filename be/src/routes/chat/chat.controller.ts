@@ -25,6 +25,7 @@ import {
   ChannelResDto,
   CreateChannelBodyDto,
   CreateMessageBodyDto,
+  GetChannelMembersResDto,
   GetChannelsResDto,
   GetMessagesPaginatedResDto,
   GetMessagesQueryDto,
@@ -102,7 +103,15 @@ export class ChatController {
   @ApiOkResponse({ type: MessageDto })
   @ZodSerializerDto(MessageDto)
   markChannelRead(@CurrentUser() user: AccessTokenPayload, @Param('id') channelId: string) {
-    return this.chatService.markChannelRead(channelId, user.userId)
+    return this.chatService.markChannelRead(user.tenantId, channelId, user.userId)
+  }
+
+  // GET /chat/channels/:id/members — powers read receipts under own messages.
+  @Get(':id/members')
+  @ApiOkResponse({ type: GetChannelMembersResDto })
+  @ZodSerializerDto(GetChannelMembersResDto)
+  getChannelMembers(@CurrentUser() user: AccessTokenPayload, @Param('id') channelId: string) {
+    return this.chatService.getChannelMembers(user.tenantId, channelId, user.userId)
   }
 
   // GET /chat/channels/:id/messages?page=&limit=

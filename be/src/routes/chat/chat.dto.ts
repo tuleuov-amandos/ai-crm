@@ -8,6 +8,7 @@ import {
   GetMessagesQuerySchema,
   GetMessagesPaginatedResSchema,
   AddChannelMembersBodySchema,
+  GetChannelMembersResSchema,
 } from './chat.model'
 
 export class CreateChannelBodyDto extends createZodDto(CreateChannelBodySchema) {}
@@ -17,6 +18,9 @@ export class AddChannelMembersBodyDto extends createZodDto(AddChannelMembersBody
 export class ChannelResDto extends createZodDto(ChannelResSchema) {}
 
 export class GetChannelsResDto extends createZodDto(GetChannelsResSchema) {}
+
+// GET /chat/channels/:id/members
+export class GetChannelMembersResDto extends createZodDto(GetChannelMembersResSchema) {}
 
 export class CreateMessageBodyDto extends createZodDto(CreateMessageBodySchema) {}
 
