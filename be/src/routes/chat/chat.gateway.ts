@@ -14,7 +14,7 @@ import { ClsService } from 'nestjs-cls'
 import { AppException, ValidationErrorCode } from 'src/common/errors'
 import { corsOriginValidator } from 'src/common/utils/cors-origin.util'
 import { WsAuthenticatedUser, WsJwtGuard } from 'src/common/guards/ws-jwt.guard'
-import { ChatService, MESSAGE_CREATED_EVENT } from './chat.service'
+import { ChannelReadEventPayload, ChatService, CHANNEL_READ_EVENT, MESSAGE_CREATED_EVENT } from './chat.service'
 import { CreateMessageBodySchema, MessageBaseType } from './chat.model'
 
 function channelRoom(tenantId: string, channelId: string) {
@@ -132,6 +132,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @OnEvent(MESSAGE_CREATED_EVENT)
   handleMessageCreated(message: MessageBaseType) {
     this.server.to(channelRoom(message.tenantId, message.channelId)).emit('newMessage', message)
+  }
+
+  // Lets everyone else currently viewing the channel update the read-receipt
+  // status under their own messages without reopening the channel.
+  @OnEvent(CHANNEL_READ_EVENT)
+  handleChannelRead({ tenantId, channelId, userId, lastReadAt }: ChannelReadEventPayload) {
+    this.server.to(channelRoom(tenantId, channelId)).emit('channelRead', { channelId, userId, lastReadAt })
   }
 
   private requireUser(client: Socket): WsAuthenticatedUser | undefined {

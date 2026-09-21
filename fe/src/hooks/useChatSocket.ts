@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/api";
 import { chatKeys } from "@/hooks/useChat";
 import {
+  GetChannelMembersResType,
   GetChannelsResType,
   GetMessagesPaginatedResType,
   Message,
@@ -123,6 +124,29 @@ export function useChatSocket(
       // for it shouldn't be able to accumulate as unread.
       markChannelReadRef.current(message.channelId);
     });
+
+    // A member (possibly on another device/tab) just marked the channel
+    // read — update their lastReadAt in the members cache so read receipts
+    // under the current user's own messages reflect it without a refetch.
+    socket.on(
+      "channelRead",
+      (payload: { channelId: string; userId: string; lastReadAt: string }) => {
+        queryClient.setQueryData<GetChannelMembersResType>(
+          chatKeys.members(payload.channelId),
+          (old) => {
+            if (!old) return old;
+            return {
+              ...old,
+              data: old.data.map((member) =>
+                member.userId === payload.userId
+                  ? { ...member, lastReadAt: payload.lastReadAt }
+                  : member,
+              ),
+            };
+          },
+        );
+      },
+    );
 
     return () => {
       socket.disconnect();

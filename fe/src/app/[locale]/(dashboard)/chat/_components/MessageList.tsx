@@ -3,14 +3,20 @@
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { useTranslations, useFormatter } from "next-intl";
 import { isToday, isYesterday, isSameDay } from "date-fns";
-import { Loader2, Paperclip } from "lucide-react";
-import { useMessages } from "@/hooks/useChat";
+import { Check, Loader2, Paperclip } from "lucide-react";
+import { useChannelMembers, useMessages } from "@/hooks/useChat";
 import { useMe } from "@/hooks/useAuth";
 import { useRelativeTime } from "@/lib/format";
 import { getAvatarColors, getInitials } from "@/lib/helper";
+import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Message } from "@/lib/validations/chat.scheme";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ChannelMember, Message } from "@/lib/validations/chat.scheme";
 
 const NEAR_BOTTOM_THRESHOLD = 80;
 const NEAR_TOP_THRESHOLD = 80;
@@ -26,6 +32,7 @@ export default function MessageList({ channelId }: MessageListProps) {
   const { data: me } = useMe();
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
     useMessages(channelId);
+  const { data: members } = useChannelMembers(channelId);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
@@ -139,6 +146,7 @@ export default function MessageList({ channelId }: MessageListProps) {
                 message={message}
                 relativeTime={relativeTime}
                 isOwn={message.senderId === me?.id}
+                members={members}
               />
             </div>
           );
@@ -152,10 +160,12 @@ function MessageRow({
   message,
   relativeTime,
   isOwn,
+  members,
 }: {
   message: Message;
   relativeTime: (date?: string | Date | null) => string;
   isOwn: boolean;
+  members: ChannelMember[] | undefined;
 }) {
   const colors = getAvatarColors(message.senderId);
 
@@ -204,9 +214,12 @@ function MessageRow({
             )}
             {attachments}
           </div>
-          <span className="text-muted-foreground mt-1" style={{ fontSize: 11 }}>
-            {relativeTime(message.createdAt)}
-          </span>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-muted-foreground" style={{ fontSize: 11 }}>
+              {relativeTime(message.createdAt)}
+            </span>
+            <ReadReceipt message={message} members={members} />
+          </div>
         </div>
       </div>
     );
@@ -246,5 +259,102 @@ function MessageRow({
         </div>
       </div>
     </div>
+  );
+}
+
+// Only ever rendered for the current user's own messages (see MessageRow
+// above) — Y is every other channel member (all of `members` except the
+// sender), X is how many of them have lastReadAt >= this message's
+// createdAt. Renders nothing when there are no other members at all, per the
+// spec (a channel where the sender is the only member shows no receipt).
+function ReadReceipt({
+  message,
+  members,
+}: {
+  message: Message;
+  members: ChannelMember[] | undefined;
+}) {
+  const t = useTranslations("chat.messages");
+
+  const otherMembers = useMemo(
+    () => (members ?? []).filter((member) => member.userId !== message.senderId),
+    [members, message.senderId],
+  );
+
+  const messageCreatedAt = useMemo(
+    () => new Date(message.createdAt).getTime(),
+    [message.createdAt],
+  );
+
+  const readByIds = useMemo(
+    () =>
+      new Set(
+        otherMembers
+          .filter(
+            (member) =>
+              member.lastReadAt !== null &&
+              new Date(member.lastReadAt).getTime() >= messageCreatedAt,
+          )
+          .map((member) => member.userId),
+      ),
+    [otherMembers, messageCreatedAt],
+  );
+
+  if (otherMembers.length === 0) return null;
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="text-muted-foreground hover:text-foreground hover:underline"
+          style={{ fontSize: 11 }}
+        >
+          {t("readStatus", { count: readByIds.size, total: otherMembers.length })}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-64 p-2">
+        <p className="text-muted-foreground px-1 pb-2" style={{ fontSize: 11, fontWeight: 500 }}>
+          {t("readByTitle")}
+        </p>
+        <div className="flex flex-col gap-0.5">
+          {otherMembers.map((member) => {
+            const isRead = readByIds.has(member.userId);
+            const colors = getAvatarColors(member.userId);
+            return (
+              <div key={member.userId} className="flex items-center gap-2 px-1 py-1">
+                <Avatar className="size-6 shrink-0">
+                  {member.avatarUrl && (
+                    <AvatarImage src={member.avatarUrl} alt={member.name} />
+                  )}
+                  <AvatarFallback
+                    className="border-0"
+                    style={{ background: colors.bg, color: colors.color, fontSize: 10, fontWeight: 600 }}
+                  >
+                    {getInitials(member.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <span
+                  className={cn(
+                    "flex-1 truncate",
+                    isRead ? "text-foreground" : "text-muted-foreground",
+                  )}
+                  style={{ fontSize: 12 }}
+                >
+                  {member.name}
+                </span>
+                {isRead ? (
+                  <Check size={14} className="text-primary shrink-0" />
+                ) : (
+                  <span className="text-muted-foreground shrink-0" style={{ fontSize: 10 }}>
+                    {t("unread")}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

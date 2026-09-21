@@ -1,6 +1,7 @@
 import { axiosInstance } from "@/lib/api";
 import {
   Channel,
+  GetChannelMembersResType,
   GetChannelsResType,
   GetMessagesParamsType,
   GetMessagesPaginatedResType,
@@ -57,6 +58,14 @@ export const chatService = {
   // POST /chat/channels/:id/read
   markChannelRead: async (channelId: string): Promise<{ message: string }> => {
     const res = await axiosInstance.post(`chat/channels/${channelId}/read`);
+    return res.data;
+  },
+
+  // GET /chat/channels/:id/members
+  getChannelMembers: async (
+    channelId: string,
+  ): Promise<GetChannelMembersResType> => {
+    const res = await axiosInstance.get(`chat/channels/${channelId}/members`);
     return res.data;
   },
 

@@ -62,6 +62,25 @@ export const GetChannelsResSchema = z.object({
 
 export type GetChannelsResType = z.infer<typeof GetChannelsResSchema>
 
+// GET /chat/channels/:id/members — plain ChannelMember rows (+ user info),
+// used by the frontend to compute each of the sender's own messages' read
+// status ("Read X of Y") and kept live via the chat gateway's `channelRead`
+// socket event (see ChatService.markChannelRead / chat.gateway.ts).
+export const ChannelMemberSchema = z.object({
+  userId: z.string(),
+  name: z.string(),
+  avatarUrl: z.string().nullable(),
+  lastReadAt: zIsoDatetime.nullable(),
+})
+
+export type ChannelMemberType = z.infer<typeof ChannelMemberSchema>
+
+export const GetChannelMembersResSchema = z.object({
+  data: z.array(ChannelMemberSchema),
+})
+
+export type GetChannelMembersResType = z.infer<typeof GetChannelMembersResSchema>
+
 // ─── MESSAGE ───────────────────────────────────────────────────────────────
 
 // `publicId` (the Cloudinary asset id) is intentionally NOT part of this

@@ -10,6 +10,7 @@ import {
 import { ChatRepository } from './chat.repo'
 import {
   ChannelBaseType,
+  ChannelMemberType,
   ChannelWithUnreadType,
   GetMessagesPaginatedResType,
   GetMessagesQueryType,
@@ -32,6 +33,19 @@ export const CHAT_ATTACHMENTS_MAX_COUNT = 5
 // push the message to everyone in the channel's room — see chat.gateway.ts
 // for why this is an event instead of a direct gateway dependency.
 export const MESSAGE_CREATED_EVENT = 'chat.message.created'
+
+// Emitted after ChannelMember.lastReadAt is durably upserted, so ChatGateway
+// can push the new value to everyone else currently looking at the channel
+// (their own message's "read X of Y" status depends on it) — same
+// event/gateway pattern as MESSAGE_CREATED_EVENT above.
+export const CHANNEL_READ_EVENT = 'chat.channel.read'
+
+export type ChannelReadEventPayload = {
+  tenantId: string
+  channelId: string
+  userId: string
+  lastReadAt: Date
+}
 
 @Injectable()
 export class ChatService {
@@ -111,9 +125,24 @@ export class ChatService {
     return { data }
   }
 
-  async markChannelRead(channelId: string, userId: string): Promise<{ message: string }> {
-    await this.chatRepo.markChannelRead(channelId, userId)
+  async markChannelRead(tenantId: string, channelId: string, userId: string): Promise<{ message: string }> {
+    const lastReadAt = await this.chatRepo.markChannelRead(channelId, userId)
+    this.eventEmitter.emit(CHANNEL_READ_EVENT, {
+      tenantId,
+      channelId,
+      userId,
+      lastReadAt,
+    } satisfies ChannelReadEventPayload)
     return { message: 'Channel marked as read' }
+  }
+
+  // GET /chat/channels/:id/members — same access check as any other channel
+  // content (private channels: members only), used by the frontend to render
+  // read receipts under the current user's own messages.
+  async getChannelMembers(tenantId: string, channelId: string, userId: string): Promise<{ data: ChannelMemberType[] }> {
+    await this.getChannelForTenant(tenantId, channelId, userId)
+    const data = await this.chatRepo.findChannelMembers(channelId)
+    return { data }
   }
 
   // Only the channel's creator or an Admin may delete it.

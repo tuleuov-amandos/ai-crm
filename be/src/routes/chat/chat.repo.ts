@@ -2,7 +2,13 @@ import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/common/services/prisma.service'
 import { Prisma } from '../../../generated/prisma-client/client'
 import { PrismaClientKnownRequestError } from '../../../generated/prisma-client/internal/prismaNamespace'
-import { ChannelBaseType, ChannelWithUnreadType, GetMessagesQueryType, MessageBaseType } from './chat.model'
+import {
+  ChannelBaseType,
+  ChannelMemberType,
+  ChannelWithUnreadType,
+  GetMessagesQueryType,
+  MessageBaseType,
+} from './chat.model'
 
 const channelInclude = {
   createdBy: { select: { id: true, name: true } },
@@ -80,13 +86,35 @@ export class ChatRepository {
   // (only a socket join for the realtime room), so most members never get a
   // ChannelMember row via addMember. The first markChannelRead call implicitly
   // joins the channel; joinedAt is only set on create so it isn't reset on
-  // subsequent reads.
-  async markChannelRead(channelId: string, userId: string): Promise<void> {
-    await this.prisma.channelMember.upsert({
+  // subsequent reads. Returns the lastReadAt it just wrote so the caller can
+  // broadcast it (see ChatService.markChannelRead / CHANNEL_READ_EVENT) —
+  // always non-null since both branches set it explicitly.
+  async markChannelRead(channelId: string, userId: string): Promise<Date> {
+    const member = await this.prisma.channelMember.upsert({
       where: { channelId_userId: { channelId, userId } },
       create: { channelId, userId, joinedAt: new Date(), lastReadAt: new Date() },
       update: { lastReadAt: new Date() },
     })
+    return member.lastReadAt
+  }
+
+  // GET /chat/channels/:id/members — every ChannelMember of the channel with
+  // enough user info for the read-receipts UI (avatar + name) plus their
+  // lastReadAt, so the frontend can compute each own message's "read X of Y".
+  findChannelMembers(channelId: string): Promise<ChannelMemberType[]> {
+    return this.prisma.channelMember
+      .findMany({
+        where: { channelId },
+        include: { user: { select: { id: true, name: true, avatarUrl: true } } },
+      })
+      .then((members) =>
+        members.map((member) => ({
+          userId: member.user.id,
+          name: member.user.name,
+          avatarUrl: member.user.avatarUrl,
+          lastReadAt: member.lastReadAt,
+        })),
+      )
   }
 
   findChannelById(channelId: string): Promise<ChannelBaseType | null> {

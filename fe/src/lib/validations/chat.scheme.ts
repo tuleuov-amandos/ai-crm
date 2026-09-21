@@ -59,6 +59,25 @@ export const GetChannelsResSchema = z.object({
 
 export type GetChannelsResType = z.infer<typeof GetChannelsResSchema>;
 
+// GET /chat/channels/:id/members — powers read receipts under own messages,
+// kept live via the socket's "channelRead" event (see useChatSocket).
+export const ChannelMemberSchema = z.object({
+  userId: z.string(),
+  name: z.string(),
+  avatarUrl: z.string().nullable(),
+  lastReadAt: z.string().nullable(),
+});
+
+export type ChannelMember = z.infer<typeof ChannelMemberSchema>;
+
+export const GetChannelMembersResSchema = z.object({
+  data: z.array(ChannelMemberSchema),
+});
+
+export type GetChannelMembersResType = z.infer<
+  typeof GetChannelMembersResSchema
+>;
+
 // ─── MESSAGE ────────────────────────────────────────────────────────────────
 export const MessageAttachmentSchema = z.object({
   id: z.string(),
