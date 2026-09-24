@@ -1294,6 +1294,8 @@
     "defaultUserName": "Нгуен Минь",
     "defaultRole": "Manager",
     "logout": "Выйти",
+    "soundOn": "Включить звук уведомлений",
+    "soundOff": "Выключить звук уведомлений",
     "nav": {
       "dashboard": "Дашборд",
       "sales": "Продажи",
