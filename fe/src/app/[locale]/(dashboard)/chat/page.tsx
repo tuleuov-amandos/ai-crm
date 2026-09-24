@@ -14,7 +14,7 @@ export default function ChatPage() {
   const [selectedChannelId, setSelectedChannelId] = useState<string | undefined>(
     undefined,
   );
-  const { joinChannel, leaveChannel, setActiveChannelId, markChannelRead } =
+  const { joinChannel, setActiveChannelId, markChannelRead } =
     useChatSocketContext();
 
   // Default to the first channel once the list loads, if nothing picked yet.
@@ -29,14 +29,14 @@ export default function ChatPage() {
     joinChannel(selectedChannelId);
     setActiveChannelId(selectedChannelId);
     markChannelRead(selectedChannelId);
+    // Don't leave the socket room here: the backend auto-joins all channels on
+    // connect so unread notifications keep arriving outside this channel/page.
     return () => {
-      leaveChannel(selectedChannelId);
       setActiveChannelId(undefined);
     };
   }, [
     selectedChannelId,
     joinChannel,
-    leaveChannel,
     setActiveChannelId,
     markChannelRead,
   ]);

@@ -37,8 +37,8 @@ const ChatSocketContext = createContext<ChatSocketContextValue | null>(null);
 /**
  * Owns the single chat socket connection for the whole dashboard (mounted in
  * the dashboard layout), so unread badges stay live on every page, not only
- * on /chat. Switching channels only emits joinChannel/leaveChannel on the
- * same connection.
+ * on /chat. Switching channels only emits joinChannel on the same
+ * connection; the socket stays in all channel rooms (backend auto-join).
  *
  * The active channel lives in a ref inside the provider, so the effect that
  * opens the connection never re-runs when it changes. When no channel is
@@ -206,6 +206,8 @@ export function ChatSocketProvider({ children }: { children: ReactNode }) {
     socketRef.current?.emit("joinChannel", channelId);
   }, []);
 
+  // Currently unused: leaving a room would cancel the backend auto-join and
+  // silence unread notifications. Kept for a possible future explicit unsubscribe.
   const leaveChannel = useCallback((channelId: string) => {
     socketRef.current?.emit("leaveChannel", channelId);
   }, []);
