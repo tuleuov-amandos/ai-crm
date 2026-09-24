@@ -52,8 +52,24 @@ import { EventEmitterModule } from '@nestjs/event-emitter'
     ThrottlerModule.forRoot({
       throttlers: [
         {
+          // Global default for every endpoint without its own @Throttle.
+          // A single SPA navigation fires 5-8 parallel GETs and a chat
+          // channel click fires ~3 more, so 10/min was exhausted within a few
+          // actions (e.g. POST /chat/channels/:id/read silently got 429).
+          // 300/min (~5 req/s) per client fits normal usage of an internal
+          // B2B CRM. Brute-force-sensitive endpoints (login, register,
+          // refresh, password change, invitations) override the same
+          // "default" throttler via @Throttle(BRUTE_FORCE_GUARD_THROTTLE)
+          // with a much stricter limit; do not raise those.
+          //
+          // SCALING NOTE: ThrottlerGuard tracks by IP. Employees behind one
+          // office NAT share this single bucket, so 300/min is per office, not
+          // per user. Proper fix (separate task): a custom ThrottlerGuard with
+          // getTracker() returning userId for authenticated requests and
+          // falling back to IP for anonymous ones. Also, the in-memory
+          // storage is per-process; multiple instances need a Redis storage.
           ttl: 60000,
-          limit: 10,
+          limit: 300,
         },
       ],
     }),
