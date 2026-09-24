@@ -20,6 +20,8 @@ import {
   Shield,
   ListTodo,
   MessageSquare,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -30,6 +32,7 @@ import { Badge } from "./ui/badge";
 import { useLogout, useMe } from "@/hooks/useAuth";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { useChannels } from "@/hooks/useChat";
+import { useChatSocketContext } from "@/hooks/useChatSocket";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 
 const capitalize = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
@@ -93,6 +96,7 @@ export function AppSidebar() {
   const { data: me } = useMe();
   const { data: workspace } = useWorkspace();
   const { data: channels } = useChannels();
+  const { soundEnabled, toggleSound } = useChatSocketContext();
   const pathName = usePathname();
   const t = useTranslations("sidebar");
 
@@ -161,11 +165,12 @@ export function AppSidebar() {
               const active = isActive(group.path);
               const Icon = group.icon!;
               return (
-                <div key={gIdx} className="px-1">
+                <div key={gIdx} className="px-1 relative">
                   <Link
                     href={group.path}
                     className={cn(
                       "flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm transition-all no-underline font-medium",
+                      group.key === "chat" && "pr-9",
                       active
                         ? "bg-[#EEEDFE] text-[#534AB7]"
                         : "text-[#495057] hover:bg-[#E9ECEF] hover:text-[#212529]"
@@ -183,6 +188,17 @@ export function AppSidebar() {
                       </Badge>
                     )}
                   </Link>
+                  {group.key === "chat" && (
+                    <button
+                      type="button"
+                      onClick={toggleSound}
+                      aria-label={t(soundEnabled ? "soundOff" : "soundOn")}
+                      title={t(soundEnabled ? "soundOff" : "soundOn")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded text-[#495057] hover:bg-[#DEE2E6] hover:text-[#212529]"
+                    >
+                      {soundEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
+                    </button>
+                  )}
                 </div>
               );
             }

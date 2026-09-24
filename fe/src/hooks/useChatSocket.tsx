@@ -5,9 +5,9 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useId,
   useMemo,
   useRef,
+  useState,
   type ReactNode,
 } from "react";
 import { io, Socket } from "socket.io-client";
@@ -15,6 +15,7 @@ import { InfiniteData, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/api";
+import { useMe } from "@/hooks/useAuth";
 import { chatKeys, useMarkChannelRead } from "@/hooks/useChat";
 import {
   GetChannelMembersResType,
@@ -25,7 +26,52 @@ import {
 
 const CONNECTION_TOAST_ID = "chat-connection-lost";
 
+const SOUND_STORAGE_KEY = "chat-sound-enabled";
+
+function readSoundEnabled(): boolean {
+  try {
+    return window.localStorage.getItem(SOUND_STORAGE_KEY) !== "false";
+  } catch {
+    return true;
+  }
+}
+
+let audioCtx: AudioContext | null = null;
+
+/** Short, soft two-note "blip" via Web Audio; silently no-ops if blocked. */
+function playNotificationSound() {
+  try {
+    const Ctx =
+      window.AudioContext ??
+      (window as unknown as { webkitAudioContext?: typeof AudioContext })
+        .webkitAudioContext;
+    if (!Ctx) return;
+    audioCtx ??= new Ctx();
+    const ctx = audioCtx;
+    // Autoplay policy: stays "suspended" until a user gesture; then this is a no-op.
+    if (ctx.state === "suspended") void ctx.resume().catch(() => {});
+    const now = ctx.currentTime;
+    [660, 880].forEach((freq, i) => {
+      const start = now + i * 0.09;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.12, start + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.12);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.13);
+    });
+  } catch {
+    // ignore: autoplay blocked or audio unavailable
+  }
+}
+
 interface ChatSocketContextValue {
+  soundEnabled: boolean;
+  toggleSound: () => void;
   joinChannel: (channelId: string) => void;
   leaveChannel: (channelId: string) => void;
   setActiveChannelId: (channelId: string | undefined) => void;
@@ -49,20 +95,41 @@ export function ChatSocketProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const t = useTranslations("chat.toasts");
   const markRead = useMarkChannelRead();
+  const { data: me } = useMe();
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const meIdRef = useRef(me?.id);
+  const soundEnabledRef = useRef(soundEnabled);
   const socketRef = useRef<Socket | null>(null);
   const activeChannelIdRef = useRef<string | undefined>(undefined);
-  // TEMP diagnostics: instance id changes on remount, render count on re-render
-  const instanceId = useId();
-  const renderCountRef = useRef(0);
-  renderCountRef.current += 1;
-  console.log("[ChatSocket] render #", renderCountRef.current, "instance:", instanceId);
   const tRef = useRef(t);
   const markReadRef = useRef(markRead.mutate);
 
   useEffect(() => {
     tRef.current = t;
     markReadRef.current = markRead.mutate;
+    meIdRef.current = me?.id;
+    soundEnabledRef.current = soundEnabled;
   });
+
+  // Read the persisted value after mount so the server render and the first
+  // client render both use the default and hydration stays consistent.
+  useEffect(() => {
+    const stored = readSoundEnabled();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time post-mount read of localStorage (SSR-safe hydration)
+    if (!stored) setSoundEnabled(false);
+  }, []);
+
+  const toggleSound = useCallback(() => {
+    setSoundEnabled((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(SOUND_STORAGE_KEY, String(next));
+      } catch {
+        // ignore unavailable storage
+      }
+      return next;
+    });
+  }, []);
 
   const markChannelRead = useCallback((channelId: string) => {
     markReadRef.current(channelId);
@@ -73,29 +140,14 @@ export function ChatSocketProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // TEMP diagnostics
-    console.log(
-      "[ChatSocket] connecting...",
-      new Date().toISOString(),
-      "provider instance:",
-      instanceId,
-    );
     const socket = io(`${API_BASE_URL}/chat`, { withCredentials: true });
     socketRef.current = socket;
 
     socket.on("connect", () => {
-      // TEMP diagnostics
-      console.log("[ChatSocket] connected", socket.id, new Date().toISOString());
       toast.dismiss(CONNECTION_TOAST_ID);
     });
 
     socket.on("disconnect", (reason: Socket.DisconnectReason) => {
-      // TEMP diagnostics
-      console.log(
-        "[ChatSocket] disconnected, reason:",
-        reason,
-        new Date().toISOString(),
-      );
       // "io client disconnect" means we called socket.disconnect() ourselves
       // (e.g. provider unmount on logout) — not a real connection loss.
       if (reason === "io client disconnect") return;
@@ -113,6 +165,15 @@ export function ChatSocketProvider({ children }: { children: ReactNode }) {
     });
 
     socket.on("newMessage", (message: Message) => {
+      const notify = () => {
+        if (
+          soundEnabledRef.current &&
+          meIdRef.current &&
+          message.senderId !== meIdRef.current
+        ) {
+          playNotificationSound();
+        }
+      };
       // A message for a channel that isn't currently open bumps that
       // channel's unread count in the channel-list cache instead of
       // touching its (unmounted) message list.
@@ -131,6 +192,7 @@ export function ChatSocketProvider({ children }: { children: ReactNode }) {
             };
           },
         );
+        notify();
         return;
       }
 
@@ -165,6 +227,7 @@ export function ChatSocketProvider({ children }: { children: ReactNode }) {
       // The user is already looking at this channel — a message arriving
       // for it shouldn't be able to accumulate as unread.
       markReadRef.current(message.channelId);
+      notify();
     });
 
     // A member (possibly on another device/tab) just marked the channel
@@ -191,15 +254,9 @@ export function ChatSocketProvider({ children }: { children: ReactNode }) {
     );
 
     return () => {
-      // TEMP diagnostics
-      console.log(
-        "[ChatSocket] effect cleanup — disconnecting",
-        new Date().toISOString(),
-      );
       socket.disconnect();
       socketRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- TEMP diagnostics: instanceId is log-only
   }, [queryClient]);
 
   const joinChannel = useCallback((channelId: string) => {
@@ -213,8 +270,22 @@ export function ChatSocketProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ joinChannel, leaveChannel, setActiveChannelId, markChannelRead }),
-    [joinChannel, leaveChannel, setActiveChannelId, markChannelRead],
+    () => ({
+      joinChannel,
+      leaveChannel,
+      setActiveChannelId,
+      markChannelRead,
+      soundEnabled,
+      toggleSound,
+    }),
+    [
+      joinChannel,
+      leaveChannel,
+      setActiveChannelId,
+      markChannelRead,
+      soundEnabled,
+      toggleSound,
+    ],
   );
 
   return (

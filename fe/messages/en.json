@@ -1294,6 +1294,8 @@
     "defaultUserName": "Nguyen Minh",
     "defaultRole": "Manager",
     "logout": "Log out",
+    "soundOn": "Turn on notification sound",
+    "soundOff": "Turn off notification sound",
     "nav": {
       "dashboard": "Dashboard",
       "sales": "Sales",
