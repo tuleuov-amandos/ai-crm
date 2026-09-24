@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useId,
   useMemo,
   useRef,
   type ReactNode,
@@ -50,6 +51,11 @@ export function ChatSocketProvider({ children }: { children: ReactNode }) {
   const markRead = useMarkChannelRead();
   const socketRef = useRef<Socket | null>(null);
   const activeChannelIdRef = useRef<string | undefined>(undefined);
+  // TEMP diagnostics: instance id changes on remount, render count on re-render
+  const instanceId = useId();
+  const renderCountRef = useRef(0);
+  renderCountRef.current += 1;
+  console.log("[ChatSocket] render #", renderCountRef.current, "instance:", instanceId);
   const tRef = useRef(t);
   const markReadRef = useRef(markRead.mutate);
 
@@ -67,14 +73,29 @@ export function ChatSocketProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // TEMP diagnostics
+    console.log(
+      "[ChatSocket] connecting...",
+      new Date().toISOString(),
+      "provider instance:",
+      instanceId,
+    );
     const socket = io(`${API_BASE_URL}/chat`, { withCredentials: true });
     socketRef.current = socket;
 
     socket.on("connect", () => {
+      // TEMP diagnostics
+      console.log("[ChatSocket] connected", socket.id, new Date().toISOString());
       toast.dismiss(CONNECTION_TOAST_ID);
     });
 
     socket.on("disconnect", (reason: Socket.DisconnectReason) => {
+      // TEMP diagnostics
+      console.log(
+        "[ChatSocket] disconnected, reason:",
+        reason,
+        new Date().toISOString(),
+      );
       // "io client disconnect" means we called socket.disconnect() ourselves
       // (e.g. provider unmount on logout) — not a real connection loss.
       if (reason === "io client disconnect") return;
@@ -170,9 +191,15 @@ export function ChatSocketProvider({ children }: { children: ReactNode }) {
     );
 
     return () => {
+      // TEMP diagnostics
+      console.log(
+        "[ChatSocket] effect cleanup — disconnecting",
+        new Date().toISOString(),
+      );
       socket.disconnect();
       socketRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- TEMP diagnostics: instanceId is log-only
   }, [queryClient]);
 
   const joinChannel = useCallback((channelId: string) => {
