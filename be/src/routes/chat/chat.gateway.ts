@@ -42,20 +42,59 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly cls: ClsService,
   ) {}
 
+  // Autojoin: right after authenticating, the socket joins the room of every
+  // channel this user can see (same list as GET /chat/channels, so private
+  // channels only appear if the user is a member). The socket connection is
+  // dashboard-wide, so live `newMessage` events (unread badges etc.) must
+  // reach it without the user opening a specific channel first.
+  // handleJoinChannel stays for explicit joins; re-joining a room the socket
+  // is already in is a no-op in Socket.IO.
+  //
+  // KNOWN LIMITATION (intentionally not handled): rooms are computed once, at
+  // connection time. If the user is added to a private channel
+  // (POST /chat/channels/:id/members) or a new public channel is created
+  // while their socket is already open, that socket is NOT subscribed to the
+  // new room until it reconnects (page reload, network drop/restore). It
+  // self-heals and is non-critical.
+  //
   // SCALING NOTE: this only broadcasts to sockets connected to *this*
-  // process. If the backend ever runs on more than one Railway instance,
-  // `server.to(room).emit(...)` will miss clients parked on other instances.
-  // At that point, wire up @socket.io/redis-adapter here (in afterInit),
-  // backed by the ioredis connection already used for BullMQ, via
+  // process, and the autojoin above only joins rooms on the instance the
+  // socket connected to. If the backend ever runs on more than one Railway
+  // instance, `server.to(room).emit(...)` will miss clients parked on other
+  // instances, and autojoin must run on whichever instance a socket
+  // (re)connects to (it does, since it runs in handleConnection). At that
+  // point, wire up @socket.io/redis-adapter here (in afterInit), backed by
+  // the ioredis connection already used for BullMQ, via
   // `server.adapter(createAdapter(pubClient, subClient))`. Not added now —
   // premature at a single instance.
-  handleConnection(client: Socket) {
+  async handleConnection(client: Socket) {
+    let user: WsAuthenticatedUser
     try {
-      client.data.user = this.wsJwtGuard.authenticate(client)
+      user = this.wsJwtGuard.authenticate(client)
+      client.data.user = user
     } catch (error) {
       this.logger.warn(`WS handshake rejected: ${error instanceof Error ? error.message : 'invalid token'}`)
       client.emit('error', { message: 'Unauthorized' })
       client.disconnect(true)
+      return
+    }
+
+    try {
+      // Like sendMessage: the tenant-isolation Prisma extension reads
+      // tenantId from CLS, which doesn't exist outside the HTTP pipeline.
+      const channels = await this.cls.run(async () => {
+        this.cls.set('tenantId', user.tenantId)
+        return (await this.chatService.listChannels(user.tenantId, user.userId)).data
+      })
+      for (const channel of channels) {
+        await client.join(channelRoom(user.tenantId, channel.id))
+      }
+    } catch (error) {
+      // Degrade, don't fail: the socket stays connected, just without
+      // pre-joined rooms (explicit joinChannel still works).
+      this.logger.warn(
+        `WS autojoin failed for user ${user.userId}: ${error instanceof Error ? error.message : 'unknown error'}`,
+      )
     }
   }
 
