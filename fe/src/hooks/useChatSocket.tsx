@@ -1,12 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  type ReactNode,
+} from "react";
 import { io, Socket } from "socket.io-client";
 import { InfiniteData, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/api";
-import { chatKeys } from "@/hooks/useChat";
+import { chatKeys, useMarkChannelRead } from "@/hooks/useChat";
 import {
   GetChannelMembersResType,
   GetChannelsResType,
@@ -16,34 +24,47 @@ import {
 
 const CONNECTION_TOAST_ID = "chat-connection-lost";
 
+interface ChatSocketContextValue {
+  joinChannel: (channelId: string) => void;
+  leaveChannel: (channelId: string) => void;
+  setActiveChannelId: (channelId: string | undefined) => void;
+  markChannelRead: (channelId: string) => void;
+}
+
+const ChatSocketContext = createContext<ChatSocketContextValue | null>(null);
+
 /**
- * One socket connection for the whole chat section (mounted once at the page
- * level), independent of which channel is currently selected — switching
- * channels only emits joinChannel/leaveChannel on the same connection.
+ * Owns the single chat socket connection for the whole dashboard (mounted in
+ * the dashboard layout), so unread badges stay live on every page, not only
+ * on /chat. Switching channels only emits joinChannel/leaveChannel on the
+ * same connection.
  *
- * `activeChannelId` is read through a ref inside the socket handler so the
- * effect that opens the connection never has to re-run when it changes.
- *
- * `markChannelRead` comes from the page via useMarkChannelRead — this is a
- * hook, not a component, so it can't call that mutation itself. It's used
- * for the active channel only, to re-mark it read when a new message arrives
- * while the user is already looking at it (otherwise that message would sit
- * as unread until the channel is reopened).
+ * The active channel lives in a ref inside the provider, so the effect that
+ * opens the connection never re-runs when it changes. When no channel is
+ * active (user is outside the chat page) every incoming message counts as
+ * unread.
  */
-export function useChatSocket(
-  activeChannelId: string | undefined,
-  markChannelRead: (channelId: string) => void,
-) {
+export function ChatSocketProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const t = useTranslations("chat.toasts");
+  const markRead = useMarkChannelRead();
   const socketRef = useRef<Socket | null>(null);
-  const activeChannelIdRef = useRef(activeChannelId);
+  const activeChannelIdRef = useRef<string | undefined>(undefined);
   const tRef = useRef(t);
-  const markChannelReadRef = useRef(markChannelRead);
+  const markReadRef = useRef(markRead.mutate);
 
-  activeChannelIdRef.current = activeChannelId;
-  tRef.current = t;
-  markChannelReadRef.current = markChannelRead;
+  useEffect(() => {
+    tRef.current = t;
+    markReadRef.current = markRead.mutate;
+  });
+
+  const markChannelRead = useCallback((channelId: string) => {
+    markReadRef.current(channelId);
+  }, []);
+
+  const setActiveChannelId = useCallback((channelId: string | undefined) => {
+    activeChannelIdRef.current = channelId;
+  }, []);
 
   useEffect(() => {
     const socket = io(`${API_BASE_URL}/chat`, { withCredentials: true });
@@ -55,7 +76,7 @@ export function useChatSocket(
 
     socket.on("disconnect", (reason: Socket.DisconnectReason) => {
       // "io client disconnect" means we called socket.disconnect() ourselves
-      // (e.g. unmounting on navigation) — not a real connection loss.
+      // (e.g. provider unmount on logout) — not a real connection loss.
       if (reason === "io client disconnect") return;
       toast.error(tRef.current("connectionLost"), { id: CONNECTION_TOAST_ID });
     });
@@ -122,7 +143,7 @@ export function useChatSocket(
 
       // The user is already looking at this channel — a message arriving
       // for it shouldn't be able to accumulate as unread.
-      markChannelReadRef.current(message.channelId);
+      markReadRef.current(message.channelId);
     });
 
     // A member (possibly on another device/tab) just marked the channel
@@ -162,5 +183,22 @@ export function useChatSocket(
     socketRef.current?.emit("leaveChannel", channelId);
   }, []);
 
-  return { joinChannel, leaveChannel };
+  const value = useMemo(
+    () => ({ joinChannel, leaveChannel, setActiveChannelId, markChannelRead }),
+    [joinChannel, leaveChannel, setActiveChannelId, markChannelRead],
+  );
+
+  return (
+    <ChatSocketContext.Provider value={value}>
+      {children}
+    </ChatSocketContext.Provider>
+  );
+}
+
+export function useChatSocketContext() {
+  const ctx = useContext(ChatSocketContext);
+  if (!ctx) {
+    throw new Error("useChatSocketContext must be used within ChatSocketProvider");
+  }
+  return ctx;
 }

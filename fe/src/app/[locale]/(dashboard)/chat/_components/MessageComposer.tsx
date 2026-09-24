@@ -29,6 +29,7 @@ export default function MessageComposer({ channelId }: MessageComposerProps) {
   const [content, setContent] = useState("");
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const isPending = sendMessage.isPending || uploadAttachments.isPending;
 
@@ -85,6 +86,10 @@ export default function MessageComposer({ channelId }: MessageComposerProps) {
       }
     } catch {
       // failure toast already shown inside the mutation hooks
+    } finally {
+      // The textarea is disabled while sending, which drops focus — restore
+      // it once it's enabled again (next frame, after the re-render).
+      requestAnimationFrame(() => textareaRef.current?.focus());
     }
   };
 
@@ -141,6 +146,7 @@ export default function MessageComposer({ channelId }: MessageComposerProps) {
         </Button>
 
         <Textarea
+          ref={textareaRef}
           value={content}
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={handleKeyDown}
