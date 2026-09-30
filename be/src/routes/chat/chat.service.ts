@@ -28,6 +28,17 @@ const HEIC_MIME_TYPES = ['image/heic', 'image/heif']
 // Not confirmed with the client — a reasonable cap, revisit if it's too low.
 export const CHAT_ATTACHMENTS_MAX_COUNT = 5
 
+// multer/busboy decode the multipart filename as latin1 by default
+// (defParamCharset), so UTF-8 names like "Инструкция.pdf" arrive as mojibake.
+// Re-decode latin1 -> utf8 only when that is lossless-looking: every char
+// <= U+00FF and the result has no U+FFFD. Names that are already proper
+// (ASCII, or Cyrillic etc. with chars > U+00FF) are returned untouched.
+export function decodeMulterFileName(name: string): string {
+  if ([...name].some((ch) => ch.charCodeAt(0) > 0xff)) return name
+  const decoded = Buffer.from(name, 'latin1').toString('utf8')
+  return decoded.includes('\uFFFD') ? name : decoded
+}
+
 // Emitted after a message is durably persisted, regardless of whether it came
 // in over REST or the chat WebSocket gateway. ChatGateway listens for this to
 // push the message to everyone in the channel's room — see chat.gateway.ts
@@ -270,7 +281,7 @@ export class ChatService {
     const attachmentRows = uploaded.map(({ url, publicId }, index) => ({
       url,
       publicId,
-      fileName: files[index].originalname,
+      fileName: decodeMulterFileName(files[index].originalname),
       mimeType: files[index].mimetype,
     }))
 
