@@ -84,6 +84,38 @@ export const ChangePasswordBodySchema = z
 
 export type ChangePasswordBodyType = z.infer<typeof ChangePasswordBodySchema>
 
+export const PASSWORD_RESET_LOCALES = ['ru', 'en'] as const
+
+export const ForgotPasswordBodySchema = z
+  .object({
+    email: z.email().max(254),
+    locale: z.enum(PASSWORD_RESET_LOCALES).default('ru'),
+  })
+  .strict()
+
+export type ForgotPasswordBodyType = z.infer<typeof ForgotPasswordBodySchema>
+
+export const ResetPasswordBodySchema = z
+  .object({
+    // 32 random bytes as base64url = 43 chars; the upper bound only keeps
+    // garbage out before it is hashed.
+    token: z.string().min(1).max(256),
+    newPassword: z.string().min(8).regex(PASSWORD_COMPLEXITY_REGEX),
+    confirmPassword: z.string().min(1),
+  })
+  .strict()
+  .superRefine(({ newPassword, confirmPassword }, ctx) => {
+    if (newPassword !== confirmPassword) {
+      ctx.addIssue({
+        code: 'custom',
+        message: ValidationErrorCode.PASSWORD_MISMATCH,
+        path: ['confirmPassword'],
+      })
+    }
+  })
+
+export type ResetPasswordBodyType = z.infer<typeof ResetPasswordBodySchema>
+
 export const RefreshTokenSchema = z.object({
   token: z.string(),
   userId: z.string(),

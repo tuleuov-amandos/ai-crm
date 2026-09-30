@@ -1,8 +1,15 @@
 import { Injectable } from '@nestjs/common'
+import { createHash, randomBytes } from 'crypto'
 import { AppException, AuthErrorCode } from 'src/common/errors'
 import { PrismaService } from 'src/common/services/prisma.service'
 import { HashingService } from 'src/common/services/hashing.service'
-import { ChangePasswordBodyType, LoginBodyType, RegisterBodyType } from './auth.model'
+import {
+  ChangePasswordBodyType,
+  ForgotPasswordBodyType,
+  LoginBodyType,
+  RegisterBodyType,
+  ResetPasswordBodyType,
+} from './auth.model'
 import slugify from 'slugify'
 import { ROLE, RoleType } from 'src/common/constants/role.constanst'
 import { SharedUserRepository } from 'src/common/repositories/shared-user.repo'
@@ -14,6 +21,8 @@ import { COOKIE_OPTIONS } from './auth.constants'
 import { RedisService } from 'src/common/services/redis.service'
 import { rootLogger } from 'src/common/logger/root-logger'
 import { EXPECTED_DOMAIN_PERMISSION_COUNT, PERMISSION_CATALOG_NOT_SEEDED } from 'src/common/casl/permission-catalog'
+import { MailService } from 'src/common/services/mail.service'
+import envConfig from 'src/common/config'
 
 // Module-level logger. During an HTTP request the pino `mixin` pulls the
 // per-request `requestId` from CLS automatically, so every line here is
@@ -21,6 +30,21 @@ import { EXPECTED_DOMAIN_PERMISSION_COUNT, PERMISSION_CATALOG_NOT_SEEDED } from 
 // are logged (ids, email, role, outcome) — never passwords, tokens, hashes or
 // whole request/profile objects.
 const log = rootLogger.child({ context: 'AuthService' })
+
+// Password reset. Only the SHA-256 of the reset token is stored, so a Redis
+// dump does not yield usable links. The raw token exists only in the email.
+const PASSWORD_RESET_TTL_SECONDS = 60 * 60
+const PASSWORD_RESET_EMAIL_COOLDOWN_SECONDS = 60
+const resetTokenKey = (tokenHash: string) => `auth:reset:${tokenHash}`
+const resetUserKey = (userId: string) => `auth:reset:user:${userId}`
+const resetCooldownKey = (emailHash: string) => `auth:reset-cooldown:${emailHash}`
+const sha256 = (value: string) => createHash('sha256').update(value).digest('hex')
+
+// Same answer whether or not the email exists, so the endpoint cannot be used
+// to enumerate accounts.
+const FORGOT_PASSWORD_RESPONSE = {
+  message: 'If an account with this email exists, we have sent password reset instructions to it',
+}
 
 @Injectable()
 export class AuthService {
@@ -31,6 +55,7 @@ export class AuthService {
     private readonly tokenService: TokenService,
     private readonly authRepository: AuthRepository,
     private readonly redisService: RedisService,
+    private readonly mailService: MailService,
   ) {}
 
   async register(body: RegisterBodyType) {
@@ -287,6 +312,138 @@ export class AuthService {
 
     log.info({ event: 'password.change', userId, outcome: 'success', revokedSessions: activeTokens.length })
     return { message: 'Password changed successfully' }
+  }
+
+  async forgotPassword({ email, locale }: ForgotPasswordBodyType) {
+    const redis = this.redisService.getClient()
+
+    // One email per address per minute. Checked before the user lookup so the
+    // pause behaves the same for known and unknown addresses. Lower-cased only
+    // for the key, so case variants of one address share the pause.
+    const cooldownSet = await redis.set(
+      resetCooldownKey(sha256(email.toLowerCase())),
+      '1',
+      'EX',
+      PASSWORD_RESET_EMAIL_COOLDOWN_SECONDS,
+      'NX',
+    )
+    if (cooldownSet !== 'OK') {
+      log.info({ event: 'password.forgot', outcome: 'cooldown' })
+      return FORGOT_PASSWORD_RESPONSE
+    }
+
+    // Same lookup as login: exact email, deactivated members excluded.
+    const user = await this.authRepository.findUserByEmail(email)
+    if (!user) {
+      log.info({ event: 'password.forgot', outcome: 'unknown_email' })
+      return FORGOT_PASSWORD_RESPONSE
+    }
+
+    if (user.password === null) {
+      this.sendPasswordResetEmailInBackground({ to: user.email, resetLink: null, locale }, user.id)
+      log.info({ event: 'password.forgot', userId: user.id, outcome: 'google_only_notice' })
+      return FORGOT_PASSWORD_RESPONSE
+    }
+
+    const token = randomBytes(32).toString('base64url')
+    const tokenHash = sha256(token)
+
+    // A new request invalidates the previous link of this user.
+    const previousHash = await redis.get(resetUserKey(user.id))
+    if (previousHash) {
+      await redis.del(resetTokenKey(previousHash))
+    }
+    await redis.set(resetTokenKey(tokenHash), user.id, 'EX', PASSWORD_RESET_TTL_SECONDS)
+    await redis.set(resetUserKey(user.id), tokenHash, 'EX', PASSWORD_RESET_TTL_SECONDS)
+
+    // Built from config only — never from request headers (Host / Origin).
+    const resetLink = `${envConfig.FRONTEND_URL.replace(/\/$/, '')}/${locale}/reset-password?token=${token}`
+    this.sendPasswordResetEmailInBackground({ to: user.email, resetLink, locale }, user.id)
+
+    log.info({ event: 'password.forgot', userId: user.id, outcome: 'reset_link_issued' })
+    return FORGOT_PASSWORD_RESPONSE
+  }
+
+  // Not awaited: waiting for the mail provider would make the response slower
+  // for existing accounts than for unknown ones and leak which emails exist.
+  private sendPasswordResetEmailInBackground(
+    args: { to: string; resetLink: string | null; locale: string },
+    userId: string,
+  ) {
+    this.mailService
+      .sendPasswordResetEmail(args)
+      .then((sent) => {
+        if (!sent) log.error({ event: 'password.forgot.mail_failed', userId })
+      })
+      .catch((err: unknown) => {
+        log.error({
+          event: 'password.forgot.mail_failed',
+          userId,
+          error: err instanceof Error ? err.message : 'unknown error',
+        })
+      })
+  }
+
+  async resetPassword({ token, newPassword }: ResetPasswordBodyType) {
+    const redis = this.redisService.getClient()
+    const tokenHash = sha256(token)
+
+    const userId = await redis.get(resetTokenKey(tokenHash))
+    if (!userId) {
+      log.warn({ event: 'password.reset', outcome: 'rejected', reason: 'token_not_found' })
+      throw this.passwordResetTokenInvalid()
+    }
+
+    // Single use: of two concurrent requests with the same token only the one
+    // whose DEL actually removed the key may continue.
+    const deleted = await redis.del(resetTokenKey(tokenHash))
+    if (deleted !== 1) {
+      log.warn({ event: 'password.reset', userId, outcome: 'rejected', reason: 'token_already_used' })
+      throw this.passwordResetTokenInvalid()
+    }
+
+    const user = await this.prismaService.user.findUnique({
+      where: { id: userId, deletedAt: null },
+      select: { id: true },
+    })
+    if (!user) {
+      log.warn({ event: 'password.reset', userId, outcome: 'rejected', reason: 'user_not_found' })
+      throw this.passwordResetTokenInvalid()
+    }
+
+    const hashedPassword = await this.hashingService.hash(newPassword)
+    await this.prismaService.$transaction([
+      this.prismaService.user.update({ where: { id: userId }, data: { password: hashedPassword } }),
+      this.prismaService.refreshToken.deleteMany({ where: { userId } }),
+    ])
+
+    // Drop the per-user pointer; if a newer link was requested meanwhile, kill
+    // that one too — the password has just been changed.
+    const currentHash = await redis.get(resetUserKey(userId))
+    if (currentHash && currentHash !== tokenHash) {
+      await redis.del(resetTokenKey(currentHash))
+    }
+    await redis.del(resetUserKey(userId))
+
+    // Sign out everywhere, same as changePassword. SessionRevocationService is
+    // deliberately NOT used: its denylist covers the whole userId for the
+    // access-token lifetime and would also reject the token issued at the next
+    // login. Old access tokens expire on their own (up to 15 minutes).
+    const activeTokens = await this.redisService.getSetMembers(`auth:refresh:user:${userId}`)
+    await Promise.all(activeTokens.map((t) => this.redisService.delete(`auth:refresh:${t}`)))
+    await this.redisService.delete(`auth:refresh:user:${userId}`)
+
+    log.info({ event: 'password.reset', userId, outcome: 'success', revokedSessions: activeTokens.length })
+    return { message: 'Password has been reset successfully' }
+  }
+
+  // 400, not 401: a 401 would make the frontend axios interceptor try a token
+  // refresh and redirect to /login.
+  private passwordResetTokenInvalid() {
+    return AppException.badRequest(
+      AuthErrorCode.PASSWORD_RESET_TOKEN_INVALID,
+      'Password reset link is invalid or has expired',
+    )
   }
 
   async validateGoogleUser(profile: {

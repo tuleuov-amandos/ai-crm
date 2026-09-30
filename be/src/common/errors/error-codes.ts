@@ -20,6 +20,8 @@ export enum AuthErrorCode {
   OAUTH_NO_PASSWORD = 'AUTH_OAUTH_NO_PASSWORD',
   /** New password is identical to the current one. */
   PASSWORD_SAME = 'AUTH_PASSWORD_SAME',
+  /** Password reset token is unknown, expired or already used. */
+  PASSWORD_RESET_TOKEN_INVALID = 'AUTH_PASSWORD_RESET_TOKEN_INVALID',
 }
 
 export enum DealErrorCode {
