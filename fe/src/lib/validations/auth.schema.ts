@@ -53,6 +53,30 @@ export const LoginBodySchema = UserSchema.pick({
 
 export type LoginBodyType = z.infer<typeof LoginBodySchema>;
 
+export const ForgotPasswordBodySchema = UserSchema.pick({
+  email: true,
+}).strict();
+
+export type ForgotPasswordBodyType = z.infer<typeof ForgotPasswordBodySchema>;
+
+// Форма сброса пароля; token берётся из ?token= и в форму не входит.
+export const ResetPasswordFormSchema = z.object({
+  newPassword: UserSchema.shape.password,
+  confirmPassword: z.string().min(8, "confirmPasswordMin"),
+}).strict().superRefine(({ newPassword, confirmPassword }, ctx) => {
+  if (newPassword !== confirmPassword) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'passwordMismatch',
+      path: ["confirmPassword"],
+    })
+  }
+});
+
+export type ResetPasswordFormType = z.infer<typeof ResetPasswordFormSchema>;
+
+export type ResetPasswordBodyType = ResetPasswordFormType & { token: string };
+
 export const LoginResSchema = z.object({
   refreshToken: z.string(),
   accessToken: z.string(),

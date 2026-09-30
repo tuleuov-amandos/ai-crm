@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
+import { Link as LocaleLink } from "@/i18n/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -143,13 +144,13 @@ const LoginPage = () => {
                     >
                       {tc("passwordLabel")}
                     </Label>
-                    <button
-                      type="button"
+                    <LocaleLink
+                      href="/forgot-password"
                       className="text-primary hover:underline underline-offset-2 transition-colors"
                       style={{ fontSize: 12, fontWeight: 400 }}
                     >
                       {t("forgotPassword")}
-                    </button>
+                    </LocaleLink>
                   </div>
                   <div className="relative">
                     <Input

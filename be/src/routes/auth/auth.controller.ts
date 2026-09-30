@@ -1,8 +1,15 @@
-import { Body, Controller, Get, Patch, Post, UseGuards, Req, Res } from '@nestjs/common'
+import { Body, Controller, Get, HttpCode, HttpStatus, Patch, Post, UseGuards, Req, Res } from '@nestjs/common'
 import { ApiTags, ApiOkResponse } from '@nestjs/swagger'
 import { Response, Request } from 'express'
 import { ZodSerializerDto } from 'nestjs-zod'
-import { ChangePasswordBodyDto, LoginBodyDto, RegisterBodyDto, RegisterResDto } from './auth.dto'
+import {
+  ChangePasswordBodyDto,
+  ForgotPasswordBodyDto,
+  LoginBodyDto,
+  RegisterBodyDto,
+  RegisterResDto,
+  ResetPasswordBodyDto,
+} from './auth.dto'
 import { AuthService } from './auth.service'
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard'
 import { CurrentUser } from 'src/common/decorators/current-user.decorator'
@@ -104,6 +111,26 @@ export class AuthController {
   @ZodSerializerDto(MessageDto)
   changePassword(@Body() body: ChangePasswordBodyDto, @CurrentUser() user: AccessTokenPayload) {
     return this.authService.changePassword(user.userId, body)
+  }
+
+  // Public (no JwtAuthGuard). Always 200 with the same body, whether or not
+  // the email belongs to an account.
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @Throttle(BRUTE_FORCE_GUARD_THROTTLE)
+  @ApiOkResponse({ type: MessageDto })
+  @ZodSerializerDto(MessageDto)
+  forgotPassword(@Body() body: ForgotPasswordBodyDto) {
+    return this.authService.forgotPassword(body)
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @Throttle(BRUTE_FORCE_GUARD_THROTTLE)
+  @ApiOkResponse({ type: MessageDto })
+  @ZodSerializerDto(MessageDto)
+  resetPassword(@Body() body: ResetPasswordBodyDto) {
+    return this.authService.resetPassword(body)
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

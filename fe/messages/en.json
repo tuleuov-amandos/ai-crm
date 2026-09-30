@@ -47,7 +47,10 @@
       "loginError": "Sign-in failed",
       "logoutSuccess": "Signed out",
       "registerSuccess": "Registration complete. Please sign in.",
-      "registerError": "Registration failed"
+      "registerError": "Registration failed",
+      "forgotPasswordError": "Couldn't send the request. Please try again.",
+      "resetPasswordSuccess": "Password changed. Sign in with your new password.",
+      "resetPasswordError": "Couldn't change the password"
     },
     "shared": {
       "emailLabel": "Email",
@@ -81,6 +84,30 @@
       "errorEmailInvalid": "Invalid email address.",
       "mockSsoConnecting": "[Mock SSO] Detected domain \"{domain}\". Connecting to Okta…",
       "mockSsoSuccess": "SSO sign-in successful! (This is a mock UI flow)"
+    },
+    "forgotPassword": {
+      "title": "Reset your password",
+      "subtitle": "Enter your account email and we'll send you a password reset link",
+      "submit": "Send reset link",
+      "submitting": "Sending…",
+      "sentTitle": "Check your email",
+      "sentDescription": "If an account with this email exists, we've sent it an email with instructions. The link is valid for 1 hour. Didn't get it? Check your spam folder.",
+      "backToLogin": "Back to sign-in"
+    },
+    "resetPassword": {
+      "title": "Set a new password",
+      "subtitle": "Choose a new password for your account",
+      "newPasswordLabel": "New password",
+      "confirmPasswordLabel": "Confirm password",
+      "passwordHint": "At least 8 characters, with uppercase and lowercase letters, a number, and a special character (@$!%*?&).",
+      "passwordShow": "Show password",
+      "passwordHide": "Hide password",
+      "submit": "Save password",
+      "submitting": "Saving…",
+      "invalidTitle": "Link is no longer valid",
+      "invalidDescription": "This link has expired or has already been used. Request a new password reset link.",
+      "requestNewLink": "Request a new link",
+      "backToLogin": "Back to sign-in"
     },
     "register": {
       "title": "Create your workspace",
@@ -1624,6 +1651,7 @@
     "VALIDATION_AT_LEAST_ONE_FIELD": "Change at least one field.",
     "AUTH_OAUTH_NO_PASSWORD": "This account signs in with Google — its password can't be changed.",
     "AUTH_PASSWORD_SAME": "New password must differ from the current one.",
+    "AUTH_PASSWORD_RESET_TOKEN_INVALID": "This password reset link is invalid or has expired. Please request a new one.",
     "USER_AVATAR_INVALID_TYPE": "Only JPG, PNG or WebP images are allowed.",
     "USER_AVATAR_TOO_LARGE": "The avatar file is too large (2 MB max).",
     "USER_AVATAR_FILE_MISSING": "No file was selected.",
