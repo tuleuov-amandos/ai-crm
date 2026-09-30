@@ -20,6 +20,15 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      // Ссылка сброса пароля несёт токен в ?token=, поэтому эта страница не
+      // отдаёт Referer вообще. Идёт после общего правила: при совпадении
+      // ключа Next.js применяет последнее.
+      ...["/reset-password", "/:locale(ru|en)/reset-password"].map(
+        (source) => ({
+          source,
+          headers: [{ key: "Referrer-Policy", value: "no-referrer" }],
+        }),
+      ),
     ];
   },
 };
