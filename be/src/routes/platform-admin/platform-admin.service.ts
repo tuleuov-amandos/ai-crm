@@ -63,8 +63,8 @@ export class PlatformAdminService {
     const tenants = await this.prisma.tenant.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
-        users: { where: { role: { name: 'ADMIN' } }, take: 1, select: { name: true, email: true } },
-        _count: { select: { users: true, contacts: true, deals: true } },
+        users: { where: { role: { name: 'ADMIN' }, deletedAt: null }, take: 1, select: { name: true, email: true } },
+        _count: { select: { users: { where: { deletedAt: null } }, contacts: true, deals: true } },
       },
     })
 
@@ -88,10 +88,11 @@ export class PlatformAdminService {
       where: { id: tenantId },
       include: {
         users: {
+          where: { deletedAt: null },
           select: { id: true, name: true, email: true, createdAt: true, role: { select: { name: true } } },
           orderBy: { createdAt: 'asc' },
         },
-        _count: { select: { users: true, contacts: true, deals: true } },
+        _count: { select: { users: { where: { deletedAt: null } }, contacts: true, deals: true } },
       },
     })
     if (!tenant) {

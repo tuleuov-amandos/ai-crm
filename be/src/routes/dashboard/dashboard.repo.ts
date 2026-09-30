@@ -35,7 +35,7 @@ export class DashboardRepository {
 
   findUsers(tenantId: string) {
     return this.prisma.user.findMany({
-      where: { tenantId },
+      where: { tenantId, deletedAt: null },
       select: { id: true, name: true },
     })
   }

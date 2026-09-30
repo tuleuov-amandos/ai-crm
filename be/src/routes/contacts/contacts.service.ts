@@ -209,7 +209,7 @@ export class ContactsService {
     const allTenantUsers = await (
       this.contactRepository as unknown as { prismaService: PrismaService }
     ).prismaService.user.findMany({
-      where: { tenantId },
+      where: { tenantId, deletedAt: null },
     })
     const userMap = new Map<string, string>(allTenantUsers.map((u) => [u.email.toLowerCase(), u.id]))
 
