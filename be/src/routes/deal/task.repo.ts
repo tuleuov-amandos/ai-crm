@@ -57,7 +57,7 @@ export class TaskRepository {
   // Verify a candidate assignee belongs to the same tenant as the task
   findAssigneeInTenant(tenantId: string, userId: string) {
     return this.prismaService.user.findFirst({
-      where: { id: userId, tenantId },
+      where: { id: userId, tenantId, deletedAt: null },
     })
   }
 }

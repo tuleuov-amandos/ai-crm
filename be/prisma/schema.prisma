@@ -52,6 +52,9 @@ model User {
   updatedAt     DateTime       @updatedAt
   password      String?
   avatarUrl     String?
+  // Soft delete: set when an admin removes the member. The row is kept so the
+  // member's messages, contacts, activities and tasks keep a valid author/owner.
+  deletedAt     DateTime?
   accounts      Account[]
   activities    Activity[]
   ownedContacts Contact[]      @relation("ContactOwner")
@@ -69,6 +72,7 @@ model User {
 
   @@index([tenantId])
   @@index([roleId])
+  @@index([tenantId, deletedAt])
 }
 
 model Role {

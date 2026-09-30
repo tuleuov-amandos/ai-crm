@@ -103,7 +103,7 @@ export class ContactsRepository {
   // Find User by email to assign as Owner
   findUserByEmail(email: string) {
     return this.prismaService.user.findFirst({
-      where: { email },
+      where: { email, deletedAt: null },
     })
   }
 

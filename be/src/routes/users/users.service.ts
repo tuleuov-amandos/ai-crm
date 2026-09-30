@@ -2,8 +2,18 @@ import { Injectable } from '@nestjs/common'
 import { AppException, RoleErrorCode, UserErrorCode } from 'src/common/errors'
 import { PrismaService } from 'src/common/services/prisma.service'
 import { RedisService } from 'src/common/services/redis.service'
+import { SessionRevocationService } from 'src/common/services/session-revocation.service'
 import { AVATAR_ALLOWED_MIME, AVATAR_MAX_BYTES, CloudinaryService } from 'src/common/services/cloudinary.service'
+import { rootLogger } from 'src/common/logger/root-logger'
+import { AuditLogsService } from '../audit-logs/audit-logs.service'
 import { UpdateUserType, UpdateMeType } from './users.dto'
+
+const log = rootLogger.child({ context: 'UsersService' })
+
+// Replaces a deactivated member's email: frees the address for a new invitation
+// and makes the old credentials unusable. `.invalid` is a reserved TLD (RFC 2606)
+// and never receives mail.
+export const deletedUserEmail = (userId: string) => `deleted+${userId}@deleted.invalid`
 
 @Injectable()
 export class UsersService {
@@ -11,6 +21,8 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly redisService: RedisService,
     private readonly cloudinary: CloudinaryService,
+    private readonly sessionRevocation: SessionRevocationService,
+    private readonly auditLogsService: AuditLogsService,
   ) {}
 
   private toProfile(user: {
@@ -33,7 +45,7 @@ export class UsersService {
 
   async getMe(userId: string) {
     const user = await this.prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: userId, deletedAt: null },
       include: { role: true },
     })
     if (!user) {
@@ -83,7 +95,7 @@ export class UsersService {
 
   async getUsersByTenant(tenantId: string) {
     const users = await this.prisma.user.findMany({
-      where: { tenantId },
+      where: { tenantId, deletedAt: null },
       include: { role: true },
       orderBy: { name: 'asc' },
     })
@@ -97,7 +109,7 @@ export class UsersService {
 
   async updateUser(id: string, body: UpdateUserType, tenantId: string, currentUserId: string) {
     const user = await this.prisma.user.findFirst({
-      where: { id, tenantId },
+      where: { id, tenantId, deletedAt: null },
       include: { role: true },
     })
     if (!user) {
@@ -137,13 +149,16 @@ export class UsersService {
     }
   }
 
+  // Soft delete (deactivation). A hard delete is not possible: the member's
+  // messages, channels, contacts and activities reference User with
+  // ON DELETE RESTRICT, so the row is kept and only access is taken away.
   async deleteUser(id: string, tenantId: string, currentUserId: string) {
     if (id === currentUserId) {
       throw AppException.badRequest(UserErrorCode.CANNOT_REMOVE_SELF, 'You cannot remove yourself from the workspace')
     }
 
     const user = await this.prisma.user.findFirst({
-      where: { id, tenantId },
+      where: { id, tenantId, deletedAt: null },
     })
     if (!user) {
       throw AppException.notFound(UserErrorCode.MEMBER_NOT_FOUND, 'Member not found')
@@ -159,9 +174,55 @@ export class UsersService {
       )
     }
 
-    return this.prisma.user.delete({
-      where: { id },
+    const deletedAt = new Date()
+    const tombstoneEmail = deletedUserEmail(id)
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id },
+        data: { deletedAt, email: tombstoneEmail },
+      })
+      await tx.refreshToken.deleteMany({ where: { userId: id } })
+      await tx.account.deleteMany({ where: { userId: id } })
+      await tx.channelMember.deleteMany({ where: { userId: id } })
     })
+
+    log.info({
+      event: 'member.deactivated',
+      tenantId,
+      userId: id,
+      originalEmail: user.email,
+      deletedBy: currentUserId,
+    })
+
+    // The member is already deactivated in the DB at this point; a Redis or
+    // audit-log failure must not turn that into an error response. Without the
+    // denylist the old access token lives until it expires, but refresh is
+    // still refused (AuthService.refreshToken checks deletedAt).
+    try {
+      const { revokedSessions } = await this.sessionRevocation.revokeUser(id)
+      log.info({ event: 'member.sessions_revoked', tenantId, userId: id, revokedSessions })
+    } catch (error) {
+      log.error({ event: 'member.sessions_revoke_failed', tenantId, userId: id, err: error })
+    }
+
+    try {
+      await this.auditLogsService.logAction({
+        tenantId,
+        userId: currentUserId,
+        action: 'DELETE',
+        targetType: 'USER',
+        targetId: id,
+        targetName: user.name,
+        changes: {
+          email: { old: user.email, new: tombstoneEmail },
+          deletedAt: { old: null, new: deletedAt.toISOString() },
+        },
+      })
+    } catch (error) {
+      log.error({ event: 'member.audit_log_failed', tenantId, userId: id, err: error })
+    }
+
+    return { message: 'Member removed successfully' }
   }
 
   // Get all roles along with assigned permissions of tenant

@@ -153,6 +153,18 @@ export class AuthService {
     await this.redisService.delete(`auth:refresh:${refreshToken}`)
     await this.redisService.removeFromSet(`auth:refresh:user:${userId}`, refreshToken)
 
+    // Deactivation revokes the member's refresh tokens in Redis, but not every
+    // issued token is indexed per user (see InvitationsService.acceptInvitation),
+    // so the DB is the source of truth here.
+    const activeUser = await this.prismaService.user.findUnique({
+      where: { id: userId, deletedAt: null },
+      select: { id: true },
+    })
+    if (!activeUser) {
+      log.warn({ event: 'refresh.failed', userId, reason: 'user_deactivated' })
+      throw AppException.unauthorized(AuthErrorCode.REFRESH_TOKEN_INVALID, 'Refresh token is invalid or has expired')
+    }
+
     const tokens = await this.generateTokens({
       userId,
       role: storedToken.role,
@@ -175,7 +187,7 @@ export class AuthService {
 
   async getProfile(userId: string) {
     const user = await this.prismaService.user.findUnique({
-      where: { id: userId },
+      where: { id: userId, deletedAt: null },
       include: { role: true, tenant: { select: { status: true } } },
     })
     if (!user) {
@@ -303,6 +315,11 @@ export class AuthService {
       include: { user: { include: { role: true } } },
     })
     if (account) {
+      // Deactivation deletes the member's Account rows, so this is defensive.
+      if (account.user.deletedAt) {
+        log.warn({ event: 'google.login', email, userId: account.user.id, outcome: 'rejected_deactivated' })
+        throw AppException.unauthorized(AuthErrorCode.INVALID_CREDENTIALS, 'Incorrect email or password')
+      }
       log.info({
         event: 'google.login',
         email,

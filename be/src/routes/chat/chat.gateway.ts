@@ -70,7 +70,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleConnection(client: Socket) {
     let user: WsAuthenticatedUser
     try {
-      user = this.wsJwtGuard.authenticate(client)
+      user = await this.wsJwtGuard.authenticate(client)
       client.data.user = user
     } catch (error) {
       this.logger.warn(`WS handshake rejected: ${error instanceof Error ? error.message : 'invalid token'}`)

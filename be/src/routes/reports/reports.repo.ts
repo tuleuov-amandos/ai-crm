@@ -52,6 +52,7 @@ export class ReportsRepository {
     return this.prisma.user.findMany({
       where: {
         ...userFilter,
+        deletedAt: null,
       },
       select: { id: true, name: true, role: true },
     })

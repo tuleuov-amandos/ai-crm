@@ -54,6 +54,10 @@ describe('AuthService', () => {
     compare: jest.fn(),
   }
 
+  const mockTokenService = {
+    verifyRefreshToken: jest.fn(),
+  }
+
   const mockRedisService = {
     set: jest.fn(),
     get: jest.fn(),
@@ -72,7 +76,7 @@ describe('AuthService', () => {
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: HashingService, useValue: mockHashingService },
         { provide: SharedUserRepository, useValue: {} },
-        { provide: TokenService, useValue: {} },
+        { provide: TokenService, useValue: mockTokenService },
         { provide: AuthRepository, useValue: {} },
         { provide: RedisService, useValue: mockRedisService },
       ],
@@ -102,6 +106,19 @@ describe('AuthService', () => {
       expect(result).toEqual(expect.objectContaining({ id: 'user-1', role: 'ADMIN' }))
       expect(mockPrismaService.user.findUnique).not.toHaveBeenCalled()
       expect(mockPrismaService.account.create).not.toHaveBeenCalled()
+    })
+
+    it('rejects a linked Google account whose member was deactivated', async () => {
+      mockPrismaService.account.findUnique.mockResolvedValue({
+        user: { id: 'user-1', role: { name: 'SALES_REP' }, deletedAt: new Date() },
+      })
+
+      await expectAppError(
+        service.validateGoogleUser(googleProfile),
+        AuthErrorCode.INVALID_CREDENTIALS,
+        HttpStatus.UNAUTHORIZED,
+      )
+      expect(mockPrismaService.user.findUnique).not.toHaveBeenCalled()
     })
 
     it('rejects and does NOT auto-link when the email matches an existing password user with no Google account', async () => {
@@ -162,6 +179,28 @@ describe('AuthService', () => {
           }),
         }),
       )
+    })
+  })
+
+  describe('refreshToken', () => {
+    it('refuses to mint tokens for a deactivated member even if the token is still in the store', async () => {
+      mockTokenService.verifyRefreshToken.mockResolvedValue({ userId: 'user-1' })
+      mockRedisService.get.mockResolvedValue({ userId: 'user-1', role: 'SALES_REP', tenantId: 'tenant-1' })
+      // findUnique filters on deletedAt: null, so a deactivated member is not returned.
+      mockPrismaService.user.findUnique.mockResolvedValue(null)
+
+      await expectAppError(
+        service.refreshToken('refresh-token', {} as never),
+        AuthErrorCode.REFRESH_TOKEN_INVALID,
+        HttpStatus.UNAUTHORIZED,
+      )
+      expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'user-1', deletedAt: null },
+        select: { id: true },
+      })
+      // The presented token is consumed either way.
+      expect(mockRedisService.delete).toHaveBeenCalledWith('auth:refresh:refresh-token')
+      expect(mockRedisService.set).not.toHaveBeenCalled()
     })
   })
 

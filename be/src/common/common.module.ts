@@ -6,6 +6,7 @@ import { HashingService } from './services/hashing.service'
 import { SharedUserRepository } from './repositories/shared-user.repo'
 import { JwtModule } from '@nestjs/jwt'
 import { RedisService } from './services/redis.service'
+import { SessionRevocationService } from './services/session-revocation.service'
 import { MailService } from './services/mail.service'
 import { CloudinaryService } from './services/cloudinary.service'
 import { ClsModule } from 'nestjs-cls'
@@ -18,6 +19,7 @@ const sharedProviders = [
   HashingService,
   SharedUserRepository,
   RedisService,
+  SessionRevocationService,
   MailService,
   CloudinaryService,
   CaslAbilityFactory, // Register CaslAbilityFactory here
