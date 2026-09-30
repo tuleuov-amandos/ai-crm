@@ -34,6 +34,16 @@ import { resolveRoleDescription } from "@/lib/roles";
 type MemberRole   = string;
 type MemberStatus = "active" | "pending";
 
+// Raw role values as returned by the backend (formatRoleDisplayName is for display only)
+const ROLE = { ADMIN: "ADMIN", MANAGER: "MANAGER", SALES_REP: "SALES_REP" } as const;
+
+// roleFilter dropdown value -> raw role
+const ROLE_FILTER_TO_ROLE: Record<string, string> = {
+  admin: ROLE.ADMIN,
+  manager: ROLE.MANAGER,
+  salesrep: ROLE.SALES_REP,
+};
+
 const formatRoleDisplayName = (name: string) => {
   if (name === "ADMIN") return "Admin";
   if (name === "MANAGER") return "Manager";
@@ -284,11 +294,7 @@ export function MembersRoles() {
   const filtered = membersList.filter((m) => {
     const q = search.toLowerCase();
     const matchSearch = !q || m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q);
-    const matchRole   =
-      roleFilter === "all"       ? true :
-      roleFilter === "admin"     ? m.role === "Admin" :
-      roleFilter === "manager"    ? m.role === "Manager" :
-      roleFilter === "salesrep"  ? m.role === "Sales Rep" : true;
+    const matchRole   = roleFilter === "all" || m.role === ROLE_FILTER_TO_ROLE[roleFilter];
     return matchSearch && matchRole;
   });
 
@@ -342,9 +348,9 @@ export function MembersRoles() {
         <div className="grid grid-cols-4 gap-4">
           {[
             { label: t("statTotalMembers"), value: `${membersList.length} / 10`, note: t("statFreePlanLimit") },
-            { label: "Admin",               value: `${membersList.filter(m => m.role === "Admin").length}`, note: t("statAdminNote") },
-            { label: "Manager",             value: `${membersList.filter(m => m.role === "Manager").length}`, note: t("statManagerNote") },
-            { label: "Sales Rep",           value: `${membersList.filter(m => m.role === "Sales Rep").length}`, note: t("statSalesNote") },
+            { label: "Admin",               value: `${membersList.filter(m => m.role === ROLE.ADMIN).length}`, note: t("statAdminNote") },
+            { label: "Manager",             value: `${membersList.filter(m => m.role === ROLE.MANAGER).length}`, note: t("statManagerNote") },
+            { label: "Sales Rep",           value: `${membersList.filter(m => m.role === ROLE.SALES_REP).length}`, note: t("statSalesNote") },
           ].map((s) => (
             <div key={s.label} className="bg-white dark:bg-card rounded-[10px] border border-[#E8E7E2] dark:border-border px-5 py-4">
               <p className="text-[#6B6B67] dark:text-muted-foreground mb-1.5" style={{ fontSize: 12 }}>{s.label}</p>
