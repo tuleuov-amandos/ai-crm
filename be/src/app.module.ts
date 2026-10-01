@@ -26,7 +26,8 @@ import { AuditLogsModule } from './routes/audit-logs/audit-logs.module'
 import { HealthModule } from './routes/health/health.module'
 import { InternalModule } from './routes/internal/internal.module'
 import { PlatformAdminModule } from './routes/platform-admin/platform-admin.module'
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
+import { ThrottlerModule } from '@nestjs/throttler'
+import { ClientIpThrottlerGuard } from './common/guards/client-ip-throttler.guard'
 import { EventEmitterModule } from '@nestjs/event-emitter'
 @Module({
   imports: [
@@ -89,7 +90,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter'
     },
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: ClientIpThrottlerGuard,
     },
   ],
 })
