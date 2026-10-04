@@ -1,14 +1,36 @@
+import { ExecutionContext } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
+import { Throttle } from '@nestjs/throttler'
 import jwt from 'jsonwebtoken'
 import envConfig from 'src/common/config'
 import { ClientIpThrottlerGuard } from './client-ip-throttler.guard'
 
 // getTracker is protected on ThrottlerGuard; expose it for direct testing.
 class TestableGuard extends ClientIpThrottlerGuard {
-  track(req: Record<string, any>) {
-    return this.getTracker(req)
+  track(req: Record<string, any>, context?: ExecutionContext) {
+    return this.getTracker(req, context)
   }
 }
+
+const BRUTE_FORCE_GUARD_THROTTLE = { default: { limit: 5, ttl: 60000 } }
+
+class SampleController {
+  @Throttle(BRUTE_FORCE_GUARD_THROTTLE)
+  strict() {}
+
+  relaxed() {}
+}
+
+@Throttle(BRUTE_FORCE_GUARD_THROTTLE)
+class StrictClassController {
+  inherited() {}
+}
+
+const contextFor = (cls: new () => object, handler: string) =>
+  ({
+    getClass: () => cls,
+    getHandler: () => (cls.prototype as Record<string, () => void>)[handler],
+  }) as unknown as ExecutionContext
 
 describe('ClientIpThrottlerGuard.getTracker', () => {
   const guard = new TestableGuard({ throttlers: [{ ttl: 60000, limit: 300 }] }, {} as never, new Reflector())
@@ -93,6 +115,41 @@ describe('ClientIpThrottlerGuard.getTracker', () => {
     it('falls back to the client IP when a signed token has no userId', async () => {
       const token = jwt.sign({ role: 'ADMIN' }, envConfig.ACCESS_TOKEN_SECRET, { algorithm: 'HS256' })
       await expect(guard.track(reqWith(undefined, '1.2.3.4', token))).resolves.toBe('ip:1.2.3.4')
+    })
+  })
+
+  describe('routes with an explicit @Throttle override', () => {
+    const xff = '37.151.61.22, 89.222.123.193'
+    const guardWithOptions = async () => {
+      const g = new TestableGuard({ throttlers: [{ ttl: 60000, limit: 300 }] }, {} as never, new Reflector())
+      await g.onModuleInit()
+      return g
+    }
+
+    it('keeps the IP tracker for a valid token on a @Throttle handler', async () => {
+      const g = await guardWithOptions()
+      await expect(g.track(reqWith(xff, '10.0.0.9', sign()), contextFor(SampleController, 'strict'))).resolves.toBe(
+        'ip:37.151.61.22',
+      )
+    })
+
+    it('keeps the IP tracker for a valid token on a class-level @Throttle', async () => {
+      const g = await guardWithOptions()
+      await expect(
+        g.track(reqWith(xff, '10.0.0.9', sign()), contextFor(StrictClassController, 'inherited')),
+      ).resolves.toBe('ip:37.151.61.22')
+    })
+
+    it('uses the user tracker for a valid token on a handler without @Throttle', async () => {
+      const g = await guardWithOptions()
+      await expect(g.track(reqWith(xff, '10.0.0.9', sign()), contextFor(SampleController, 'relaxed'))).resolves.toBe(
+        'user:user-1',
+      )
+    })
+
+    it('uses the IP tracker without a token on a handler without @Throttle', async () => {
+      const g = await guardWithOptions()
+      await expect(g.track(reqWith(xff), contextFor(SampleController, 'relaxed'))).resolves.toBe('ip:37.151.61.22')
     })
   })
 })
