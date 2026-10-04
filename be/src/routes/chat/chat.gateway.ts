@@ -89,10 +89,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       for (const channel of channels) {
         await client.join(channelRoom(user.tenantId, channel.id))
       }
-      // TEMP diagnostics
-      this.logger.log(
-        `WS autojoin: user ${user.userId} (tenant ${user.tenantId}) joined channels [${channels.map((c) => c.id).join(', ')}]`,
-      )
     } catch (error) {
       // Degrade, don't fail: the socket stays connected, just without
       // pre-joined rooms (explicit joinChannel still works).
@@ -173,11 +169,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @OnEvent(MESSAGE_CREATED_EVENT)
-  async handleMessageCreated(message: MessageBaseType) {
+  handleMessageCreated(message: MessageBaseType) {
     const roomName = channelRoom(message.tenantId, message.channelId)
-    // TEMP diagnostics: log the room size right before emitting.
-    const size = (await this.server.in(roomName).allSockets()).size
-    this.logger.log(`WS broadcast: room ${roomName} has ${size} socket(s), emitting newMessage id=${message.id}`)
     this.server.to(roomName).emit('newMessage', message)
   }
 
