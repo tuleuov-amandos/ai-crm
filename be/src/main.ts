@@ -27,13 +27,12 @@ async function bootstrap() {
   app.useLogger(app.get(Logger))
   const logger = app.get(Logger)
 
-  // Trust exactly 1 proxy hop (Railway's edge proxy) so express derives req.ip
-  // from the outermost X-Forwarded-For entry it sets. Without this, req.ip is
-  // the proxy's own IP and the ThrottlerGuard's per-IP buckets collapse into
-  // one shared bucket for all clients. Using `true` (trust all hops) would let
-  // a client forge its own X-Forwarded-For prefix to spoof a different IP and
-  // evade the per-IP limit entirely — `1` trusts only the hop count we
-  // actually have.
+  // Trust exactly 1 proxy hop so req.protocol/req.secure honour X-Forwarded-*.
+  // NOTE: with 1 hop, req.ip is the RIGHTMOST X-Forwarded-For entry, i.e. the
+  // proxy node's own address (which rotates between requests on Railway), NOT
+  // the client. Do not use req.ip to identify clients; rate limiting resolves
+  // the real client IP in ClientIpThrottlerGuard. Using `true` (trust all hops)
+  // would be worse: it would let a client forge its own XFF prefix.
   app.getHttpAdapter().getInstance().set('trust proxy', 1)
 
   // Relay AI events emitted by the standalone worker process to SSE clients

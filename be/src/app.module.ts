@@ -26,7 +26,8 @@ import { AuditLogsModule } from './routes/audit-logs/audit-logs.module'
 import { HealthModule } from './routes/health/health.module'
 import { InternalModule } from './routes/internal/internal.module'
 import { PlatformAdminModule } from './routes/platform-admin/platform-admin.module'
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
+import { ThrottlerModule } from '@nestjs/throttler'
+import { ClientIpThrottlerGuard } from './common/guards/client-ip-throttler.guard'
 import { EventEmitterModule } from '@nestjs/event-emitter'
 @Module({
   imports: [
@@ -62,12 +63,11 @@ import { EventEmitterModule } from '@nestjs/event-emitter'
           // "default" throttler via @Throttle(BRUTE_FORCE_GUARD_THROTTLE)
           // with a much stricter limit; do not raise those.
           //
-          // SCALING NOTE: ThrottlerGuard tracks by IP. Employees behind one
-          // office NAT share this single bucket, so 300/min is per office, not
-          // per user. Proper fix (separate task): a custom ThrottlerGuard with
-          // getTracker() returning userId for authenticated requests and
-          // falling back to IP for anonymous ones. Also, the in-memory
-          // storage is per-process; multiple instances need a Redis storage.
+          // SCALING NOTE: ClientIpThrottlerGuard tracks authenticated
+          // requests per user and anonymous ones per client IP (see that
+          // guard), so 300/min is per user for logged-in traffic. The
+          // in-memory storage is per-process; multiple instances need a
+          // Redis storage.
           ttl: 60000,
           limit: 300,
         },
@@ -89,7 +89,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter'
     },
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: ClientIpThrottlerGuard,
     },
   ],
 })

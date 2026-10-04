@@ -1,20 +1,8 @@
-import { Controller, Get, Req, ServiceUnavailableException } from '@nestjs/common'
-import type { Request } from 'express'
+import { Controller, Get, ServiceUnavailableException } from '@nestjs/common'
 import { PrismaService } from 'src/common/services/prisma.service'
 import { RedisService } from 'src/common/services/redis.service'
 
 type CheckStatus = 'up' | 'down'
-
-const WHOAMI_HEADERS = [
-  'x-forwarded-for',
-  'x-real-ip',
-  'fastly-client-ip',
-  'cdn-loop',
-  'via',
-  'x-forwarded-proto',
-  'x-forwarded-host',
-  'x-envoy-external-address',
-] as const
 
 @Controller('health')
 export class HealthController {
@@ -40,23 +28,6 @@ export class HealthController {
     }
 
     return { status: 'ok', checks }
-  }
-
-  // TEMPORARY diagnostic, remove in the follow-up PR (client-IP / throttling fix)
-  @Get('whoami')
-  whoami(@Req() req: Request) {
-    const headers: Record<string, string | string[] | undefined> = {}
-    for (const name of WHOAMI_HEADERS) {
-      headers[name] = req.headers[name]
-    }
-
-    return {
-      ip: req.ip,
-      ips: req.ips,
-      remoteAddress: req.socket.remoteAddress,
-      headers,
-      trustProxy: req.app.get('trust proxy'),
-    }
   }
 
   private async checkDatabase(): Promise<CheckStatus> {
