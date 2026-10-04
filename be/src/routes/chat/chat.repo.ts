@@ -150,6 +150,18 @@ export class ChatRepository {
       .then((member) => member !== null)
   }
 
+  // Returns the subset of `ids` that are active (not soft-deleted) users of the
+  // tenant. ChannelMember has no tenantId, so tenant/deletedAt are filtered
+  // explicitly here rather than relying on the Prisma tenant extension.
+  async findActiveUserIdsInTenant(tenantId: string, ids: string[]): Promise<string[]> {
+    if (ids.length === 0) return []
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: ids }, tenantId, deletedAt: null },
+      select: { id: true },
+    })
+    return users.map((user) => user.id)
+  }
+
   // Idempotent bulk add — skipDuplicates covers ids already in the channel
   // (e.g. re-adding a current member), same intent as addMember's P2002 catch.
   async addMembers(channelId: string, userIds: string[]): Promise<void> {

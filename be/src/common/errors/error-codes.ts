@@ -100,6 +100,8 @@ export enum ChatErrorCode {
   FORBIDDEN_PRIVATE_CHANNEL_ACCESS = 'CHAT_FORBIDDEN_PRIVATE_CHANNEL_ACCESS',
   /** Only the channel's creator or an Admin may add members to it. */
   FORBIDDEN_ADD_MEMBERS = 'CHAT_FORBIDDEN_ADD_MEMBERS',
+  /** Some memberIds/userIds are not active users of the tenant (foreign, missing or deactivated — deliberately indistinguishable). */
+  INVALID_MEMBERS = 'CHAT_INVALID_MEMBERS',
   MESSAGE_NOT_FOUND = 'CHAT_MESSAGE_NOT_FOUND',
   /** No file was sent with the attachment upload request. */
   ATTACHMENT_FILE_MISSING = 'CHAT_ATTACHMENT_FILE_MISSING',

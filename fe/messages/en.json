@@ -1606,6 +1606,7 @@
     "ROLE_SYSTEM_IMMUTABLE_DELETE": "System default roles cannot be deleted.",
     "ROLE_IN_USE_BY_MEMBERS": "This role is assigned to members. Reassign them before deleting it.",
     "ROLE_IN_USE_BY_INVITATIONS": "This role is assigned to a pending invitation. Update or cancel the invitation before deleting it.",
+    "CHAT_INVALID_MEMBERS": "Some of the selected members are unavailable. Refresh the list and try again.",
     "ACTIVITY_NOT_FOUND": "Activity not found.",
     "ACTIVITY_FORBIDDEN_LIST": "You do not have permission to view activities.",
     "ACTIVITY_FORBIDDEN_UPDATE": "You do not have permission to edit this activity.",

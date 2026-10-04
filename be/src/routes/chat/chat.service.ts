@@ -94,6 +94,22 @@ export class ChatService {
     return channel
   }
 
+  // ChannelMember has no tenantId and its FK to User is global, so every id
+  // must be checked before it is written: it has to be an active (not
+  // soft-deleted) user of this tenant. One generic 400 for all failure reasons
+  // so the endpoint can't be used as an oracle for user ids.
+  private async assertActiveTenantUsers(tenantId: string, ids: string[]): Promise<void> {
+    const unique = [...new Set(ids)]
+    if (unique.length === 0) return
+    const found = await this.chatRepo.findActiveUserIdsInTenant(tenantId, unique)
+    if (found.length !== unique.length) {
+      throw AppException.badRequest(
+        ChatErrorCode.INVALID_MEMBERS,
+        'Some members are not active users of this workspace',
+      )
+    }
+  }
+
   // isPrivate channels may only be created by an Admin. memberIds are added
   // as ChannelMember alongside the creator, in the same transaction that
   // creates the channel — see ChatRepository.createChannel.
@@ -109,6 +125,7 @@ export class ChatService {
         'Only an Admin can create a private channel',
       )
     }
+    await this.assertActiveTenantUsers(user.tenantId, memberIds)
     return this.chatRepo.createChannel(user.userId, name, isPrivate, memberIds)
   }
 
@@ -127,6 +144,7 @@ export class ChatService {
       )
     }
 
+    await this.assertActiveTenantUsers(channel.tenantId, userIds)
     await this.chatRepo.addMembers(channelId, userIds)
     return { message: 'Members added successfully' }
   }
