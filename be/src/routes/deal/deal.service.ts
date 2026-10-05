@@ -79,12 +79,12 @@ export class DealService {
       }
     }
 
-    const deal = await this.dealRepo.create(data)
+    const deal = await this.dealRepo.create(tenantId, data)
     await this.redisService.invalidateTenantCache(tenantId)
 
     const changes: AuditLogChanges = {}
     for (const [key, val] of Object.entries(deal)) {
-      if (['createdAt', 'updatedAt', 'deletedAt', 'id', 'tenantId'].includes(key)) continue
+      if (['createdAt', 'updatedAt', 'deletedAt', 'id', 'tenantId', 'stageId'].includes(key)) continue
       changes[key] = { old: null, new: val }
     }
     await this.auditLogsService.logAction({
@@ -206,7 +206,7 @@ export class DealService {
       throw AppException.unprocessable(DealErrorCode.INVALID_STAGE, 'Invalid stage')
     }
 
-    const updated = await this.dealRepo.updateStage(dealId, stage)
+    const updated = await this.dealRepo.updateStage(dealId, tenantId, stage)
     await this.redisService.invalidateTenantCache(tenantId)
 
     const changes = {
@@ -276,7 +276,7 @@ export class DealService {
 
     const changes: AuditLogChanges = {}
     for (const [key, val] of Object.entries(deal)) {
-      if (['createdAt', 'updatedAt', 'deletedAt', 'id', 'tenantId'].includes(key)) continue
+      if (['createdAt', 'updatedAt', 'deletedAt', 'id', 'tenantId', 'stageId'].includes(key)) continue
       changes[key] = { old: val, new: null }
     }
     await this.auditLogsService.logAction({

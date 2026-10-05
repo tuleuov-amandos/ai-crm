@@ -38,6 +38,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
               'AuditLog',
               'Channel',
               'Message',
+              'PipelineStage',
             ]
 
             if (tenantModels.includes(model)) {

@@ -39,6 +39,7 @@ model Tenant {
   auditLogs   AuditLog[]
   channels    Channel[]
   messages    Message[]
+  pipelineStages PipelineStage[]
 }
 
 model User {
@@ -165,6 +166,9 @@ model Deal {
   title         String
   value         Decimal        @default(0)
   stage         DealStage      @default(PROSPECT)
+  // Expand step of custom pipeline stages: written alongside `stage` (dual
+  // write), nullable until every reader is switched over. Reads still use `stage`.
+  stageId       String?
   isPaid        Boolean        @default(false)
   closeDate     DateTime?
   note          String?
@@ -176,11 +180,34 @@ model Deal {
   contact       Contact        @relation(fields: [contactId], references: [id])
   owner         User           @relation("DealOwner", fields: [ownerId], references: [id])
   tenant        Tenant         @relation(fields: [tenantId], references: [id])
+  pipelineStage PipelineStage? @relation(fields: [stageId], references: [id], onDelete: Restrict)
   tasks         Task[]
 
   @@index([tenantId])
   @@index([tenantId, stage])
   @@index([tenantId, ownerId])
+  @@index([tenantId, stageId])
+}
+
+// Per-tenant pipeline stage. `legacyKey` maps the stage to the old DealStage
+// enum value for the default stages (null for custom ones). Constraints Prisma
+// cannot express live in the migration SQL: one WON and one LOST stage per
+// tenant, unique (tenantId, legacyKey), probability CHECKs per kind.
+model PipelineStage {
+  id          String            @id @default(cuid())
+  tenantId    String
+  name        String
+  color       String            @default("blue")
+  order       Int
+  probability Int
+  kind        PipelineStageKind @default(OPEN)
+  legacyKey   String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  tenant      Tenant            @relation(fields: [tenantId], references: [id])
+  deals       Deal[]
+
+  @@index([tenantId, order])
 }
 
 model Activity {
@@ -398,6 +425,12 @@ enum DealStage {
   PROPOSAL
   CLOSED_WON
   CLOSED_LOST
+}
+
+enum PipelineStageKind {
+  OPEN
+  WON
+  LOST
 }
 
 enum ActivityType {

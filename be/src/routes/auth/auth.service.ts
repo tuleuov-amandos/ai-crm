@@ -21,6 +21,7 @@ import { COOKIE_OPTIONS } from './auth.constants'
 import { RedisService } from 'src/common/services/redis.service'
 import { rootLogger } from 'src/common/logger/root-logger'
 import { EXPECTED_DOMAIN_PERMISSION_COUNT, PERMISSION_CATALOG_NOT_SEEDED } from 'src/common/casl/permission-catalog'
+import { createDefaultStages } from 'src/common/pipeline-stages/default-pipeline-stages'
 import { MailService } from 'src/common/services/mail.service'
 import envConfig from 'src/common/config'
 
@@ -597,6 +598,8 @@ export class AuthService {
             },
           })
         }
+        // Default pipeline stages (tenantId explicit: no tenant in CLS at sign-up)
+        await createDefaultStages(tx, tenant.id)
         const newUser = await tx.user.create({
           data: { email, name, tenantId: tenant.id, password: null, roleId: adminRole.id },
         })
