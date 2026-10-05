@@ -4,6 +4,7 @@ import { UserType } from 'src/routes/auth/auth.model'
 import { RoleType } from '../constants/role.constanst'
 import { rootLogger } from 'src/common/logger/root-logger'
 import { EXPECTED_DOMAIN_PERMISSION_COUNT, PERMISSION_CATALOG_NOT_SEEDED } from '../casl/permission-catalog'
+import { createDefaultStages } from '../pipeline-stages/default-pipeline-stages'
 
 const log = rootLogger.child({ context: 'SharedUserRepository' })
 
@@ -115,7 +116,10 @@ export class SharedUserRepository {
         })
       }
 
-      // 5. Create first ADMIN user
+      // 5. Default pipeline stages (tenantId explicit: no tenant in CLS at sign-up)
+      await createDefaultStages(tx, tenant.id)
+
+      // 6. Create first ADMIN user
       const user = await tx.user.create({
         data: {
           email: payload.email,

@@ -193,6 +193,7 @@ describe('AuthService', () => {
             .mockResolvedValue(Array.from({ length: 16 }, (_, i) => ({ id: `perm-${i}`, subject: 'Deal' }))),
         },
         rolePermission: { create: jest.fn() },
+        pipelineStage: { createMany: jest.fn() },
         user: { create: jest.fn().mockResolvedValue({ id: 'new-user-1' }) },
         account: { create: jest.fn() },
       }
@@ -203,6 +204,12 @@ describe('AuthService', () => {
       expect(result).toEqual(expect.objectContaining({ id: 'new-user-1', role: 'ADMIN' }))
       expect(tx.rolePermission.create).toHaveBeenCalledWith({
         data: { roleId: 'role-admin', permissionId: 'perm-manage-all' },
+      })
+      expect(tx.pipelineStage.createMany).toHaveBeenCalledWith({
+        data: expect.arrayContaining([
+          expect.objectContaining({ tenantId: 'tenant-1', legacyKey: 'PROSPECT' }),
+          expect.objectContaining({ tenantId: 'tenant-1', legacyKey: 'CLOSED_LOST' }),
+        ]),
       })
       expect(tx.account.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -547,6 +554,7 @@ describe('AuthService', () => {
           findMany: jest.fn().mockResolvedValue([]),
         },
         rolePermission: { create: jest.fn() },
+        pipelineStage: { createMany: jest.fn() },
         user: { create: jest.fn() },
         account: { create: jest.fn() },
       }
@@ -554,6 +562,7 @@ describe('AuthService', () => {
 
       await expect(service.validateGoogleUser(googleProfile)).rejects.toThrow(/catalog is not seeded/i)
       expect(tx.rolePermission.create).not.toHaveBeenCalled()
+      expect(tx.pipelineStage.createMany).not.toHaveBeenCalled()
       expect(tx.user.create).not.toHaveBeenCalled()
       expect(tx.account.create).not.toHaveBeenCalled()
     })

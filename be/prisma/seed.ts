@@ -5,6 +5,7 @@ import { DealStage, ActivityType, AiSuggestionType } from '../generated/prisma-c
 import 'dotenv/config'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { getDatabaseSsl } from 'src/common/utils/database-ssl.util'
+import { createDefaultStages, resolveStageIdByLegacyKey } from 'src/common/pipeline-stages/default-pipeline-stages'
 
 // Жёсткий предохранитель: seed стирает и перезаписывает данные (main() начинается
 // с deleteMany по всем таблицам). В production это недопустимо — прерываемся до
@@ -63,6 +64,7 @@ async function main() {
   await prisma.task.deleteMany({})
   await prisma.activity.deleteMany({})
   await prisma.deal.deleteMany({})
+  await prisma.pipelineStage.deleteMany({})
   await prisma.contact.deleteMany({})
   await prisma.kpiTarget.deleteMany({})
   await prisma.refreshToken.deleteMany({})
@@ -83,6 +85,7 @@ async function main() {
       plan: 'pro',
     },
   })
+  await createDefaultStages(prisma, tenant.id)
 
   // 2. Create system Permissions list
   const permissionsList = [
@@ -366,6 +369,7 @@ async function main() {
         title,
         value,
         stage,
+        stageId: await resolveStageIdByLegacyKey(prisma, tenant.id, stage),
         closeDate,
         createdAt,
         note: `Cơ hội kinh doanh tiềm năng với ${contact.name}`,

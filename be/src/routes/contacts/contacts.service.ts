@@ -311,7 +311,7 @@ export class ContactsService {
           stage = 'CLOSED_LOST'
         }
 
-        const deal = await this.dealRepository.createWithStage({
+        const deal = await this.dealRepository.createWithStage(tenantId, {
           ownerId,
           title: item.dealTitle,
           value: item.dealValue || 0,
@@ -323,7 +323,7 @@ export class ContactsService {
         // Write Audit Log for CREATE Deal action
         const dealChanges: AuditLogChanges = {}
         for (const [key, val] of Object.entries(deal)) {
-          if (['createdAt', 'updatedAt', 'deletedAt', 'id', 'tenantId'].includes(key)) continue
+          if (['createdAt', 'updatedAt', 'deletedAt', 'id', 'tenantId', 'stageId'].includes(key)) continue
           dealChanges[key] = { old: null, new: val }
         }
         await this.auditLogsService.logAction({

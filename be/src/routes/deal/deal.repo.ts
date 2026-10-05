@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/common/services/prisma.service'
 import { Prisma } from '../../../generated/prisma-client/client'
 import { CreateDealBodyType, DealStageConst, DealStageType, UpdateDealBodyType } from './deal.model'
+import { resolveStageIdByLegacyKey } from 'src/common/pipeline-stages/default-pipeline-stages'
 
 @Injectable()
 export class DealRepository {
@@ -75,13 +76,16 @@ export class DealRepository {
     })
   }
 
-  create(data: CreateDealBodyType) {
+  async create(tenantId: string, data: CreateDealBodyType) {
+    const stage = data.stage ?? DealStageConst.PROSPECT
+    const stageId = await resolveStageIdByLegacyKey(this.prismaService, tenantId, stage)
     return this.prismaService.deal.create({
       data: {
         ownerId: data.ownerId,
         title: data.title,
         value: data.value ?? 0,
-        stage: data.stage ?? DealStageConst.PROSPECT,
+        stage,
+        stageId,
         contactId: data.contactId,
         closeDate: data.closeDate ?? null,
         note: data.note ?? null,
@@ -96,10 +100,11 @@ export class DealRepository {
     })
   }
 
-  updateStage(dealId: string, stage: DealStageType) {
+  async updateStage(dealId: string, tenantId: string, stage: DealStageType) {
+    const stageId = await resolveStageIdByLegacyKey(this.prismaService, tenantId, stage)
     return this.prismaService.deal.update({
       where: { id: dealId, deletedAt: null },
-      data: { stage },
+      data: { stage, stageId },
     })
   }
 
@@ -118,21 +123,26 @@ export class DealRepository {
   }
 
   // Create new Deal with optional stage (for Excel Import)
-  createWithStage(data: {
-    ownerId: string
-    title: string
-    value: number
-    stage: DealStageType
-    contactId: string
-    closeDate?: Date | null
-    note?: string | null
-  }) {
+  async createWithStage(
+    tenantId: string,
+    data: {
+      ownerId: string
+      title: string
+      value: number
+      stage: DealStageType
+      contactId: string
+      closeDate?: Date | null
+      note?: string | null
+    },
+  ) {
+    const stageId = await resolveStageIdByLegacyKey(this.prismaService, tenantId, data.stage)
     return this.prismaService.deal.create({
       data: {
         ownerId: data.ownerId,
         title: data.title,
         value: data.value,
         stage: data.stage,
+        stageId,
         contactId: data.contactId,
         closeDate: data.closeDate ?? null,
         note: data.note ?? null,
