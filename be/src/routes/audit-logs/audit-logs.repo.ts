@@ -1,21 +1,27 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/common/services/prisma.service'
+import { Prisma } from '../../../generated/prisma-client/client'
 import { AuditLogChanges, GetAuditLogsQueryType } from './audit-logs.model'
 
 @Injectable()
 export class AuditLogsRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  create(params: {
-    tenantId: string
-    userId: string
-    action: string
-    targetType: string
-    targetId: string
-    targetName?: string | null
-    changes: AuditLogChanges
-  }) {
-    return this.prismaService.auditLog.create({
+  // `client` lets a caller write the entry inside its own interactive
+  // transaction, so the log commits or rolls back together with the change.
+  create(
+    params: {
+      tenantId: string
+      userId: string
+      action: string
+      targetType: string
+      targetId: string
+      targetName?: string | null
+      changes: AuditLogChanges
+    },
+    client: Pick<Prisma.TransactionClient, 'auditLog'> = this.prismaService,
+  ) {
+    return client.auditLog.create({
       data: {
         tenantId: params.tenantId,
         userId: params.userId,

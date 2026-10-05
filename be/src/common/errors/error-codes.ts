@@ -33,6 +33,32 @@ export enum DealErrorCode {
   MEETING_NOTE_REQUIRED = 'DEAL_MEETING_NOTE_REQUIRED',
 }
 
+export enum PipelineStageErrorCode {
+  NOT_FOUND = 'PIPELINE_STAGE_NOT_FOUND',
+  /** Another stage of the tenant already has this name (case-insensitive). */
+  NAME_TAKEN = 'PIPELINE_STAGE_NAME_TAKEN',
+  /** Color or probability of a WON/LOST stage cannot be changed, only its name. */
+  SYSTEM_FIELD_IMMUTABLE = 'PIPELINE_STAGE_SYSTEM_FIELD_IMMUTABLE',
+  /** WON/LOST stages cannot be deleted. */
+  SYSTEM_DELETE_NOT_ALLOWED = 'PIPELINE_STAGE_SYSTEM_DELETE_NOT_ALLOWED',
+  /** Default stages (legacyKey set) cannot be deleted until deal writes use stageId. */
+  DEFAULT_DELETE_NOT_ALLOWED = 'PIPELINE_STAGE_DEFAULT_DELETE_NOT_ALLOWED',
+  /** The tenant already has the maximum number of open stages. */
+  LIMIT_MAX = 'PIPELINE_STAGE_LIMIT_MAX',
+  /** Deleting would leave the tenant without open stages. */
+  LIMIT_MIN = 'PIPELINE_STAGE_LIMIT_MIN',
+  /** The stage still has deals, so a target stage to move them to is required. */
+  TARGET_REQUIRED = 'PIPELINE_STAGE_TARGET_REQUIRED',
+  /** targetStageId is missing in this tenant or equals the deleted stage. */
+  TARGET_INVALID = 'PIPELINE_STAGE_TARGET_INVALID',
+  /** Reorder list is not exactly the tenant's open stages (foreign, missing, duplicate or WON/LOST ids). */
+  REORDER_MISMATCH = 'PIPELINE_STAGE_REORDER_MISMATCH',
+  /** Probability is out of range for the stage kind (DB CHECK, last line of defense). */
+  INVALID_PROBABILITY = 'PIPELINE_STAGE_INVALID_PROBABILITY',
+  /** A DB uniqueness or reference constraint rejected the write (concurrent change). */
+  CONFLICT = 'PIPELINE_STAGE_CONFLICT',
+}
+
 export enum ContactErrorCode {
   FORBIDDEN_LIST = 'CONTACT_FORBIDDEN_LIST',
   NOT_FOUND = 'CONTACT_NOT_FOUND',
@@ -189,6 +215,7 @@ export enum ValidationErrorCode {
 export type AppErrorCode =
   | AuthErrorCode
   | DealErrorCode
+  | PipelineStageErrorCode
   | ContactErrorCode
   | TaskErrorCode
   | DashboardErrorCode

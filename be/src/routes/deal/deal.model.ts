@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { zIsoDatetime, zDate } from 'src/common/utils/zod.util'
 import { ValidationErrorCode } from 'src/common/errors'
+import { PipelineStageSchema } from '../pipeline-stages/pipeline-stages.model'
 
 // export const DealStageEnum = z.enum(['PROSPECT', 'QUALIFIED', 'PROPOSAL', 'CLOSED_WON', 'CLOSED_LOST'])
 
@@ -206,6 +207,32 @@ export const GetPipelineQuerySchema = z.object({
   isPaid: z.enum(['true', 'false']).optional(),
 })
 export type GetPipelineQueryType = z.infer<typeof GetPipelineQuerySchema>
+
+// ─────────────────────────────────────────
+// BOARD — GET /deals/board (same query as /deals/pipeline)
+// ─────────────────────────────────────────
+// Columns are the tenant's pipeline stages in order.
+export const BoardDealCardSchema = DealCardSchema.extend({
+  stageId: z.string().nullable(),
+})
+export type BoardDealCardRes = z.infer<typeof BoardDealCardSchema>
+
+export const BoardColumnStageSchema = PipelineStageSchema.pick({
+  id: true,
+  name: true,
+  color: true,
+  order: true,
+  kind: true,
+  probability: true,
+})
+
+export const GetDealsBoardResSchema = z.array(
+  z.object({
+    stage: BoardColumnStageSchema,
+    deals: z.array(BoardDealCardSchema),
+  }),
+)
+export type GetDealsBoardResType = z.infer<typeof GetDealsBoardResSchema>
 
 // ─────────────────────────────────────────
 // ANALYZE — POST /deals/:id/analyze

@@ -23,6 +23,7 @@ import {
   CreateDealResDto,
   GetDealResDto,
   GetDealsPipelineResDto,
+  GetDealsBoardResDto,
   GetPipelineQueryDto,
   UpdateDealResDto,
 } from './deal.dto'
@@ -60,6 +61,14 @@ export class DealController {
   @ZodSerializerDto(GetDealsPipelineResDto)
   getPipeline(@CurrentUser() user: AccessTokenPayload, @Query() query: GetPipelineQueryDto) {
     return this.dealService.getPipleline(user.tenantId, user, query)
+  }
+
+  // Declared before `:id` so "board" is never captured as an id.
+  @Get('board')
+  @ApiOkResponse({ type: GetDealsBoardResDto })
+  @ZodSerializerDto(GetDealsBoardResDto)
+  getBoard(@CurrentUser() user: AccessTokenPayload, @Query() query: GetPipelineQueryDto) {
+    return this.dealService.getBoard(user.tenantId, user, query)
   }
 
   @Get(':id')
