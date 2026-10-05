@@ -11,6 +11,8 @@ import {
   AnalyzeDealBodyType,
   AnalyzeDealResType,
   GetPipelineQueryType,
+  BoardDealCardRes,
+  BoardDealCardSchema,
 } from './deal.model'
 import { DealRepository } from './deal.repo'
 import { TaskRepository } from './task.repo'
@@ -23,6 +25,10 @@ import { CaslAbilityFactory } from 'src/common/casl/casl-ability.factory'
 import { subject } from '@casl/ability'
 import { Prisma } from '../../../generated/prisma-client/client'
 import { AuditLogChanges } from '../audit-logs/audit-logs.model'
+import { PipelineStagesRepository } from '../pipeline-stages/pipeline-stages.repo'
+import { rootLogger } from 'src/common/logger/root-logger'
+
+const log = rootLogger.child({ context: 'DealService' })
 
 export function getChangesDiff(
   oldObj: Record<string, Prisma.InputJsonValue>,
@@ -58,6 +64,7 @@ export class DealService {
     private readonly redisService: RedisService,
     private readonly auditLogsService: AuditLogsService,
     private readonly caslAbilityFactory: CaslAbilityFactory,
+    private readonly pipelineStagesRepo: PipelineStagesRepository,
   ) {}
 
   async create(tenantId: string, data: CreateDealBodyType, user: { userId: string; role: string; tenantId: string }) {
@@ -105,6 +112,65 @@ export class DealService {
     user: { userId: string; role: string; tenantId: string },
     query: GetPipelineQueryType,
   ) {
+    const deals = await this.findPipelineDeals(user, query)
+
+    const stageMap: Record<DealStageType, DealCardRes[]> = {
+      [DealStageConst.PROSPECT]: [],
+      [DealStageConst.QUALIFIED]: [],
+      [DealStageConst.PROPOSAL]: [],
+      [DealStageConst.CLOSED_WON]: [],
+      [DealStageConst.CLOSED_LOST]: [],
+    }
+    deals.forEach((deal) => {
+      const parsed = DealCardSchema.parse(deal)
+      stageMap[deal.stage].push(parsed)
+    })
+    return stageMap
+  }
+
+  // Same permissions and filters as getPipleline, grouped by stageId into the
+  // tenant's pipeline stages. A deal without stageId falls back to the stage
+  // whose legacyKey matches Deal.stage (R1 dual write).
+  async getBoard(
+    tenantId: string,
+    user: { userId: string; role: string; tenantId: string },
+    query: GetPipelineQueryType,
+  ) {
+    const deals = await this.findPipelineDeals(user, query)
+    const stages = await this.pipelineStagesRepo.findAll(tenantId)
+
+    const columns = stages.map((stage) => ({
+      stage: {
+        id: stage.id,
+        name: stage.name,
+        color: stage.color,
+        order: stage.order,
+        kind: stage.kind,
+        probability: stage.probability,
+      },
+      deals: [] as BoardDealCardRes[],
+    }))
+    const columnByStageId = new Map(columns.map((column) => [column.stage.id, column]))
+    const columnByLegacyKey = new Map(
+      stages.filter((stage) => stage.legacyKey).map((stage) => [stage.legacyKey, columnByStageId.get(stage.id)]),
+    )
+
+    deals.forEach((deal) => {
+      const column = (deal.stageId && columnByStageId.get(deal.stageId)) || columnByLegacyKey.get(deal.stage)
+      if (!column) {
+        log.warn({ event: 'deal.board_stage_missing', tenantId, dealId: deal.id, stageId: deal.stageId })
+        return
+      }
+      column.deals.push(BoardDealCardSchema.parse(deal))
+    })
+    return columns
+  }
+
+  // CASL checks and filters shared by GET /deals/pipeline and GET /deals/board.
+  private async findPipelineDeals(
+    user: { userId: string; role: string; tenantId: string },
+    query: GetPipelineQueryType,
+  ) {
     const ability = await this.caslAbilityFactory.createForUser(user)
     const filters: { ownerId?: string; dateFrom?: string; dateTo?: string; search?: string; isPaid?: boolean } = {}
     if (ability.cannot('read', 'Deal')) {
@@ -123,20 +189,7 @@ export class DealService {
     if (query.search) filters.search = query.search
     if (query.isPaid !== undefined) filters.isPaid = query.isPaid === 'true'
 
-    const deals = await this.dealRepo.findAllByTenant(filters)
-
-    const stageMap: Record<DealStageType, DealCardRes[]> = {
-      [DealStageConst.PROSPECT]: [],
-      [DealStageConst.QUALIFIED]: [],
-      [DealStageConst.PROPOSAL]: [],
-      [DealStageConst.CLOSED_WON]: [],
-      [DealStageConst.CLOSED_LOST]: [],
-    }
-    deals.forEach((deal) => {
-      const parsed = DealCardSchema.parse(deal)
-      stageMap[deal.stage].push(parsed)
-    })
-    return stageMap
+    return this.dealRepo.findAllByTenant(filters)
   }
 
   async getDealById(dealId: string, tenantId: string, user: { userId: string; role: string; tenantId: string }) {

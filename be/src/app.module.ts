@@ -13,6 +13,7 @@ import { AuthModule } from './routes/auth/auth.module'
 import { ContactsModule } from './routes/contacts/contacts.module'
 import { ActivitiesModule } from './routes/activities/activities.module'
 import { DealModule } from './routes/deal/deal.module'
+import { PipelineStagesModule } from './routes/pipeline-stages/pipeline-stages.module'
 import { TasksModule } from './routes/tasks/tasks.module'
 import { ChatModule } from './routes/chat/chat.module'
 import { UsersModule } from './routes/users/users.module'
@@ -39,6 +40,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter'
     ContactsModule,
     ActivitiesModule,
     DealModule,
+    PipelineStagesModule,
     TasksModule,
     ChatModule,
     UsersModule,

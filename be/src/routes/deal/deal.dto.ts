@@ -7,6 +7,7 @@ import {
   UpdateDealBodySchema,
   GetDealResSchema,
   GetDealsPipelineResSchema,
+  GetDealsBoardResSchema,
   GetPipelineQuerySchema,
   UpdateDealResSchema,
   AnalyzeDealResSchema,
@@ -24,6 +25,7 @@ export class UpdateDealResDto extends createZodDto(UpdateDealResSchema) {}
 export class GetDealResDto extends createZodDto(GetDealResSchema) {}
 export class GetDealsPipelineResDto extends createZodDto(GetDealsPipelineResSchema) {}
 export class GetPipelineQueryDto extends createZodDto(GetPipelineQuerySchema) {}
+export class GetDealsBoardResDto extends createZodDto(GetDealsBoardResSchema) {}
 
 export class AnalyzeDealBodyDto extends createZodDto(AnalyzeDealBodySchema) {}
 export class AnalyzeDealResDto extends createZodDto(AnalyzeDealResSchema) {}

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { Prisma } from '../../../generated/prisma-client/client'
 import { AuditLogsRepository } from './audit-logs.repo'
 import { AuditLogChanges, GetAuditLogsQueryType } from './audit-logs.model'
 
@@ -6,16 +7,20 @@ import { AuditLogChanges, GetAuditLogsQueryType } from './audit-logs.model'
 export class AuditLogsService {
   constructor(private readonly auditLogsRepository: AuditLogsRepository) {}
 
-  async logAction(params: {
-    tenantId: string
-    userId: string
-    action: string
-    targetType: string
-    targetId: string
-    targetName?: string | null
-    changes: AuditLogChanges
-  }) {
-    return this.auditLogsRepository.create(params)
+  // Pass `tx` to write the entry inside the caller's transaction.
+  async logAction(
+    params: {
+      tenantId: string
+      userId: string
+      action: string
+      targetType: string
+      targetId: string
+      targetName?: string | null
+      changes: AuditLogChanges
+    },
+    tx?: Pick<Prisma.TransactionClient, 'auditLog'>,
+  ) {
+    return this.auditLogsRepository.create(params, tx)
   }
 
   async getLogs(tenantId: string, query: GetAuditLogsQueryType) {
