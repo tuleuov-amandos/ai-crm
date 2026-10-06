@@ -73,6 +73,7 @@ const deal = (stage: string, ownerId: string, stageId: string | null = stageIdBy
     createdAt: new Date(Date.UTC(2026, 0, seq)),
     updatedAt: new Date(Date.UTC(2026, 0, seq)),
     deletedAt: null,
+    archivedAt: null as Date | null,
     contact: { id: 'c1', name: 'Contact', company: null },
     owner: { id: ownerId, name: ownerId },
   }
@@ -151,7 +152,7 @@ describe('DealService board vs pipeline', () => {
 
     const board = await service.getBoard(TENANT, SALES_REP, { ownerId: 'admin-1' })
 
-    expect(dealRepo.findAllByTenant).toHaveBeenCalledWith({ ownerId: SALES_REP.userId })
+    expect(dealRepo.findAllByTenant).toHaveBeenCalledWith({ ownerId: SALES_REP.userId, excludeArchived: true })
     const ids = board.flatMap((c) => c.deals.map((d) => d.ownerId))
     expect(ids.length).toBeGreaterThan(0)
     expect(new Set(ids)).toEqual(new Set([SALES_REP.userId]))
@@ -172,7 +173,8 @@ describe('DealService board vs pipeline', () => {
 
     const expected = { ownerId: 'rep-1', dateFrom: '2026-01-01', dateTo: '2026-02-01', search: 'acme', isPaid: true }
     expect(dealRepo.findAllByTenant).toHaveBeenNthCalledWith(1, expected)
-    expect(dealRepo.findAllByTenant).toHaveBeenNthCalledWith(2, expected)
+    // The board alone hides archived deals.
+    expect(dealRepo.findAllByTenant).toHaveBeenNthCalledWith(2, { ...expected, excludeArchived: true })
   })
 
   it('rejects a role without read:Deal with 403, like the pipeline', async () => {
@@ -230,6 +232,7 @@ const EXISTING_DEAL = {
   createdAt: new Date(Date.UTC(2026, 0, 1)),
   updatedAt: new Date(Date.UTC(2026, 0, 1)),
   deletedAt: null,
+  archivedAt: null,
 }
 
 const buildDb = (stages: Row[] = DEFAULT_WRITE_STAGES) => {
@@ -519,6 +522,244 @@ describe('DealService writes deals into pipeline stages', () => {
   })
 })
 
+// ─── Archive: GET /deals/board filter, POST /deals/archive and /deals/unarchive ───
+
+describe('DealService board hides archived deals', () => {
+  const live = deal('PROSPECT', 'admin-1')
+  const archived = { ...deal('CLOSED_WON', 'admin-1'), archivedAt: new Date(Date.UTC(2026, 5, 1)) }
+  const dealRepo = {
+    // Emulates the DB-side archivedAt filter of findAllByTenant.
+    findAllByTenant: jest.fn((filters?: { excludeArchived?: boolean }) =>
+      Promise.resolve([live, archived].filter((d) => !filters?.excludeArchived || d.archivedAt === null)),
+    ),
+  }
+  const caslAbilityFactory = { createForUser: jest.fn().mockResolvedValue(adminAbility()) }
+  const service = new DealService(
+    dealRepo as never,
+    {} as never,
+    {} as never,
+    {} as never,
+    {} as never,
+    {} as never,
+    caslAbilityFactory as never,
+    { findAll: jest.fn().mockResolvedValue(STAGES) } as never,
+  )
+
+  beforeEach(() => jest.clearAllMocks())
+
+  it('hides archived deals by default and with includeArchived=false', async () => {
+    for (const query of [{}, { includeArchived: 'false' as const }]) {
+      const board = await service.getBoard(TENANT, ADMIN, query)
+
+      expect(board.flatMap((c) => c.deals.map((d) => d.id))).toEqual([live.id])
+    }
+    expect(dealRepo.findAllByTenant).toHaveBeenNthCalledWith(1, { excludeArchived: true })
+    expect(dealRepo.findAllByTenant).toHaveBeenNthCalledWith(2, { excludeArchived: true })
+  })
+
+  it('returns archived deals with includeArchived=true, cards carry archivedAt', async () => {
+    const board = await service.getBoard(TENANT, ADMIN, { includeArchived: 'true' })
+
+    expect(dealRepo.findAllByTenant).toHaveBeenCalledWith({})
+    const cards = board.flatMap((c) => c.deals)
+    expect(cards.map((d) => [d.id, d.archivedAt])).toEqual([
+      [live.id, null],
+      [archived.id, archived.archivedAt],
+    ])
+    expect(JSON.parse(JSON.stringify(cards[1])).archivedAt).toBe('2026-06-01T00:00:00.000Z')
+  })
+
+  it('leaves GET /deals/pipeline untouched: archived deals stay, no archive filter', async () => {
+    const pipeline = await service.getPipleline(TENANT, ADMIN, {})
+
+    expect(dealRepo.findAllByTenant).toHaveBeenCalledWith({})
+    expect(pipeline.CLOSED_WON.map((d) => d.id)).toEqual([archived.id])
+    expect(pipeline.CLOSED_WON[0]).not.toHaveProperty('archivedAt')
+  })
+})
+
+describe('DealService.setArchived (POST /deals/archive, /deals/unarchive)', () => {
+  const ARCHIVED_AT = new Date(Date.UTC(2026, 3, 1))
+  const row = (id: string, ownerId: string, extra: Row = {}): Row => ({
+    id,
+    tenantId: TENANT,
+    ownerId,
+    deletedAt: null,
+    archivedAt: null,
+    ...extra,
+  })
+  const buildRows = () => [
+    row('open-admin', ADMIN.userId),
+    row('won-rep', SALES_REP.userId, { stage: 'CLOSED_WON' }),
+    row('archived-rep', SALES_REP.userId, { archivedAt: ARCHIVED_AT }),
+    row('deleted', ADMIN.userId, { deletedAt: new Date() }),
+    row('foreign', 'other-user', { tenantId: OTHER_TENANT }),
+    row('foreign-archived', 'other-user', { tenantId: OTHER_TENANT, archivedAt: ARCHIVED_AT }),
+  ]
+
+  // updateMany honoring the where clause the repository builds (no tenant
+  // extension here: isolation must come from the explicit tenantId).
+  const matches = (r: Row, where: Row) =>
+    Object.entries(where).every(([key, cond]) => {
+      if (cond !== null && typeof cond === 'object' && !(cond instanceof Date)) {
+        if ('in' in cond) return (cond.in as unknown[]).includes(r[key])
+        if ('not' in cond) return r[key] !== cond.not
+        throw new Error(`unsupported condition on ${key}`)
+      }
+      return r[key] === cond
+    })
+
+  let rows: Row[]
+  let service: DealService
+  const db = {
+    deal: {
+      updateMany: jest.fn(({ where, data }: { where: Row; data: Row }) => {
+        const hit = rows.filter((r) => matches(r, where))
+        hit.forEach((r) => Object.assign(r, data))
+        return Promise.resolve({ count: hit.length })
+      }),
+    },
+  }
+  const redisService = { invalidateTenantCache: jest.fn() }
+  const auditLogsService = { logAction: jest.fn() }
+  const caslAbilityFactory = { createForUser: jest.fn() }
+  const byId = (id: string) => rows.find((r) => r.id === id)
+
+  const repUpdateAbility = () => {
+    const { can, build } = new AbilityBuilder(createMongoAbility)
+    can(['read', 'update'], 'Deal', { ownerId: SALES_REP.userId })
+    return build()
+  }
+  const readOnlyAbility = () => {
+    const { can, build } = new AbilityBuilder(createMongoAbility)
+    can('read', 'Deal')
+    return build()
+  }
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    rows = buildRows()
+    caslAbilityFactory.createForUser.mockResolvedValue(adminAbility())
+    service = new DealService(
+      new DealRepository(db as unknown as PrismaService),
+      {} as never,
+      {} as never,
+      {} as never,
+      redisService as never,
+      auditLogsService as never,
+      caslAbilityFactory as never,
+      {} as never,
+    )
+  })
+
+  it('archives open and closed deals, silently skipping foreign, unknown, deleted and already archived ids', async () => {
+    const ids = ['open-admin', 'won-rep', 'archived-rep', 'deleted', 'foreign', 'missing']
+
+    const res = await service.setArchived(TENANT, ids, true, ADMIN)
+
+    expect(res).toEqual({ updated: 2 })
+    expect(byId('open-admin').archivedAt).toBeInstanceOf(Date)
+    expect(byId('won-rep').archivedAt).toBeInstanceOf(Date)
+    expect(byId('archived-rep').archivedAt).toBe(ARCHIVED_AT)
+    expect(byId('deleted').archivedAt).toBeNull()
+    expect(byId('foreign').archivedAt).toBeNull()
+  })
+
+  it('never touches another tenant, even when only foreign ids are sent', async () => {
+    expect(await service.setArchived(TENANT, ['foreign'], true, ADMIN)).toEqual({ updated: 0 })
+    expect(await service.setArchived(TENANT, ['foreign-archived'], false, ADMIN)).toEqual({ updated: 0 })
+
+    expect(byId('foreign').archivedAt).toBeNull()
+    expect(byId('foreign-archived').archivedAt).toBe(ARCHIVED_AT)
+    expect(db.deal.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ tenantId: TENANT }) }),
+    )
+  })
+
+  it('archiving twice gives updated: 0 the second time and keeps the first archivedAt', async () => {
+    await service.setArchived(TENANT, ['open-admin'], true, ADMIN)
+    const first = byId('open-admin').archivedAt
+
+    expect(await service.setArchived(TENANT, ['open-admin'], true, ADMIN)).toEqual({ updated: 0 })
+    expect(byId('open-admin').archivedAt).toBe(first)
+  })
+
+  it('unarchives only archived deals', async () => {
+    const res = await service.setArchived(TENANT, ['archived-rep', 'open-admin', 'deleted'], false, ADMIN)
+
+    expect(res).toEqual({ updated: 1 })
+    expect(byId('archived-rep').archivedAt).toBeNull()
+    expect(await service.setArchived(TENANT, ['archived-rep'], false, ADMIN)).toEqual({ updated: 0 })
+  })
+
+  it('sends each id once to the database', async () => {
+    await service.setArchived(TENANT, ['open-admin', 'open-admin', 'won-rep'], true, ADMIN)
+
+    expect(db.deal.updateMany.mock.calls[0][0].where.id).toEqual({ in: ['open-admin', 'won-rep'] })
+  })
+
+  it('a role limited to own deals (SALES_REP) archives and unarchives only its own deals', async () => {
+    caslAbilityFactory.createForUser.mockResolvedValue(repUpdateAbility())
+
+    expect(await service.setArchived(TENANT, ['open-admin', 'won-rep'], true, SALES_REP)).toEqual({ updated: 1 })
+    expect(byId('open-admin').archivedAt).toBeNull()
+    expect(byId('won-rep').archivedAt).toBeInstanceOf(Date)
+    expect(db.deal.updateMany.mock.calls[0][0].where.ownerId).toBe(SALES_REP.userId)
+
+    rows.push(row('archived-admin', ADMIN.userId, { archivedAt: ARCHIVED_AT }))
+    expect(await service.setArchived(TENANT, ['archived-admin'], false, SALES_REP)).toEqual({ updated: 0 })
+    expect(byId('archived-admin').archivedAt).toBe(ARCHIVED_AT)
+  })
+
+  it('a role allowed to update every deal (ADMIN) gets no owner condition', async () => {
+    await service.setArchived(TENANT, ['open-admin'], true, ADMIN)
+
+    expect(db.deal.updateMany.mock.calls[0][0].where).not.toHaveProperty('ownerId')
+  })
+
+  it.each([
+    ['without update:Deal', readOnlyAbility],
+    ['without any Deal permission', noDealAbility],
+  ])('rejects a role %s with 403 and writes nothing', async (_name, ability) => {
+    caslAbilityFactory.createForUser.mockResolvedValue(ability())
+
+    for (const archived of [true, false]) {
+      const err = await service.setArchived(TENANT, ['won-rep'], archived, SALES_REP).catch((e: unknown) => e)
+      expect(err).toBeInstanceOf(HttpException)
+      expect((err as HttpException).getStatus()).toBe(HttpStatus.FORBIDDEN)
+    }
+    expect(db.deal.updateMany).not.toHaveBeenCalled()
+    expect(auditLogsService.logAction).not.toHaveBeenCalled()
+  })
+
+  it('writes one audit record per call with the number of changed deals', async () => {
+    await service.setArchived(TENANT, ['open-admin', 'won-rep', 'foreign'], true, ADMIN)
+    await service.setArchived(TENANT, ['open-admin'], false, ADMIN)
+
+    expect(auditLogsService.logAction).toHaveBeenCalledTimes(2)
+    expect(auditLogsService.logAction).toHaveBeenNthCalledWith(1, {
+      tenantId: TENANT,
+      userId: ADMIN.userId,
+      action: 'UPDATE',
+      targetType: 'DEAL',
+      targetId: 'BULK',
+      targetName: null,
+      changes: { archived: { old: false, new: true }, dealCount: { old: null, new: 2 } },
+    })
+    expect(auditLogsService.logAction).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ changes: { archived: { old: true, new: false }, dealCount: { old: null, new: 1 } } }),
+    )
+    expect(redisService.invalidateTenantCache).toHaveBeenCalledWith(TENANT)
+  })
+
+  it('writes no audit record when nothing changed', async () => {
+    await service.setArchived(TENANT, ['foreign', 'missing'], true, ADMIN)
+
+    expect(auditLogsService.logAction).not.toHaveBeenCalled()
+  })
+})
+
 describe('deal responses', () => {
   const row = { ...EXISTING_DEAL, stageId: 's-qualified' }
 
@@ -538,6 +779,23 @@ describe('deal responses', () => {
       aiSuggestions: [],
     })
     expect(parsed.stageId).toBe('s-qualified')
+  })
+
+  it('GET /deals/:id carries archivedAt: null for a live deal and an ISO string for an archived one', () => {
+    const detail = {
+      contact: { id: 'c1', name: 'C', email: null, phone: null, company: null, position: null, city: null },
+      owner: { id: 'u1', name: 'U', email: 'u@x' },
+      tasks: [],
+      activities: [],
+      aiSuggestions: [],
+    }
+    const archivedAt = new Date(Date.UTC(2026, 5, 1))
+
+    const live = GetDealResSchema.parse({ ...row, archivedAt: null, ...detail })
+    const archived = GetDealResSchema.parse({ ...row, archivedAt, ...detail })
+
+    expect(live.archivedAt).toBeNull()
+    expect(JSON.parse(JSON.stringify(archived)).archivedAt).toBe('2026-06-01T00:00:00.000Z')
   })
 
   it('GET /deals/pipeline cards stay unchanged (no stageId)', () => {

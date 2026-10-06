@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { ForbiddenException, Injectable } from '@nestjs/common'
 import { AppException, ContactErrorCode, DealErrorCode, TaskErrorCode } from 'src/common/errors'
 import { ROLE } from 'src/common/constants/role.constanst'
 import {
@@ -11,6 +11,7 @@ import {
   AnalyzeDealBodyType,
   AnalyzeDealResType,
   GetPipelineQueryType,
+  GetBoardQueryType,
   BoardDealCardRes,
   BoardDealCardSchema,
   UpdateDealStageBodyType,
@@ -155,13 +156,10 @@ export class DealService {
 
   // Same permissions and filters as getPipleline, grouped by stageId into the
   // tenant's pipeline stages. A deal without stageId falls back to the stage
-  // whose legacyKey matches Deal.stage (R1 dual write).
-  async getBoard(
-    tenantId: string,
-    user: { userId: string; role: string; tenantId: string },
-    query: GetPipelineQueryType,
-  ) {
-    const deals = await this.findPipelineDeals(user, query)
+  // whose legacyKey matches Deal.stage (R1 dual write). Unlike the pipeline,
+  // archived deals are left out unless includeArchived=true.
+  async getBoard(tenantId: string, user: { userId: string; role: string; tenantId: string }, query: GetBoardQueryType) {
+    const deals = await this.findPipelineDeals(user, query, { excludeArchived: query.includeArchived !== 'true' })
     const stages = await this.pipelineStagesRepo.findAll(tenantId)
 
     const columns = stages.map((stage) => ({
@@ -195,9 +193,17 @@ export class DealService {
   private async findPipelineDeals(
     user: { userId: string; role: string; tenantId: string },
     query: GetPipelineQueryType,
+    { excludeArchived = false }: { excludeArchived?: boolean } = {},
   ) {
     const ability = await this.caslAbilityFactory.createForUser(user)
-    const filters: { ownerId?: string; dateFrom?: string; dateTo?: string; search?: string; isPaid?: boolean } = {}
+    const filters: {
+      ownerId?: string
+      dateFrom?: string
+      dateTo?: string
+      search?: string
+      isPaid?: boolean
+      excludeArchived?: boolean
+    } = {}
     if (ability.cannot('read', 'Deal')) {
       throw AppException.forbidden(DealErrorCode.FORBIDDEN_LIST, 'You do not have permission to view deals')
     }
@@ -213,6 +219,7 @@ export class DealService {
     if (query.dateTo) filters.dateTo = query.dateTo
     if (query.search) filters.search = query.search
     if (query.isPaid !== undefined) filters.isPaid = query.isPaid === 'true'
+    if (excludeArchived) filters.excludeArchived = true
 
     return this.dealRepo.findAllByTenant(filters)
   }
@@ -409,6 +416,47 @@ export class DealService {
     })
 
     return { message: 'Deal deleted successfully' }
+  }
+
+  // POST /deals/archive and /deals/unarchive. Same right as PATCH /deals/:id
+  // (update:Deal); a role limited to its own deals (SALES_REP: ownerId
+  // condition) changes only those. Ids that do not match are skipped silently.
+  async setArchived(
+    tenantId: string,
+    dealIds: string[],
+    archived: boolean,
+    user: { userId: string; role: string; tenantId: string },
+  ) {
+    const ability = await this.caslAbilityFactory.createForUser(user)
+    if (ability.cannot('update', 'Deal')) {
+      throw new ForbiddenException('You do not have permission to update deals')
+    }
+    const filters: { ownerId?: string } = {}
+    if (ability.cannot('update', subject('Deal', { ownerId: 'other' } as any))) {
+      filters.ownerId = user.userId
+    }
+
+    const ids = [...new Set(dealIds)]
+    const { count } = archived
+      ? await this.dealRepo.archiveMany(tenantId, ids, filters)
+      : await this.dealRepo.unarchiveMany(tenantId, ids, filters)
+    if (count === 0) return { updated: 0 }
+
+    await this.redisService.invalidateTenantCache(tenantId)
+    await this.auditLogsService.logAction({
+      tenantId,
+      userId: user.userId,
+      action: 'UPDATE',
+      targetType: 'DEAL',
+      targetId: 'BULK',
+      targetName: null,
+      changes: {
+        archived: { old: !archived, new: archived },
+        dealCount: { old: null, new: count },
+      },
+    })
+
+    return { updated: count }
   }
 
   async analyze(

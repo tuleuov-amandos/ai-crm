@@ -1,6 +1,7 @@
 import { ContactsService } from './contacts.service'
 import { BulkImportContactsBodyDto } from './contacts.dto'
 import { GetContactResSchema } from './contacts.model'
+import { ContactsRepository } from './contacts.repo'
 
 // ai.service -> ai.queue opens a Redis connection at import time; not needed here.
 jest.mock('../ai/ai.service', () => ({ AiService: class {} }))
@@ -142,6 +143,7 @@ describe('ContactsService.getContactById deals', () => {
     stageId,
     value: '1000',
     deletedAt: null,
+    archivedAt: null as Date | null,
   })
   const contact = {
     id: 'c1',
@@ -179,5 +181,28 @@ describe('ContactsService.getContactById deals', () => {
       { stage: 'PROSPECT', stageId: 's-new' },
       { stage: 'PROSPECT', stageId: null },
     ])
+  })
+
+  it('keeps archived deals in GET /contacts/:id and carries archivedAt', () => {
+    const archivedAt = new Date(Date.UTC(2026, 5, 1))
+    const res = GetContactResSchema.parse({
+      ...contact,
+      deals: [deal('d1', 's-new'), { ...deal('d2', null), archivedAt }],
+    })
+
+    expect(res.deals.map((d) => [d.id, d.archivedAt])).toEqual([
+      ['d1', null],
+      ['d2', archivedAt],
+    ])
+    expect(JSON.parse(JSON.stringify(res)).deals[1].archivedAt).toBe('2026-06-01T00:00:00.000Z')
+  })
+
+  it('does not filter the contact deals by archivedAt in the repository', async () => {
+    const findFirst = jest.fn().mockResolvedValue(null)
+    const repo = new ContactsRepository({ contact: { findFirst } } as never)
+
+    await repo.findOne('c1')
+
+    expect(findFirst.mock.calls[0][0].include.deals).toEqual({ where: { deletedAt: null } })
   })
 })
