@@ -23,12 +23,14 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import logoImg from "@/app/favicon.ico";
 import { cn } from "@/lib/utils";
 import { Badge } from "./ui/badge";
+import { Skeleton } from "./ui/skeleton";
 import { useLogout, useMe } from "@/hooks/useAuth";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { useChannels } from "@/hooks/useChat";
@@ -94,11 +96,17 @@ const navGroups = [
 export function AppSidebar() {
   const { mutate: logout } = useLogout();
   const { data: me } = useMe();
-  const { data: workspace } = useWorkspace();
+  const { data: workspace, isPending: workspaceLoading } = useWorkspace();
+  // URL логотипа, который не загрузился: для него показываем favicon. Привязка
+  // к самому URL сбрасывает ошибку сама, когда в Settings загрузят новый логотип.
+  const [failedLogoUrl, setFailedLogoUrl] = useState<string | null>(null);
   const { data: channels } = useChannels();
   const { soundEnabled, toggleSound } = useChatSocketContext();
   const pathName = usePathname();
   const t = useTranslations("sidebar");
+
+  const brandName = workspace?.name?.trim() || "NSTORE";
+  const showLogo = !!workspace?.logoUrl && workspace.logoUrl !== failedLogoUrl;
 
   const totalUnread =
     channels?.reduce((sum, channel) => sum + channel.unreadCount, 0) ?? 0;
@@ -118,39 +126,64 @@ export function AppSidebar() {
           <div className="px-4 pt-5 pb-4 border-b border-border shrink-0">
             <Link
               href="/"
-              className="flex items-center gap-2 mb-1 no-underline"
+              className="flex items-center gap-2 mb-1 min-w-0 no-underline"
               style={{ textDecoration: "none" }}
             >
-              <Image
-                src={logoImg}
-                alt="NSTORE"
-                width={24}
-                height={24}
-                unoptimized
-                className="rounded-[6px] shrink-0"
-              />
-              <span
-                className="text-foreground"
-                style={{
-                  fontSize: 14,
-                  fontWeight: 600,
-                  letterSpacing: "-0.01em",
-                }}
-              >
-                NSTORE
-              </span>
+              {workspaceLoading ? (
+                <>
+                  <Skeleton className="size-6 rounded-[6px] shrink-0" />
+                  <Skeleton className="h-3.5 w-24" />
+                </>
+              ) : (
+                <>
+                  {showLogo ? (
+                    // Same plain <img> as Settings → Workspace Info: the logo is an
+                    // external Cloudinary URL and next.config has no remotePatterns.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={workspace.logoUrl!}
+                      alt={brandName}
+                      width={24}
+                      height={24}
+                      onError={() => setFailedLogoUrl(workspace.logoUrl)}
+                      className="size-6 rounded-[6px] shrink-0 object-contain"
+                    />
+                  ) : (
+                    <Image
+                      src={logoImg}
+                      alt={brandName}
+                      width={24}
+                      height={24}
+                      unoptimized
+                      className="rounded-[6px] shrink-0"
+                    />
+                  )}
+                  <span
+                    className="text-foreground truncate min-w-0"
+                    title={brandName}
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 600,
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
+                    {brandName}
+                  </span>
+                </>
+              )}
             </Link>
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-muted-foreground truncate min-w-0" style={{ fontSize: 12 }}>
-                {workspace?.name || t("companyName")}
-              </span>
-              <Badge
-                variant="secondary"
-                className="h-[18px] px-1.5 text-primary bg-secondary rounded-full border-0 shrink-0"
-                style={{ fontSize: 10 }}
-              >
-                {workspace?.plan ? capitalize(workspace.plan) : t("planFree")}
-              </Badge>
+            <div className="flex items-center min-w-0">
+              {workspaceLoading ? (
+                <Skeleton className="h-[18px] w-10 rounded-full" />
+              ) : (
+                <Badge
+                  variant="secondary"
+                  className="h-[18px] px-1.5 text-primary bg-secondary rounded-full border-0 shrink-0"
+                  style={{ fontSize: 10 }}
+                >
+                  {workspace?.plan ? capitalize(workspace.plan) : t("planFree")}
+                </Badge>
+              )}
             </div>
           </div>
         </SidebarHeader>
