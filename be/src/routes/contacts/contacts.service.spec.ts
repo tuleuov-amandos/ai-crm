@@ -1,5 +1,6 @@
 import { ContactsService } from './contacts.service'
 import { BulkImportContactsBodyDto } from './contacts.dto'
+import { GetContactResSchema } from './contacts.model'
 
 // ai.service -> ai.queue opens a Redis connection at import time; not needed here.
 jest.mock('../ai/ai.service', () => ({ AiService: class {} }))
@@ -129,5 +130,54 @@ describe('ContactsService.bulkImport deal stage matching', () => {
     expect(pipelineStagesRepo.findAll).toHaveBeenCalledTimes(1)
     expect(pipelineStagesRepo.findAll).toHaveBeenCalledWith(TENANT)
     expect(dealRepository.createWithStage).toHaveBeenCalledTimes(4)
+  })
+})
+
+describe('ContactsService.getContactById deals', () => {
+  const now = new Date()
+  const deal = (id: string, stageId: string | null) => ({
+    id,
+    title: `Deal ${id}`,
+    stage: 'PROSPECT',
+    stageId,
+    value: '1000',
+    deletedAt: null,
+  })
+  const contact = {
+    id: 'c1',
+    tenantId: TENANT,
+    ownerId: 'u1',
+    name: 'Contact',
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
+    deals: [deal('d1', 's-new'), deal('d2', null)],
+    activities: [],
+  }
+  const user = { userId: 'u1', role: 'ADMIN', tenantId: TENANT }
+
+  it('returns the deals with stageId (custom stage and null) from the service', async () => {
+    const service = new ContactsService(
+      { findOne: jest.fn().mockResolvedValue(contact) } as never,
+      {} as never,
+      {} as never,
+      { createForUser: jest.fn().mockResolvedValue({ cannot: () => false }) } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+    )
+
+    const res = await service.getContactById('c1', TENANT, user)
+
+    expect(res.deals.map((d) => d.stageId)).toEqual(['s-new', null])
+  })
+
+  it('keeps stageId in the GET /contacts/:id response schema, next to the legacy stage', () => {
+    const res = GetContactResSchema.parse(contact)
+
+    expect(res.deals.map(({ stage, stageId }) => ({ stage, stageId }))).toEqual([
+      { stage: 'PROSPECT', stageId: 's-new' },
+      { stage: 'PROSPECT', stageId: null },
+    ])
   })
 })

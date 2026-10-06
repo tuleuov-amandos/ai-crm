@@ -98,6 +98,7 @@ export const GetContactResSchema = ContactBaseSchema.omit({ deletedAt: true }).e
       id: z.string(),
       title: z.string(),
       stage: z.string(),
+      stageId: z.string().nullable(),
       value: z.coerce.number(),
     }),
   ),
