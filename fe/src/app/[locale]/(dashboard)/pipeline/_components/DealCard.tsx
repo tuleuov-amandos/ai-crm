@@ -75,51 +75,51 @@ export function DealCard({ deal, isWon = false, onEdit, onDelete }: Props) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className={cn(
-        "bg-background rounded-lg p-3 cursor-grab select-none transition-shadow duration-150 relative touch-none",
+        "bg-background rounded-lg px-3 py-2 cursor-grab select-none transition-shadow duration-150 relative touch-none",
         isWon ? "border-[1.5px] border-[#3B6D11]" : "border border-border/70",
         !isDragging && hovered
           ? "shadow-[0_2px_10px_rgba(0,0,0,0.07)]"
           : "shadow-none",
       )}
     >
-      {isWon && (
-        <div className="absolute top-2 right-2 size-4 rounded-full bg-[#3B6D11] flex items-center justify-center">
-          <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
-            <path
-              d="M1 3.5L3.5 6L8 1"
-              stroke="white"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
-      )}
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-center gap-2 mb-0.5">
         <Link
           href={`/pipeline/${deal.id}`}
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
+          title={deal.title}
           className={cn(
-            "block mb-0.5 transition-colors flex-1 min-w-0",
+            "block truncate transition-colors flex-1 min-w-0",
             hovered ? "text-primary" : "text-foreground",
           )}
           style={{
             fontSize: 13,
             fontWeight: 500,
             lineHeight: 1.4,
-            paddingRight: isWon ? 20 : 0,
             textDecoration: "none",
           }}
         >
           {deal.title}
         </Link>
+        {isWon && (
+          <div className="size-4 shrink-0 rounded-full bg-[#3B6D11] flex items-center justify-center">
+            <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+              <path
+                d="M1 3.5L3.5 6L8 1"
+                stroke="white"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+        )}
         <div
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
           className={cn(
-            "shrink-0 transition-opacity",
+            "shrink-0 -my-1 transition-opacity",
             hovered ? "opacity-100" : "opacity-0",
           )}
         >
@@ -168,32 +168,33 @@ export function DealCard({ deal, isWon = false, onEdit, onDelete }: Props) {
         {deal.contact.name}
       </p>
 
-      <div
-        onClick={(e) => e.stopPropagation()}
-        onMouseDown={(e) => e.stopPropagation()}
-        style={{ marginBottom: 10 }}
-      >
-        <PaymentStatusBadge
-          isPaid={deal.isPaid}
-          disabled={updatePaymentStatus.isPending}
-          onToggle={
-            canTogglePayment
-              ? () =>
-                  updatePaymentStatus.mutate({ isPaid: !deal.isPaid })
-              : undefined
-          }
-        />
-      </div>
+      <div className="flex items-center gap-2">
+        <div
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="min-w-0 shrink"
+        >
+          <PaymentStatusBadge
+            isPaid={deal.isPaid}
+            disabled={updatePaymentStatus.isPending}
+            onToggle={
+              canTogglePayment
+                ? () =>
+                    updatePaymentStatus.mutate({ isPaid: !deal.isPaid })
+                : undefined
+            }
+            className="block max-w-full truncate"
+          />
+        </div>
 
-      <div className="flex items-center justify-between">
         <span
-          className="text-foreground"
+          className="text-foreground min-w-0 truncate"
           style={{ fontSize: 12, fontWeight: 600 }}
         >
           {formatValue(Number(deal.value), units)}
         </span>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 ml-auto shrink-0">
           <Link
             href={`/pipeline/${deal.id}`}
             onClick={(e) => e.stopPropagation()}
