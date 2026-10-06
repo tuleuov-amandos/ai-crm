@@ -1021,6 +1021,7 @@
       "workspaceInfo": "Workspace Info",
       "members": "Members & Roles",
       "invitations": "Invitations",
+      "pipelineStages": "Sales pipeline",
       "profile": "My Profile",
       "password": "Change Password",
       "billing": "Plan & Billing",
@@ -1226,6 +1227,68 @@
           "confirmMismatch": "Passwords do not match.",
           "newSameAsCurrent": "New password must differ from the current one."
         }
+      }
+    },
+    "pipelineStages": {
+      "heading": "Sales pipeline",
+      "subtitle": "Deal stages used on the board, in reports and on the dashboard. Drag a stage by its handle to change the order.",
+      "loading": "Loading stages…",
+      "loadError": "Could not load pipeline stages",
+      "addStage": "Add stage",
+      "limitHint": "Limit reached: up to {max} open stages",
+      "openStages": "Pipeline stages",
+      "closedStages": "Closing stages",
+      "dragHandle": "Drag stage “{name}”",
+      "dealCount": "{count, plural, one {# deal} other {# deals}}",
+      "edit": "Edit",
+      "delete": "Delete",
+      "lastStageHint": "The pipeline needs at least one open stage",
+      "wonCaption": "Successful close",
+      "lostCaption": "Closed without result",
+      "systemFixed": "Color and probability are fixed",
+      "form": {
+        "createTitle": "New stage",
+        "editTitle": "Edit stage",
+        "nameLabel": "Name",
+        "namePlaceholder": "e.g. Negotiation",
+        "colorLabel": "Color",
+        "probabilityLabel": "Win probability",
+        "probabilityHint": "Whole number from 0 to 99",
+        "systemNote": "Only the name of this stage can be changed.",
+        "create": "Add"
+      },
+      "colors": {
+        "blue": "Blue",
+        "purple": "Purple",
+        "orange": "Orange",
+        "teal": "Teal",
+        "pink": "Pink",
+        "yellow": "Yellow",
+        "gray": "Gray",
+        "indigo": "Indigo"
+      },
+      "validation": {
+        "nameRequired": "Enter a stage name",
+        "nameMax": "The name can be at most 50 characters",
+        "colorRequired": "Choose a color",
+        "probabilityRange": "Enter a whole number from 0 to 99"
+      },
+      "deleteDialog": {
+        "title": "Delete stage “{name}”?",
+        "bodyWithDeals": "Stage “{name}” has {count, plural, one {# deal} other {# deals}}. Move them to:",
+        "bodyEmpty": "No active deals. The stage can be deleted; if archived deals remain in it, they will be moved to the selected stage",
+        "targetLabel": "Stage to move deals to",
+        "targetPlaceholder": "Choose a stage",
+        "confirm": "Delete"
+      },
+      "toasts": {
+        "createSuccess": "Stage added",
+        "createError": "Could not add the stage",
+        "updateSuccess": "Stage saved",
+        "updateError": "Could not save the stage",
+        "deleteSuccess": "Stage deleted",
+        "deleteError": "Could not delete the stage",
+        "reorderError": "Could not change the stage order"
       }
     }
   },
@@ -1661,6 +1724,17 @@
     "TENANT_FORBIDDEN": "Only a workspace administrator can change these settings.",
     "TENANT_LOGO_INVALID_TYPE": "Only JPG, PNG or WebP images are allowed.",
     "TENANT_LOGO_TOO_LARGE": "The logo file is too large (2 MB max).",
-    "TENANT_LOGO_FILE_MISSING": "No file was selected."
+    "TENANT_LOGO_FILE_MISSING": "No file was selected.",
+    "PIPELINE_STAGE_NOT_FOUND": "Pipeline stage not found. Refresh the page.",
+    "PIPELINE_STAGE_NAME_TAKEN": "A stage with this name already exists.",
+    "PIPELINE_STAGE_SYSTEM_FIELD_IMMUTABLE": "Only the name of a closing stage can be changed.",
+    "PIPELINE_STAGE_SYSTEM_DELETE_NOT_ALLOWED": "Closing stages cannot be deleted.",
+    "PIPELINE_STAGE_LIMIT_MAX": "A pipeline can have at most 12 open stages.",
+    "PIPELINE_STAGE_LIMIT_MIN": "A pipeline needs at least one open stage.",
+    "PIPELINE_STAGE_TARGET_REQUIRED": "The stage has deals. Choose a stage to move them to.",
+    "PIPELINE_STAGE_TARGET_INVALID": "The stage to move deals to was not found.",
+    "PIPELINE_STAGE_REORDER_MISMATCH": "The stage list has changed. Refresh the page and try again.",
+    "PIPELINE_STAGE_INVALID_PROBABILITY": "Probability is out of range for this stage.",
+    "PIPELINE_STAGE_CONFLICT": "The pipeline was changed at the same time. Try again."
   }
 }

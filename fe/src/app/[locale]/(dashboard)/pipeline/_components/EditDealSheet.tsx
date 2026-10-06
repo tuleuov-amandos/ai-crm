@@ -1,6 +1,8 @@
 import { useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -28,7 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Deal, DealDetail } from "./types";
-import { useUpdateDeal } from "@/hooks/useDeals";
+import { dealKeys, useUpdateDeal, useUpdateDealStage } from "@/hooks/useDeals";
 import { usePipelineStages, useStageLabel } from "@/hooks/usePipelineStages";
 import { useGetUsers } from "@/hooks/useUsers";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -61,6 +63,10 @@ export function EditDealSheet({ deal, open, onOpenChange }: Props) {
   const tCommon = useTranslations("common");
   const formSchema = useMemo(() => buildFormSchema(tv), [tv]);
   const updateDeal = useUpdateDeal(deal.id);
+  // Same stage move as the board: PATCH /deals/:id/stage with { stageId }
+  const updateDealStage = useUpdateDealStage();
+  const queryClient = useQueryClient();
+  const tToasts = useTranslations("pipeline.toasts");
   const usersQuery = useGetUsers();
   const users = usersQuery.data ?? [];
   const usersLoading = usersQuery.isLoading;
@@ -96,9 +102,38 @@ export function EditDealSheet({ deal, open, onOpenChange }: Props) {
     }
   }, [deal, open, form, dealStageId]);
 
+  // Read during render so react-hook-form tracks it
+  const { dirtyFields } = form.formState;
+
   const onSubmit = (values: FormValues) => {
     if (!deal) return;
-    
+
+    // PATCH /deals/:id does not write the stage; a changed stage is saved with
+    // its own request after the other fields. stageId is "" until stages load.
+    const stageChanged = !!values.stageId && values.stageId !== dealStageId;
+    const fieldsChanged = Object.keys(dirtyFields).some((key) => key !== "stageId");
+
+    // Errors toast in useUpdateDealStage; on failure the sheet stays open and
+    // the other fields stay saved. The rollback there is a no-op: the deal was
+    // not moved on the board optimistically.
+    const saveStage = (onlyStage: boolean) =>
+      updateDealStage.mutate(
+        { id: deal.id, from: dealStageId, to: values.stageId, data: { stageId: values.stageId } },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: dealKeys.detail(deal.id) });
+            // useUpdateDeal already toasted when the other fields were saved
+            if (onlyStage) toast.success(tToasts("updateSuccess"));
+            onOpenChange(false);
+          },
+        },
+      );
+
+    if (stageChanged && !fieldsChanged) {
+      saveStage(true);
+      return;
+    }
+
     updateDeal.mutate(
       {
         title:   values.title,
@@ -109,7 +144,15 @@ export function EditDealSheet({ deal, open, onOpenChange }: Props) {
       },
       {
         // Success toast is owned by useUpdateDeal's onSuccess; only close on success
-        onSuccess: () => onOpenChange(false),
+        onSuccess: () => {
+          if (!stageChanged) {
+            onOpenChange(false);
+            return;
+          }
+          // The fields are saved: a retry after a failed stage move sends only the stage
+          form.reset(values);
+          saveStage(false);
+        },
       },
     );
   };
@@ -290,7 +333,7 @@ export function EditDealSheet({ deal, open, onOpenChange }: Props) {
               >
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" size="sm" className="flex-1 text-xs">
+              <Button type="submit" size="sm" className="flex-1 text-xs" disabled={updateDeal.isPending || updateDealStage.isPending}>
                 {t("saveChanges")}
               </Button>
             </div>
