@@ -324,7 +324,10 @@ export class DealService {
     if (hasStage) {
       if (!Object.values(DealStageConst).includes(body.stage as DealStageType)) throw invalidStage('Invalid stage')
       const stage = body.stage as DealStageType
-      return { stageId: await this.dealRepo.resolveStageIdByLegacyKey(tenantId, stage), stage }
+      // The tenant may have deleted the default stage with this key.
+      const found = await this.dealRepo.findStageByLegacyKey(tenantId, stage)
+      if (!found) throw invalidStage('Invalid stage')
+      return { stageId: found.id, stage }
     }
 
     if (required) throw invalidStage('Invalid stage')

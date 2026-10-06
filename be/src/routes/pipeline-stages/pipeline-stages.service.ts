@@ -184,15 +184,6 @@ export class PipelineStagesService {
           'WON and LOST stages cannot be deleted',
         )
       }
-      // TODO(PR3): снять. Until deal writes switch to stageId,
-      // resolveStageIdByLegacyKey() looks stages up by legacyKey, so a default
-      // stage must not disappear.
-      if (stage.legacyKey !== null) {
-        throw AppException.badRequest(
-          PipelineStageErrorCode.DEFAULT_DELETE_NOT_ALLOWED,
-          'Default pipeline stages cannot be deleted yet',
-        )
-      }
       const open = stages.filter(isOpen)
       if (open.length <= MIN_OPEN_STAGES) {
         throw AppException.badRequest(

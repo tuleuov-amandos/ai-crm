@@ -562,13 +562,37 @@ describe('PipelineStagesService', () => {
       expect(db.tenantStages(T1)).toHaveLength(5)
     })
 
-    it('refuses to delete a default stage (legacyKey set) until PR 3', async () => {
-      const { proposal, prospect } = db.addDefaultStages(T1)
+    it('deletes a default open stage and moves its deals, syncing Deal.stage via legacyDealStageFor', async () => {
+      const { proposal, qualified } = db.addDefaultStages(T1)
+      const deal = db.addDeal({ tenantId: T1, stageId: proposal.id, stage: 'PROPOSAL' })
+
+      await expect(service.remove(ADMIN, proposal.id, { targetStageId: qualified.id })).resolves.toEqual({
+        message: 'Pipeline stage deleted successfully',
+      })
+
+      expect(db.stages.some((s) => s.id === proposal.id)).toBe(false)
+      expect(db.deals.find((d) => d.id === deal.id)).toMatchObject({ stageId: qualified.id, stage: 'QUALIFIED' })
+      expect(orderOf(db, T1)).toEqual(['0:Лид', '1:Контакт установлен', '2:Выиграно', '3:Проиграно'])
+      expect(redis.invalidateTenantCache).toHaveBeenCalledWith(T1)
+    })
+
+    it('deletes an empty default open stage without targetStageId', async () => {
+      const { prospect } = db.addDefaultStages(T1)
+
+      await service.remove(ADMIN, prospect.id, {})
+
+      expect(db.stages.some((s) => s.id === prospect.id)).toBe(false)
+      expect(db.tenantStages(T1)).toHaveLength(4)
+    })
+
+    it('still requires targetStageId when a default stage has deals', async () => {
+      const { prospect } = db.addDefaultStages(T1)
+      db.addDeal({ tenantId: T1, stageId: prospect.id, stage: 'PROSPECT' })
 
       await expectAppError(
-        service.remove(ADMIN, proposal.id, { targetStageId: prospect.id }),
+        service.remove(ADMIN, prospect.id, {}),
         HttpStatus.BAD_REQUEST,
-        PipelineStageErrorCode.DEFAULT_DELETE_NOT_ALLOWED,
+        PipelineStageErrorCode.TARGET_REQUIRED,
       )
       expect(db.tenantStages(T1)).toHaveLength(5)
     })
