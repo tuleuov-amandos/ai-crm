@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Archive, ArchiveRestore, ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Deal } from "./types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -208,31 +208,18 @@ export function DealCard({ deal, isWon = false, onEdit, onDelete, onArchive, onU
                     updatePaymentStatus.mutate({ isPaid: !deal.isPaid })
                 : undefined
             }
-            className="block max-w-full truncate"
+            className="block max-w-full truncate px-2"
           />
         </div>
 
         <span
-          className="text-foreground min-w-0 truncate"
+          className="text-foreground shrink-0 whitespace-nowrap"
           style={{ fontSize: 12, fontWeight: 600 }}
         >
           {formatValue(Number(deal.value), units)}
         </span>
 
-        <div className="flex items-center gap-1.5 ml-auto shrink-0">
-          <Link
-            href={`/pipeline/${deal.id}`}
-            onClick={(e) => e.stopPropagation()}
-            title={t("card.openDeal")}
-            className={cn(
-              "flex items-center justify-center size-[18px] rounded-[5px] text-muted-foreground transition-opacity",
-              hovered ? "opacity-100" : "opacity-0",
-            )}
-            style={{ textDecoration: "none" }}
-          >
-            <ExternalLink size={11} />
-          </Link>
-
+        <div className="flex items-center ml-auto shrink-0">
           <Avatar className="size-5">
             <AvatarFallback
               className="border-0 bg-primary/10 text-primary"
