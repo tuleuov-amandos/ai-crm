@@ -15,6 +15,8 @@ import { ArchivedBadge } from "@/components/ui/ArchivedBadge";
 import { isDealArchived } from "@/lib/dealArchive";
 import { useMe } from "@/hooks/useAuth";
 import { useUpdateDealPaymentStatus } from "@/hooks/useDeals";
+import { useDealSelectionStore } from "@/stores/dealSelection-store";
+import { SelectionCheckbox } from "./SelectionCheckbox";
 
 interface Props {
   deal: Deal;
@@ -49,6 +51,11 @@ export function DealCard({ deal, isWon = false, onEdit, onDelete, onArchive, onU
   // An archived card is not draggable (no listeners); it stays a drop target
   // so other cards can still be dropped next to it.
   const isArchived = isDealArchived(deal);
+  // Selection mode: a click anywhere toggles the card, nothing is draggable
+  // (disabled drops the listeners, so the pointer and touch sensors never start).
+  const selectionMode = useDealSelectionStore((s) => s.selectionMode);
+  const selected = useDealSelectionStore((s) => s.selectedIds.has(deal.id));
+  const toggleDeal = useDealSelectionStore((s) => s.toggleDeal);
   const {
     attributes,
     listeners,
@@ -58,7 +65,7 @@ export function DealCard({ deal, isWon = false, onEdit, onDelete, onArchive, onU
     isDragging,
   } = useSortable({
     id: deal.id,
-    disabled: isArchived,
+    disabled: isArchived || selectionMode,
   });
 
   const [hovered, setHovered] = useState(false);
@@ -82,17 +89,30 @@ export function DealCard({ deal, isWon = false, onEdit, onDelete, onArchive, onU
       {...attributes}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={selectionMode ? () => toggleDeal(deal.id) : undefined}
       className={cn(
         "bg-background rounded-lg px-3 py-2 select-none transition-shadow duration-150 relative",
-        isArchived ? "cursor-default" : "cursor-grab touch-none",
+        selectionMode
+          ? "cursor-pointer"
+          : isArchived
+            ? "cursor-default"
+            : "cursor-grab touch-none",
         isWon ? "border-[1.5px] border-[#3B6D11]" : "border border-border/70",
         !isDragging && hovered
           ? "shadow-[0_2px_10px_rgba(0,0,0,0.07)]"
           : "shadow-none",
+        selected && "ring-2 ring-primary",
       )}
     >
       <div className="flex items-center gap-2 mb-0.5">
-        {isWon && (
+        {/* Slot before the title: the checkbox replaces the won check */}
+        {selectionMode ? (
+          <SelectionCheckbox
+            checked={selected}
+            onCheckedChange={() => toggleDeal(deal.id)}
+            aria-label={deal.title}
+          />
+        ) : isWon && (
           <div className="size-4 shrink-0 rounded-full bg-[#3B6D11] flex items-center justify-center">
             <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
               <path
@@ -107,7 +127,11 @@ export function DealCard({ deal, isWon = false, onEdit, onDelete, onArchive, onU
         )}
         <Link
           href={`/pipeline/${deal.id}`}
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            // In selection mode the click selects the card instead
+            if (selectionMode) e.preventDefault();
+            else e.stopPropagation();
+          }}
           onMouseDown={(e) => e.stopPropagation()}
           title={deal.title}
           className={cn(
@@ -129,7 +153,8 @@ export function DealCard({ deal, isWon = false, onEdit, onDelete, onArchive, onU
           onTouchStart={(e) => e.stopPropagation()}
           className={cn(
             "shrink-0 -my-1 transition-opacity",
-            hovered ? "opacity-100" : "opacity-0",
+            // Hidden in selection mode but keeps its width, so the title stays put
+            selectionMode ? "invisible" : hovered ? "opacity-100" : "opacity-0",
           )}
         >
           <DropdownMenu>
@@ -194,16 +219,17 @@ export function DealCard({ deal, isWon = false, onEdit, onDelete, onArchive, onU
       </p>
 
       <div className="flex items-center gap-2">
+        {/* In selection mode the badge is plain text and the click selects the card */}
         <div
-          onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
+          onClick={selectionMode ? undefined : (e) => e.stopPropagation()}
+          onMouseDown={selectionMode ? undefined : (e) => e.stopPropagation()}
           className="min-w-0 shrink"
         >
           <PaymentStatusBadge
             isPaid={deal.isPaid}
             disabled={updatePaymentStatus.isPending}
             onToggle={
-              canTogglePayment
+              canTogglePayment && !selectionMode
                 ? () =>
                     updatePaymentStatus.mutate({ isPaid: !deal.isPaid })
                 : undefined

@@ -9,8 +9,11 @@ import {
   Calendar,
   Search,
   Archive,
+  ListChecks,
+  X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useIsMutating } from "@tanstack/react-query";
 import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { useTranslations } from "next-intl";
@@ -18,6 +21,7 @@ import { useDebounceValue } from "usehooks-ts";
 import { KanbanBoard } from "@/app/[locale]/(dashboard)/pipeline/_components/KanbanBoard";
 import { ListView } from "@/app/[locale]/(dashboard)/pipeline/_components/ListView";
 import { CreateDealSheet } from "@/app/[locale]/(dashboard)/pipeline/_components/CreateDealSheet";
+import { DealBulkActionBar } from "@/app/[locale]/(dashboard)/pipeline/_components/DealBulkActionBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -29,6 +33,8 @@ import {
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { useGetUsers } from "@/hooks/useUsers";
+import { dealBulkArchiveKey } from "@/hooks/useDeals";
+import { useDealSelectionStore } from "@/stores/dealSelection-store";
 
 // ─── PERIOD FILTER ────────────────────────────────────────────────────────────
 function PeriodFilter({
@@ -309,6 +315,33 @@ export default function Pipeline() {
     : undefined;
   const dateTo = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined;
 
+  // ── Selection mode (board and list) ─────────────────────────────────────
+  const selectionMode = useDealSelectionStore((s) => s.selectionMode);
+  const enterSelection = useDealSelectionStore((s) => s.enterSelection);
+  const exitSelection = useDealSelectionStore((s) => s.exitSelection);
+  const clearSelection = useDealSelectionStore((s) => s.clearSelection);
+  const bulkPending = useIsMutating({ mutationKey: dealBulkArchiveKey }) > 0;
+
+  // Other deals are listed after any of these changes: drop the selection,
+  // keep the mode. Search counts once debounced, when the query changes.
+  useEffect(() => {
+    clearSelection();
+  }, [selectedOwnerId, dateFrom, dateTo, debouncedSearch, isPaidFilter, showArchived, viewMode, clearSelection]);
+
+  // The store outlives the page: leave the mode when navigating away
+  useEffect(() => exitSelection, [exitSelection]);
+
+  // Esc leaves the mode. Radix calls preventDefault when Esc closes a dialog,
+  // popover or menu, so that Esc only closes the layer.
+  useEffect(() => {
+    if (!selectionMode || bulkPending) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !e.defaultPrevented) exitSelection();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectionMode, bulkPending, exitSelection]);
+
   function handleAddDealInStage(stageId?: string) {
     setCreateDefaultStageId(stageId);
     setCreateOpen(true);
@@ -400,6 +433,27 @@ export default function Pipeline() {
           </Button>
 
           <Button
+            variant="outline"
+            size="sm"
+            aria-pressed={selectionMode}
+            disabled={bulkPending}
+            onClick={selectionMode ? exitSelection : enterSelection}
+            className={cn(
+              "h-8 gap-1 border-border text-xs",
+              selectionMode
+                ? "bg-secondary text-primary"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {selectionMode ? (
+              <X size={12} className="shrink-0" />
+            ) : (
+              <ListChecks size={12} className="shrink-0" />
+            )}
+            {selectionMode ? t("archive.cancelSelect") : t("archive.select")}
+          </Button>
+
+          <Button
             size="sm"
             className="h-8 gap-1.5 text-xs"
             onClick={() => {
@@ -440,6 +494,8 @@ export default function Pipeline() {
           </div>
         )}
       </main>
+
+      <DealBulkActionBar />
 
       <CreateDealSheet
         open={createOpen}

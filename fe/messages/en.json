@@ -414,11 +414,27 @@
       "badge": "Archived",
       "archive": "Archive",
       "unarchive": "Restore from archive",
+      "select": "Select",
+      "cancelSelect": "Cancel",
+      "selectAll": "Select all",
       "dialog": {
         "title": "Archive this deal?",
         "description": "The deal <b>{title}</b> is on an open stage and will be hidden from the board. You can find it with “Show archive” and restore it.",
         "warning": "The deal will stay in reports and the forecast.",
+        "bulkTitle": "Archive {count, plural, one {# deal} other {# deals}}?",
+        "bulkDescription": "The deals will be hidden from the board. You can find them with “Show archive” and restore them.",
+        "bulkOpenWarning": "{count, plural, one {# of them is on an open stage and will stay in reports and the forecast.} other {# of them are on open stages and will stay in reports and the forecast.}}",
         "confirm": "Archive"
+      },
+      "bulk": {
+        "selected": "{count, plural, one {# deal selected} other {# deals selected}}",
+        "archive": "Archive ({count})",
+        "unarchive": "Restore from archive ({count})",
+        "archiveSuccess": "{count, plural, one {# deal archived} other {# deals archived}}",
+        "unarchiveSuccess": "{count, plural, one {# deal restored from archive} other {# deals restored from archive}}",
+        "unchanged": "The deals are already in this state",
+        "archivePartial": "Archived {done} of {total}, the rest could not be archived",
+        "unarchivePartial": "Restored {done} of {total} from archive, the rest could not be restored"
       },
       "toasts": {
         "archiveSuccess": "Deal archived",
