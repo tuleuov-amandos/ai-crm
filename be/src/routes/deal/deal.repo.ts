@@ -19,10 +19,13 @@ export class DealRepository {
     dateTo?: string
     search?: string
     isPaid?: boolean
+    // Opt-in: only the board hides archived deals.
+    excludeArchived?: boolean
   }) {
     return this.prismaService.deal.findMany({
       where: {
         deletedAt: null,
+        ...(filters?.excludeArchived && { archivedAt: null }),
         ...(filters?.ownerId && { ownerId: filters.ownerId }),
         ...(filters?.isPaid !== undefined && { isPaid: filters.isPaid }),
         ...((filters?.dateFrom || filters?.dateTo) && {
@@ -142,6 +145,34 @@ export class DealRepository {
     return this.prismaService.deal.update({
       where: { id: dealId, deletedAt: null },
       data: { deletedAt: new Date() },
+    })
+  }
+
+  // Bulk archive / unarchive. tenantId and deletedAt are explicit, not left to
+  // the tenant extension; ids that do not match are skipped. Returns { count }.
+  archiveMany(tenantId: string, dealIds: string[], filters?: { ownerId?: string }) {
+    return this.prismaService.deal.updateMany({
+      where: {
+        id: { in: dealIds },
+        tenantId,
+        deletedAt: null,
+        archivedAt: null,
+        ...(filters?.ownerId && { ownerId: filters.ownerId }),
+      },
+      data: { archivedAt: new Date() },
+    })
+  }
+
+  unarchiveMany(tenantId: string, dealIds: string[], filters?: { ownerId?: string }) {
+    return this.prismaService.deal.updateMany({
+      where: {
+        id: { in: dealIds },
+        tenantId,
+        deletedAt: null,
+        archivedAt: { not: null },
+        ...(filters?.ownerId && { ownerId: filters.ownerId }),
+      },
+      data: { archivedAt: null },
     })
   }
 

@@ -96,3 +96,63 @@ describe('DealRepository dual write of stage + stageId', () => {
     })
   })
 })
+
+// Archive only hides deals from the board: the filter is opt-in, so the
+// pipeline (and every other caller) still reads archived deals.
+describe('DealRepository archive', () => {
+  const buildPrisma = () => ({
+    deal: {
+      findMany: jest.fn().mockResolvedValue([]),
+      updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+    },
+  })
+
+  it('findAllByTenant() skips archived deals only when asked to', async () => {
+    const prisma = buildPrisma()
+    const repo = new DealRepository(prisma as unknown as PrismaService)
+
+    await repo.findAllByTenant({ excludeArchived: true })
+    await repo.findAllByTenant({})
+    await repo.findAllByTenant()
+
+    expect(prisma.deal.findMany.mock.calls[0][0].where).toEqual({ deletedAt: null, archivedAt: null })
+    expect(prisma.deal.findMany.mock.calls[1][0].where).toEqual({ deletedAt: null })
+    expect(prisma.deal.findMany.mock.calls[2][0].where).toEqual({ deletedAt: null })
+  })
+
+  it('archiveMany() updates only live, not yet archived deals of the tenant', async () => {
+    const prisma = buildPrisma()
+    const repo = new DealRepository(prisma as unknown as PrismaService)
+
+    const result = await repo.archiveMany('tenant-1', ['d1', 'd2'])
+
+    expect(result).toEqual({ count: 2 })
+    expect(prisma.deal.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: ['d1', 'd2'] }, tenantId: 'tenant-1', deletedAt: null, archivedAt: null },
+      data: { archivedAt: expect.any(Date) },
+    })
+  })
+
+  it('unarchiveMany() updates only archived live deals of the tenant', async () => {
+    const prisma = buildPrisma()
+    const repo = new DealRepository(prisma as unknown as PrismaService)
+
+    await repo.unarchiveMany('tenant-1', ['d1'])
+
+    expect(prisma.deal.updateMany).toHaveBeenCalledWith({
+      where: { id: { in: ['d1'] }, tenantId: 'tenant-1', deletedAt: null, archivedAt: { not: null } },
+      data: { archivedAt: null },
+    })
+  })
+
+  it('archiveMany() / unarchiveMany() add the owner condition when given one', async () => {
+    const prisma = buildPrisma()
+    const repo = new DealRepository(prisma as unknown as PrismaService)
+
+    await repo.archiveMany('tenant-1', ['d1'], { ownerId: 'rep-1' })
+    await repo.unarchiveMany('tenant-1', ['d1'], { ownerId: 'rep-1' })
+
+    expect(prisma.deal.updateMany.mock.calls[0][0].where).toMatchObject({ ownerId: 'rep-1' })
+    expect(prisma.deal.updateMany.mock.calls[1][0].where).toMatchObject({ ownerId: 'rep-1' })
+  })
+})

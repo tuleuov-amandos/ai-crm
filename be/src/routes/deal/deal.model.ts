@@ -123,6 +123,7 @@ export type UpdateDealPaymentStatusResType = UpdateDealResType
 // ─────────────────────────────────────────
 export const GetDealResSchema = DealBaseSchema.omit({ deletedAt: true }).extend({
   stageId: z.string().nullable(),
+  archivedAt: zDate.nullable(),
   contact: z.object({
     id: z.string(),
     name: z.string(),
@@ -211,11 +212,18 @@ export const GetPipelineQuerySchema = z.object({
 export type GetPipelineQueryType = z.infer<typeof GetPipelineQuerySchema>
 
 // ─────────────────────────────────────────
-// BOARD — GET /deals/board (same query as /deals/pipeline)
+// BOARD — GET /deals/board (query of /deals/pipeline + includeArchived)
 // ─────────────────────────────────────────
-// Columns are the tenant's pipeline stages in order.
+// Columns are the tenant's pipeline stages in order. Archived deals are left
+// out unless includeArchived=true.
+export const GetBoardQuerySchema = GetPipelineQuerySchema.extend({
+  includeArchived: z.enum(['true', 'false']).optional(),
+})
+export type GetBoardQueryType = z.infer<typeof GetBoardQuerySchema>
+
 export const BoardDealCardSchema = DealCardSchema.extend({
   stageId: z.string().nullable(),
+  archivedAt: zDate.nullable(),
 })
 export type BoardDealCardRes = z.infer<typeof BoardDealCardSchema>
 
@@ -235,6 +243,24 @@ export const GetDealsBoardResSchema = z.array(
   }),
 )
 export type GetDealsBoardResType = z.infer<typeof GetDealsBoardResSchema>
+
+// ─────────────────────────────────────────
+// ARCHIVE — POST /deals/archive, POST /deals/unarchive
+// ─────────────────────────────────────────
+// Ids the user may not change (other tenant, unknown, deleted, not owned when
+// limited to own deals) or already in the target state are skipped silently.
+export const ArchiveDealsBodySchema = z
+  .object({
+    dealIds: z.array(z.string().min(1)).min(1).max(200),
+  })
+  .strict()
+
+export const ArchiveDealsResSchema = z.object({
+  updated: z.number().int().nonnegative(),
+})
+
+export type ArchiveDealsBodyType = z.infer<typeof ArchiveDealsBodySchema>
+export type ArchiveDealsResType = z.infer<typeof ArchiveDealsResSchema>
 
 // ─────────────────────────────────────────
 // ANALYZE — POST /deals/:id/analyze

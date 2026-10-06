@@ -20,10 +20,13 @@ import { ROLE } from 'src/common/constants/role.constanst'
 import { DealService } from './deal.service'
 import { ZodSerializerDto } from 'nestjs-zod'
 import {
+  ArchiveDealsBodyDto,
+  ArchiveDealsResDto,
   CreateDealResDto,
   GetDealResDto,
   GetDealsPipelineResDto,
   GetDealsBoardResDto,
+  GetBoardQueryDto,
   GetPipelineQueryDto,
   UpdateDealResDto,
   UpdateDealStageBodyDto,
@@ -68,8 +71,22 @@ export class DealController {
   @Get('board')
   @ApiOkResponse({ type: GetDealsBoardResDto })
   @ZodSerializerDto(GetDealsBoardResDto)
-  getBoard(@CurrentUser() user: AccessTokenPayload, @Query() query: GetPipelineQueryDto) {
+  getBoard(@CurrentUser() user: AccessTokenPayload, @Query() query: GetBoardQueryDto) {
     return this.dealService.getBoard(user.tenantId, user, query)
+  }
+
+  @Post('archive')
+  @ApiOkResponse({ type: ArchiveDealsResDto })
+  @ZodSerializerDto(ArchiveDealsResDto)
+  archive(@Body() body: ArchiveDealsBodyDto, @CurrentUser() user: AccessTokenPayload) {
+    return this.dealService.setArchived(user.tenantId, body.dealIds, true, user)
+  }
+
+  @Post('unarchive')
+  @ApiOkResponse({ type: ArchiveDealsResDto })
+  @ZodSerializerDto(ArchiveDealsResDto)
+  unarchive(@Body() body: ArchiveDealsBodyDto, @CurrentUser() user: AccessTokenPayload) {
+    return this.dealService.setArchived(user.tenantId, body.dealIds, false, user)
   }
 
   @Get(':id')

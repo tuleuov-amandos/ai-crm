@@ -100,6 +100,8 @@ export const GetContactResSchema = ContactBaseSchema.omit({ deletedAt: true }).e
       stage: z.string(),
       stageId: z.string().nullable(),
       value: z.coerce.number(),
+      // Archived deals are not hidden here.
+      archivedAt: zIsoDatetime.nullable(),
     }),
   ),
   activities: z.array(
