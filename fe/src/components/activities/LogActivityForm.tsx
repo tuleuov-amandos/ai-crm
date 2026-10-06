@@ -26,6 +26,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { toDateOnly } from "@/lib/dateOnly";
 import { toast } from "sonner";
 import {
   ACTIVITY_ATTACHMENT_ACCEPT,
@@ -227,7 +228,7 @@ function LogActivityForm({ onSubmit, isPending, entityType = "contact" }: LogAct
                 className="flex items-center gap-1 px-2.5 py-1 text-[11px] rounded-md border border-border bg-background text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
                 <Clock size={11} />
-                {selectedDate.toISOString().split('T')[0]}
+                {toDateOnly(selectedDate)}
                 <ChevronDown size={10} />
               </button>
             </PopoverTrigger>
