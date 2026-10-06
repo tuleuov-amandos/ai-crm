@@ -41,8 +41,6 @@ export enum PipelineStageErrorCode {
   SYSTEM_FIELD_IMMUTABLE = 'PIPELINE_STAGE_SYSTEM_FIELD_IMMUTABLE',
   /** WON/LOST stages cannot be deleted. */
   SYSTEM_DELETE_NOT_ALLOWED = 'PIPELINE_STAGE_SYSTEM_DELETE_NOT_ALLOWED',
-  /** Default stages (legacyKey set) cannot be deleted until deal writes use stageId. */
-  DEFAULT_DELETE_NOT_ALLOWED = 'PIPELINE_STAGE_DEFAULT_DELETE_NOT_ALLOWED',
   /** The tenant already has the maximum number of open stages. */
   LIMIT_MAX = 'PIPELINE_STAGE_LIMIT_MAX',
   /** Deleting would leave the tenant without open stages. */

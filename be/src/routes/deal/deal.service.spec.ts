@@ -297,6 +297,8 @@ const expectInvalidStage = async (call: Promise<unknown>) => {
   expect(((err as HttpException).getResponse() as { code: string }).code).toBe(DealErrorCode.INVALID_STAGE)
 }
 
+const WITHOUT_PROPOSAL = () => DEFAULT_WRITE_STAGES.filter((stage) => stage.id !== 's-proposal')
+
 describe('DealService writes deals into pipeline stages', () => {
   let db: ReturnType<typeof buildDb>
   let service: DealService
@@ -367,6 +369,14 @@ describe('DealService writes deals into pipeline stages', () => {
       })
     })
 
+    it('rejects the legacy { stage } whose default stage was deleted with 422 INVALID_STAGE, not 500', async () => {
+      build(WITHOUT_PROPOSAL())
+
+      await expectInvalidStage(service.create(TENANT, { ...NEW_DEAL, stage: 'PROPOSAL' }, ADMIN))
+      expect(db.deal.create).not.toHaveBeenCalled()
+      expect(auditLogsService.logAction).not.toHaveBeenCalled()
+    })
+
     it('rejects stage and stageId together with 422 INVALID_STAGE', async () => {
       await expectInvalidStage(service.create(TENANT, { ...NEW_DEAL, stage: 'PROSPECT', stageId: 's-prospect' }, ADMIN))
       expect(db.deal.create).not.toHaveBeenCalled()
@@ -415,6 +425,25 @@ describe('DealService writes deals into pipeline stages', () => {
         expect.objectContaining({ changes: { stage: { old: 'QUALIFIED', new: 'PROPOSAL' } } }),
       )
       expect(redisService.invalidateTenantCache).toHaveBeenCalledWith(TENANT)
+    })
+
+    it('rejects the legacy { stage } whose default stage was deleted with 422 INVALID_STAGE, not 500', async () => {
+      build(WITHOUT_PROPOSAL())
+
+      await expectInvalidStage(service.updateDealStage('deal-1', TENANT, { stage: 'PROPOSAL' }, ADMIN))
+      expect(db.deal.update).not.toHaveBeenCalled()
+      expect(auditLogsService.logAction).not.toHaveBeenCalled()
+    })
+
+    it('legacy { stage } still resolves other default stages after PROPOSAL was deleted', async () => {
+      build(WITHOUT_PROPOSAL())
+
+      await service.updateDealStage('deal-1', TENANT, { stage: 'PROSPECT' }, ADMIN)
+
+      expect(db.deal.update).toHaveBeenCalledWith({
+        where: { id: 'deal-1', deletedAt: null },
+        data: { stage: 'PROSPECT', stageId: 's-prospect' },
+      })
     })
 
     it.each([

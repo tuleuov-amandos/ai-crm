@@ -3,7 +3,7 @@ import { PrismaService } from 'src/common/services/prisma.service'
 import { Prisma } from '../../../generated/prisma-client/client'
 import type { DealStage } from '../../../generated/prisma-client/enums'
 import { CreateDealBodyType, DealStageType, UpdateDealBodyType } from './deal.model'
-import { findFirstOpenStage, resolveStageIdByLegacyKey } from 'src/common/pipeline-stages/default-pipeline-stages'
+import { findFirstOpenStage } from 'src/common/pipeline-stages/default-pipeline-stages'
 
 // Dual write (R1): the PipelineStage a deal goes into and the legacy
 // Deal.stage value written next to it (legacyDealStageFor).
@@ -94,8 +94,12 @@ export class DealRepository {
     return findFirstOpenStage(this.prismaService, tenantId)
   }
 
-  resolveStageIdByLegacyKey(tenantId: string, stage: DealStageType) {
-    return resolveStageIdByLegacyKey(this.prismaService, tenantId, stage)
+  // Non-throwing: a tenant may have deleted the default stage with this key.
+  findStageByLegacyKey(tenantId: string, legacyKey: DealStageType) {
+    return this.prismaService.pipelineStage.findFirst({
+      where: { tenantId, legacyKey },
+      select: { id: true },
+    })
   }
 
   create(data: CreateDealBodyType, target: DealStageTarget) {
