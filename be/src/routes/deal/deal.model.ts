@@ -59,10 +59,15 @@ export const CreateDealBodySchema = DealBaseSchema.pick({
         DealStageConst.CLOSED_LOST,
       ])
       .optional(),
+    // New format: a PipelineStage id of the tenant. Pass stage or stageId, not
+    // both; with neither the deal goes into the first open stage.
+    stageId: z.string().optional(),
   })
   .strict()
 
-export const CreateDealResSchema = DealBaseSchema.omit({ deletedAt: true })
+export const CreateDealResSchema = DealBaseSchema.omit({ deletedAt: true }).extend({
+  stageId: z.string().nullable(),
+})
 
 export type CreateDealBodyType = z.infer<typeof CreateDealBodySchema>
 export type CreateDealResType = z.infer<typeof CreateDealResSchema>
@@ -90,17 +95,13 @@ export type UpdateDealResType = z.infer<typeof UpdateDealResSchema>
 // ─────────────────────────────────────────
 // UPDATE STAGE — PATCH /deals/:id/stage
 // ─────────────────────────────────────────
-export const UpdateDealStageBodySchema = z
-  .object({
-    stage: z.enum([
-      DealStageConst.PROSPECT,
-      DealStageConst.QUALIFIED,
-      DealStageConst.PROPOSAL,
-      DealStageConst.CLOSED_WON,
-      DealStageConst.CLOSED_LOST,
-    ]),
-  })
-  .strict()
+// Exactly one of stage (legacy DealStage value) or stageId (PipelineStage id).
+// Values are checked in DealService so an unknown stage or a stageId of another
+// tenant keeps answering 422 DEAL_INVALID_STAGE, as before this DTO existed.
+export const UpdateDealStageBodySchema = z.object({
+  stage: z.string().optional(),
+  stageId: z.string().optional(),
+})
 
 export type UpdateDealStageBodyType = z.infer<typeof UpdateDealStageBodySchema>
 export type UpdateDealStageResType = UpdateDealResType
@@ -121,6 +122,7 @@ export type UpdateDealPaymentStatusResType = UpdateDealResType
 // GET ONE — GET /deals/:id
 // ─────────────────────────────────────────
 export const GetDealResSchema = DealBaseSchema.omit({ deletedAt: true }).extend({
+  stageId: z.string().nullable(),
   contact: z.object({
     id: z.string(),
     name: z.string(),

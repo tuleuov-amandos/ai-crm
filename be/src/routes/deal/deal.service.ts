@@ -13,8 +13,9 @@ import {
   GetPipelineQueryType,
   BoardDealCardRes,
   BoardDealCardSchema,
+  UpdateDealStageBodyType,
 } from './deal.model'
-import { DealRepository } from './deal.repo'
+import { DealRepository, DealStageTarget } from './deal.repo'
 import { TaskRepository } from './task.repo'
 import { CreateTaskBodyType, UpdateTaskBodyType } from './task.model'
 import { AiService } from '../ai/ai.service'
@@ -27,6 +28,8 @@ import { Prisma } from '../../../generated/prisma-client/client'
 import { AuditLogChanges } from '../audit-logs/audit-logs.model'
 import { PipelineStagesRepository } from '../pipeline-stages/pipeline-stages.repo'
 import { rootLogger } from 'src/common/logger/root-logger'
+import { legacyDealStageFor } from 'src/common/pipeline-stages/default-pipeline-stages'
+import { PrismaClientKnownRequestError } from '../../../generated/prisma-client/internal/prismaNamespace'
 
 const log = rootLogger.child({ context: 'DealService' })
 
@@ -54,6 +57,27 @@ export function getChangesDiff(
   }
   return diff
 }
+
+const invalidStage = (message: string) => AppException.unprocessable(DealErrorCode.INVALID_STAGE, message)
+
+// The stage was found, then deleted concurrently before the deal write: the
+// write fails on Deal_stageId_fkey. Other FK violations are not stage errors.
+const isStageForeignKeyError = (error: unknown) =>
+  error instanceof PrismaClientKnownRequestError && error.code === 'P2003' && error.message.includes('stageId')
+
+// PATCH /deals/:id edits only these columns. The body is not validated by a
+// DTO, so stage/stageId (dual write), isPaid (own endpoint) and the rest of the
+// row must not reach prisma.deal.update from it.
+const pickUpdatableDealFields = (body: UpdateDealBodyType): UpdateDealBodyType => {
+  const data: UpdateDealBodyType = {}
+  if (body.title !== undefined) data.title = body.title
+  if (body.ownerId !== undefined) data.ownerId = body.ownerId
+  if (body.value !== undefined) data.value = body.value
+  if (body.closeDate !== undefined) data.closeDate = body.closeDate
+  if (body.note !== undefined) data.note = body.note
+  return data
+}
+
 @Injectable()
 export class DealService {
   constructor(
@@ -86,7 +110,8 @@ export class DealService {
       }
     }
 
-    const deal = await this.dealRepo.create(tenantId, data)
+    const target = await this.resolveStageTarget(tenantId, data, { required: false })
+    const deal = await this.writeDealStage(() => this.dealRepo.create(data, target))
     await this.redisService.invalidateTenantCache(tenantId)
 
     const changes: AuditLogChanges = {}
@@ -221,10 +246,11 @@ export class DealService {
       throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
     }
 
-    const updated = await this.dealRepo.update(dealId, body)
+    const data = pickUpdatableDealFields(body)
+    const updated = await this.dealRepo.update(dealId, data)
     await this.redisService.invalidateTenantCache(tenantId)
 
-    const changes = getChangesDiff(oldDeal, body)
+    const changes = getChangesDiff(oldDeal, data)
     if (Object.keys(changes).length > 0) {
       await this.auditLogsService.logAction({
         tenantId,
@@ -242,7 +268,7 @@ export class DealService {
   async updateDealStage(
     dealId: string,
     tenantId: string,
-    stage: DealStageType,
+    body: UpdateDealStageBodyType,
     user: { userId: string; role: string; tenantId: string },
   ) {
     const oldDeal = await this.dealRepo.findOne(dealId)
@@ -255,15 +281,13 @@ export class DealService {
       throw AppException.notFound(DealErrorCode.NOT_FOUND, 'Deal not found')
     }
 
-    if (!Object.values(DealStageConst).includes(stage)) {
-      throw AppException.unprocessable(DealErrorCode.INVALID_STAGE, 'Invalid stage')
-    }
-
-    const updated = await this.dealRepo.updateStage(dealId, tenantId, stage)
+    const target = await this.resolveStageTarget(tenantId, body, { required: true })
+    const updated = await this.writeDealStage(() => this.dealRepo.updateStage(dealId, target))
     await this.redisService.invalidateTenantCache(tenantId)
 
+    // Audit format unchanged: the legacy value, so a custom stage logs PROSPECT.
     const changes = {
-      stage: { old: oldDeal.stage, new: stage },
+      stage: { old: oldDeal.stage, new: target.stage },
     }
     await this.auditLogsService.logAction({
       tenantId,
@@ -276,6 +300,45 @@ export class DealService {
     })
 
     return updated
+  }
+
+  // Resolves the body's stage (legacy DealStage value) or stageId (PipelineStage
+  // of this tenant) into what a deal write stores. Without either the deal goes
+  // into the first open stage, or 422 when a stage is required.
+  private async resolveStageTarget(
+    tenantId: string,
+    body: { stage?: string | null; stageId?: string | null },
+    { required }: { required: boolean },
+  ): Promise<DealStageTarget> {
+    const hasStage = body.stage !== undefined && body.stage !== null
+    const hasStageId = body.stageId !== undefined && body.stageId !== null
+
+    if (hasStage && hasStageId) throw invalidStage('Pass either stage or stageId, not both')
+
+    if (hasStageId) {
+      const stage = typeof body.stageId === 'string' ? await this.dealRepo.findStageById(tenantId, body.stageId) : null
+      if (!stage) throw invalidStage('Invalid stage')
+      return { stageId: stage.id, stage: legacyDealStageFor(stage) }
+    }
+
+    if (hasStage) {
+      if (!Object.values(DealStageConst).includes(body.stage as DealStageType)) throw invalidStage('Invalid stage')
+      const stage = body.stage as DealStageType
+      return { stageId: await this.dealRepo.resolveStageIdByLegacyKey(tenantId, stage), stage }
+    }
+
+    if (required) throw invalidStage('Invalid stage')
+    const first = await this.dealRepo.findFirstOpenStage(tenantId)
+    return { stageId: first.id, stage: legacyDealStageFor(first) }
+  }
+
+  private async writeDealStage<T>(write: () => Promise<T>): Promise<T> {
+    try {
+      return await write()
+    } catch (error) {
+      if (isStageForeignKeyError(error)) throw invalidStage('Pipeline stage no longer exists')
+      throw error
+    }
   }
 
   async updateDealPaymentStatus(

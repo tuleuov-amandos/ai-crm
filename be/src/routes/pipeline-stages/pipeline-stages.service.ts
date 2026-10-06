@@ -4,7 +4,7 @@ import { ROLE } from 'src/common/constants/role.constanst'
 import { rootLogger } from 'src/common/logger/root-logger'
 import { RedisService } from 'src/common/services/redis.service'
 import { PrismaClientKnownRequestError } from '../../../generated/prisma-client/internal/prismaNamespace'
-import type { DealStage } from '../../../generated/prisma-client/enums'
+import { legacyDealStageFor } from 'src/common/pipeline-stages/default-pipeline-stages'
 import { AuditLogsService } from '../audit-logs/audit-logs.service'
 import { AuditLogChanges } from '../audit-logs/audit-logs.model'
 import { PipelineStagesRepository } from './pipeline-stages.repo'
@@ -26,7 +26,6 @@ type StageRow = PipelineStageRes & { tenantId: string }
 type Db = Parameters<Parameters<PipelineStagesRepository['runInTransaction']>[0]>[0]
 
 const AUDIT_TARGET_TYPE = 'PIPELINE_STAGE'
-const LEGACY_DEAL_STAGES: readonly string[] = ['PROSPECT', 'QUALIFIED', 'PROPOSAL', 'CLOSED_WON', 'CLOSED_LOST']
 
 const toRes = (stage: StageRow): PipelineStageRes => ({
   id: stage.id,
@@ -39,16 +38,6 @@ const toRes = (stage: StageRow): PipelineStageRes => ({
 })
 
 const isOpen = (stage: StageRow) => stage.kind === PipelineStageKindConst.OPEN
-
-// Dual write (R1): the legacy Deal.stage value for deals moved into `stage`.
-// WON/LOST map to the closed keys, a default stage to its own key, a custom
-// stage (no legacyKey) to PROSPECT.
-export function legacyDealStageFor(stage: { kind: string; legacyKey?: string | null }): DealStage {
-  if (stage.kind === PipelineStageKindConst.WON) return 'CLOSED_WON'
-  if (stage.kind === PipelineStageKindConst.LOST) return 'CLOSED_LOST'
-  if (stage.legacyKey && LEGACY_DEAL_STAGES.includes(stage.legacyKey)) return stage.legacyKey as DealStage
-  return 'PROSPECT'
-}
 
 // Prisma 7 + adapter-pg surface a CHECK violation (SQLSTATE 23514) as a raw
 // DriverAdapterError whose cause has kind "postgres"; it is not converted into

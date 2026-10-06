@@ -48,3 +48,30 @@ export async function resolveStageIdByLegacyKey(
   }
   return stage.id
 }
+
+const LEGACY_DEAL_STAGES: readonly string[] = DEFAULT_PIPELINE_STAGES.map((stage) => stage.legacyKey)
+
+// Dual write (R1): the legacy Deal.stage value for deals moved into `stage`.
+// WON/LOST map to the closed keys, a default stage to its own key, a custom
+// stage (no legacyKey) to PROSPECT.
+export function legacyDealStageFor(stage: { kind: string; legacyKey?: string | null }): DealStage {
+  if (stage.kind === 'WON') return 'CLOSED_WON'
+  if (stage.kind === 'LOST') return 'CLOSED_LOST'
+  if (stage.legacyKey && LEGACY_DEAL_STAGES.includes(stage.legacyKey)) return stage.legacyKey as DealStage
+  return 'PROSPECT'
+}
+
+// Where a deal goes when no stage is given: the first open stage of the
+// pipeline. Every tenant keeps at least one open stage, so a missing one is a
+// data-integrity bug, same as in resolveStageIdByLegacyKey.
+export async function findFirstOpenStage(client: PipelineStageClient, tenantId: string) {
+  const stage = await client.pipelineStage.findFirst({
+    where: { tenantId, kind: 'OPEN' },
+    orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+    select: { id: true, kind: true, legacyKey: true },
+  })
+  if (!stage) {
+    throw new Error(`No open PipelineStage found for tenant ${tenantId}`)
+  }
+  return stage
+}
