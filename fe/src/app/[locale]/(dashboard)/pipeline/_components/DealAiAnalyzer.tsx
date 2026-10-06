@@ -42,7 +42,7 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
   const tErr = useTranslations("errors");
   const getApiError = useApiError();
   const locale = useLocale();
-  const [note, setNote] = useState(() => tAi("meetingNote"));
+  const [note, setNote] = useState("");
   const [phase, setPhase] = useState<Phase>("idle");
   const [revealedTasks, setRevealedTasks] = useState(0);
   const [aiTasks, setAiTasks] = useState<AITask[]>([]);
@@ -264,6 +264,7 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
           <Textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
+            placeholder={tAi("meetingNotePlaceholder")}
             disabled={isStreaming || phase === "analyzing"}
             rows={phase === "idle" ? 10 : 5}
             className={cn(
