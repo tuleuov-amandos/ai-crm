@@ -27,6 +27,9 @@ export const DealCardSchema = z.object({
   // Null only for an old deal the backend has not linked to a stage yet.
   stageId: z.string().nullable(),
   isPaid: z.boolean().default(false),
+  // ISO string when the deal is archived manually, null otherwise. Responses
+  // are not parsed at runtime, so it stays a string (check with != null).
+  archivedAt: z.string().nullable(),
   closeDate: z.coerce.date(),
   note: z.string().nullable(),
   createdAt: z.coerce.date(),
@@ -162,3 +165,10 @@ export const UpdateDealPaymentStatusBodySchema = z.object({
 export type UpdateDealPaymentStatusBodyType = z.infer<
   typeof UpdateDealPaymentStatusBodySchema
 >;
+
+// ─── ARCHIVE — POST /deals/archive, POST /deals/unarchive ────────────────────
+export const ArchiveDealsResSchema = z.object({
+  updated: z.number(),
+});
+
+export type ArchiveDealsRes = z.infer<typeof ArchiveDealsResSchema>;

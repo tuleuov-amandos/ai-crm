@@ -18,6 +18,9 @@ interface Props {
   deals: Deal[];
   onEdit: (deal: Deal) => void;
   onDelete: (deal: Deal) => void;
+  // The column's stage decides whether archiving asks for confirmation
+  onArchive: (deal: Deal, stage: BoardColumnStage) => void;
+  onUnarchive: (deal: Deal) => void;
   onAddDeal: (stageId: string) => void;
 }
 
@@ -33,6 +36,8 @@ export function KanbanColumn({
   deals,
   onEdit,
   onDelete,
+  onArchive,
+  onUnarchive,
   onAddDeal,
 }: Props) {
   const t = useTranslations("pipeline");
@@ -146,6 +151,8 @@ export function KanbanColumn({
                 isWon={isWon}
                 onEdit={() => onEdit(deal)}
                 onDelete={() => onDelete(deal)}
+                onArchive={() => onArchive(deal, stage)}
+                onUnarchive={() => onUnarchive(deal)}
               />
             ))
           )}

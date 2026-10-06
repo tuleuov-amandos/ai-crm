@@ -22,9 +22,17 @@ import {
   getAllDeals,
   useDealPipelineStore,
 } from "@/stores/dealCards-store";
-import { useGetPipeline, useUpdateDealStage, useDeleteDeal } from "@/hooks/useDeals";
-import type { Deal } from "./types";
+import {
+  useGetPipeline,
+  useUpdateDealStage,
+  useDeleteDeal,
+  useArchiveDeals,
+  useUnarchiveDeals,
+} from "@/hooks/useDeals";
+import { needsArchiveConfirm } from "@/lib/dealArchive";
+import type { BoardColumnStage, Deal } from "./types";
 import { EditDealSheet } from "./EditDealSheet";
+import { ArchiveDealDialog } from "./ArchiveDealDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -152,6 +160,7 @@ export function KanbanBoard({
   dateTo,
   search,
   isPaid,
+  includeArchived,
   onAddDeal,
 }: {
   ownerId?: string;
@@ -159,13 +168,14 @@ export function KanbanBoard({
   dateTo?: string;
   search?: string;
   isPaid?: boolean;
+  includeArchived?: boolean;
   // stageId of the column; without it the create form picks the first open stage
   onAddDeal: (stageId?: string) => void;
 }) {
   const t = useTranslations("pipeline");
   const tCommon = useTranslations("common");
   const { columns, moveDeal, reorderDeal } = useDealPipelineStore();
-  const { data, isLoading, isError, error } = useGetPipeline({ ownerId, dateFrom, dateTo, search, isPaid });
+  const { data, isLoading, isError, error } = useGetPipeline({ ownerId, dateFrom, dateTo, search, isPaid, includeArchived });
   const updateDealStage = useUpdateDealStage();
 
   const [activeDeal, setActiveDeal] = useState<Deal | null>(null);
@@ -177,6 +187,20 @@ export function KanbanBoard({
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
   const [deletingDeal, setDeletingDeal] = useState<Deal | null>(null);
   const deleteDealMutation = useDeleteDeal();
+  const [archivingDeal, setArchivingDeal] = useState<Deal | null>(null);
+  const archiveDeals = useArchiveDeals();
+  const unarchiveDeals = useUnarchiveDeals();
+
+  // Open stage: confirm first (the deal stays in reports); won/lost: at once.
+  const handleArchive = (deal: Deal, stage: BoardColumnStage) => {
+    if (needsArchiveConfirm(stage.kind)) setArchivingDeal(deal);
+    else archiveDeals.mutate([deal.id]);
+  };
+
+  const handleArchiveConfirm = () => {
+    if (archivingDeal) archiveDeals.mutate([archivingDeal.id]);
+    setArchivingDeal(null);
+  };
 
   const handleDelete = () => {
     if (deletingDeal) {
@@ -376,6 +400,8 @@ export function KanbanBoard({
                 deals={column.deals}
                 onEdit={setEditingDeal}
                 onDelete={setDeletingDeal}
+                onArchive={handleArchive}
+                onUnarchive={(deal) => unarchiveDeals.mutate([deal.id])}
                 onAddDeal={onAddDeal}
               />
             ))}
@@ -391,6 +417,8 @@ export function KanbanBoard({
             isWon={activeDealWon}
             onDelete={() => {}}
             onEdit={() => {}}
+            onArchive={() => {}}
+            onUnarchive={() => {}}
           />
         ) : null}
       </DragOverlay>
@@ -404,6 +432,15 @@ export function KanbanBoard({
           }}
         />
       )}
+
+      <ArchiveDealDialog
+        dealTitle={archivingDeal?.title ?? ""}
+        open={!!archivingDeal}
+        onOpenChange={(open) => {
+          if (!open) setArchivingDeal(null);
+        }}
+        onConfirm={handleArchiveConfirm}
+      />
 
       <AlertDialog open={!!deletingDeal} onOpenChange={(open) => {
         if (!open) setDeletingDeal(null);
