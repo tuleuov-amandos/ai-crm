@@ -13,7 +13,7 @@ import {
   HttpStatus,
 } from '@nestjs/common'
 import { ApiTags, ApiOkResponse } from '@nestjs/swagger'
-import { AnalyzeDealBodyType, CreateDealBodyType, DealStageType, UpdateDealBodyType } from './deal.model'
+import { AnalyzeDealBodyType, CreateDealBodyType, UpdateDealBodyType } from './deal.model'
 import { RolesGuard } from 'src/common/guards/roles.guard'
 import { Roles } from 'src/common/decorators/roles.decorator'
 import { ROLE } from 'src/common/constants/role.constanst'
@@ -26,6 +26,7 @@ import {
   GetDealsBoardResDto,
   GetPipelineQueryDto,
   UpdateDealResDto,
+  UpdateDealStageBodyDto,
 } from './deal.dto'
 import { CreateTaskBodyDto, CreateTasksBulkBodyDto, UpdateTaskBodyDto, TaskResDto } from './task.dto'
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard'
@@ -84,9 +85,9 @@ export class DealController {
   updateStage(
     @Param('id') dealId: string,
     @CurrentUser() user: AccessTokenPayload,
-    @Body() body: { stage: DealStageType },
+    @Body() body: UpdateDealStageBodyDto,
   ) {
-    return this.dealService.updateDealStage(dealId, user.tenantId, body.stage, user)
+    return this.dealService.updateDealStage(dealId, user.tenantId, body, user)
   }
 
   @UseGuards(RolesGuard)

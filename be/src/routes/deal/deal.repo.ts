@@ -1,8 +1,13 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/common/services/prisma.service'
 import { Prisma } from '../../../generated/prisma-client/client'
-import { CreateDealBodyType, DealStageConst, DealStageType, UpdateDealBodyType } from './deal.model'
-import { resolveStageIdByLegacyKey } from 'src/common/pipeline-stages/default-pipeline-stages'
+import type { DealStage } from '../../../generated/prisma-client/enums'
+import { CreateDealBodyType, DealStageType, UpdateDealBodyType } from './deal.model'
+import { findFirstOpenStage, resolveStageIdByLegacyKey } from 'src/common/pipeline-stages/default-pipeline-stages'
+
+// Dual write (R1): the PipelineStage a deal goes into and the legacy
+// Deal.stage value written next to it (legacyDealStageFor).
+export type DealStageTarget = { stageId: string; stage: DealStage }
 
 @Injectable()
 export class DealRepository {
@@ -76,16 +81,31 @@ export class DealRepository {
     })
   }
 
-  async create(tenantId: string, data: CreateDealBodyType) {
-    const stage = data.stage ?? DealStageConst.PROSPECT
-    const stageId = await resolveStageIdByLegacyKey(this.prismaService, tenantId, stage)
+  // Stage lookups for deal writes; tenantId is always explicit, so a stageId of
+  // another tenant is never found.
+  findStageById(tenantId: string, stageId: string) {
+    return this.prismaService.pipelineStage.findFirst({
+      where: { id: stageId, tenantId },
+      select: { id: true, kind: true, legacyKey: true },
+    })
+  }
+
+  findFirstOpenStage(tenantId: string) {
+    return findFirstOpenStage(this.prismaService, tenantId)
+  }
+
+  resolveStageIdByLegacyKey(tenantId: string, stage: DealStageType) {
+    return resolveStageIdByLegacyKey(this.prismaService, tenantId, stage)
+  }
+
+  create(data: CreateDealBodyType, target: DealStageTarget) {
     return this.prismaService.deal.create({
       data: {
         ownerId: data.ownerId,
         title: data.title,
         value: data.value ?? 0,
-        stage,
-        stageId,
+        stage: target.stage,
+        stageId: target.stageId,
         contactId: data.contactId,
         closeDate: data.closeDate ?? null,
         note: data.note ?? null,
@@ -100,11 +120,10 @@ export class DealRepository {
     })
   }
 
-  async updateStage(dealId: string, tenantId: string, stage: DealStageType) {
-    const stageId = await resolveStageIdByLegacyKey(this.prismaService, tenantId, stage)
+  updateStage(dealId: string, target: DealStageTarget) {
     return this.prismaService.deal.update({
       where: { id: dealId, deletedAt: null },
-      data: { stage, stageId },
+      data: { stage: target.stage, stageId: target.stageId },
     })
   }
 
@@ -122,27 +141,24 @@ export class DealRepository {
     })
   }
 
-  // Create new Deal with optional stage (for Excel Import)
-  async createWithStage(
-    tenantId: string,
+  // Create new Deal in an already resolved stage (for Excel Import)
+  createWithStage(
     data: {
       ownerId: string
       title: string
       value: number
-      stage: DealStageType
       contactId: string
       closeDate?: Date | null
       note?: string | null
-    },
+    } & DealStageTarget,
   ) {
-    const stageId = await resolveStageIdByLegacyKey(this.prismaService, tenantId, data.stage)
     return this.prismaService.deal.create({
       data: {
         ownerId: data.ownerId,
         title: data.title,
         value: data.value,
         stage: data.stage,
-        stageId,
+        stageId: data.stageId,
         contactId: data.contactId,
         closeDate: data.closeDate ?? null,
         note: data.note ?? null,

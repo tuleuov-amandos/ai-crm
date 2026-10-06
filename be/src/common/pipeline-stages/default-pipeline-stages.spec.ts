@@ -1,4 +1,10 @@
-import { DEFAULT_PIPELINE_STAGES, createDefaultStages, resolveStageIdByLegacyKey } from './default-pipeline-stages'
+import {
+  DEFAULT_PIPELINE_STAGES,
+  createDefaultStages,
+  findFirstOpenStage,
+  legacyDealStageFor,
+  resolveStageIdByLegacyKey,
+} from './default-pipeline-stages'
 
 type StageClient = Parameters<typeof resolveStageIdByLegacyKey>[0]
 
@@ -51,6 +57,48 @@ describe('default pipeline stages', () => {
 
       await expect(resolveStageIdByLegacyKey(client as unknown as StageClient, 'tenant-1', 'PROPOSAL')).rejects.toThrow(
         /PipelineStage.*PROPOSAL.*tenant-1/,
+      )
+    })
+  })
+
+  describe('legacyDealStageFor', () => {
+    it('maps WON and LOST stages to the closed keys whatever their legacyKey', () => {
+      expect(legacyDealStageFor({ kind: 'WON', legacyKey: null })).toBe('CLOSED_WON')
+      expect(legacyDealStageFor({ kind: 'LOST', legacyKey: null })).toBe('CLOSED_LOST')
+      expect(legacyDealStageFor({ kind: 'WON', legacyKey: 'CLOSED_WON' })).toBe('CLOSED_WON')
+    })
+
+    it('maps a default open stage to its own legacyKey', () => {
+      expect(legacyDealStageFor({ kind: 'OPEN', legacyKey: 'PROSPECT' })).toBe('PROSPECT')
+      expect(legacyDealStageFor({ kind: 'OPEN', legacyKey: 'QUALIFIED' })).toBe('QUALIFIED')
+      expect(legacyDealStageFor({ kind: 'OPEN', legacyKey: 'PROPOSAL' })).toBe('PROPOSAL')
+    })
+
+    it('maps a custom stage (no or unknown legacyKey) to PROSPECT', () => {
+      expect(legacyDealStageFor({ kind: 'OPEN', legacyKey: null })).toBe('PROSPECT')
+      expect(legacyDealStageFor({ kind: 'OPEN' })).toBe('PROSPECT')
+      expect(legacyDealStageFor({ kind: 'OPEN', legacyKey: 'SOMETHING' })).toBe('PROSPECT')
+    })
+  })
+
+  describe('findFirstOpenStage', () => {
+    it('asks for the OPEN stage of the tenant with the smallest order, then the oldest', async () => {
+      const stage = { id: 'stage-1', kind: 'OPEN', legacyKey: null }
+      const client = { pipelineStage: { findFirst: jest.fn().mockResolvedValue(stage) } }
+
+      await expect(findFirstOpenStage(client as unknown as StageClient, 'tenant-1')).resolves.toBe(stage)
+      expect(client.pipelineStage.findFirst).toHaveBeenCalledWith({
+        where: { tenantId: 'tenant-1', kind: 'OPEN' },
+        orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
+        select: { id: true, kind: true, legacyKey: true },
+      })
+    })
+
+    it('throws a descriptive error when the tenant has no open stage', async () => {
+      const client = { pipelineStage: { findFirst: jest.fn().mockResolvedValue(null) } }
+
+      await expect(findFirstOpenStage(client as unknown as StageClient, 'tenant-1')).rejects.toThrow(
+        /open PipelineStage.*tenant-1/,
       )
     })
   })

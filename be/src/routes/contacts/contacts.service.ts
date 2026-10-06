@@ -20,6 +20,38 @@ import { AiService } from '../ai/ai.service'
 import { PrismaService } from 'src/common/services/prisma.service'
 import { DealStageType } from '../deal/deal.model'
 import { BulkImportContactsBodyDto } from './contacts.dto'
+import { PipelineStagesRepository } from '../pipeline-stages/pipeline-stages.repo'
+import { legacyDealStageFor } from 'src/common/pipeline-stages/default-pipeline-stages'
+
+type ImportStage = { id: string; name: string; kind: string; legacyKey: string | null }
+
+// Old import words (Vietnamese and English), kept so earlier client files still
+// land in the same stages.
+function legacyStageFromImportWords(rawStage: string): DealStageType | null {
+  if (rawStage.includes('mới') || rawStage.includes('prospect')) return 'PROSPECT'
+  if (rawStage.includes('tiềm') || rawStage.includes('qualified')) return 'QUALIFIED'
+  if (rawStage.includes('thương') || rawStage.includes('đề') || rawStage.includes('proposal')) return 'PROPOSAL'
+  if (rawStage.includes('thắng') || rawStage.includes('won') || rawStage.includes('thành công')) return 'CLOSED_WON'
+  if (rawStage.includes('bại') || rawStage.includes('lost') || rawStage.includes('thất bại')) return 'CLOSED_LOST'
+  return null
+}
+
+// Deal stage text from an import row -> one of the tenant's stages (ordered as
+// in the pipeline): stage name, then legacyKey (both ignoring case), then the
+// old words, otherwise the first open stage.
+function matchImportStage(raw: string | null | undefined, stages: ImportStage[]): ImportStage {
+  const text = (raw || '').trim().toLowerCase()
+  const byName = text && stages.find((s) => s.name.trim().toLowerCase() === text)
+  if (byName) return byName
+  const byLegacyKey = text && stages.find((s) => s.legacyKey?.toLowerCase() === text)
+  if (byLegacyKey) return byLegacyKey
+  const legacyKey = legacyStageFromImportWords(text)
+  const byOldWords = legacyKey && stages.find((s) => s.legacyKey === legacyKey)
+  if (byOldWords) return byOldWords
+  const firstOpen = stages.find((s) => s.kind === 'OPEN')
+  if (!firstOpen) throw new Error('No open PipelineStage found for the import')
+  return firstOpen
+}
 
 function normalizeChannel(raw: string | null | undefined): ContactChannelType | null {
   if (!raw) return null
@@ -51,6 +83,7 @@ export class ContactsService {
     private readonly caslAbilityFactory: CaslAbilityFactory,
     private readonly dealRepository: DealRepository, // Inject DealRepository
     private readonly aiService: AiService,
+    private readonly pipelineStagesRepo: PipelineStagesRepository,
   ) {}
 
   async getAllContacts(
@@ -213,6 +246,9 @@ export class ContactsService {
     })
     const userMap = new Map<string, string>(allTenantUsers.map((u) => [u.email.toLowerCase(), u.id]))
 
+    // Pipeline stages are read once for the whole import, not per row.
+    const stages = await this.pipelineStagesRepo.findAll(tenantId)
+
     for (const item of body.contacts) {
       // 1. Owner authorization
       let ownerId = currentUserId
@@ -295,27 +331,14 @@ export class ContactsService {
 
       // 3. Create accompanying Deal if Deal Title is declared
       if (item.dealTitle) {
-        // Normalize Deal Stage language
-        let stage: DealStageType = 'PROSPECT'
-        const rawStage = (item.dealStage || '').toLowerCase().trim()
+        const stage = matchImportStage(item.dealStage, stages)
 
-        if (rawStage.includes('mới') || rawStage.includes('prospect')) {
-          stage = 'PROSPECT'
-        } else if (rawStage.includes('tiềm') || rawStage.includes('qualified')) {
-          stage = 'QUALIFIED'
-        } else if (rawStage.includes('thương') || rawStage.includes('đề') || rawStage.includes('proposal')) {
-          stage = 'PROPOSAL'
-        } else if (rawStage.includes('thắng') || rawStage.includes('won') || rawStage.includes('thành công')) {
-          stage = 'CLOSED_WON'
-        } else if (rawStage.includes('bại') || rawStage.includes('lost') || rawStage.includes('thất bại')) {
-          stage = 'CLOSED_LOST'
-        }
-
-        const deal = await this.dealRepository.createWithStage(tenantId, {
+        const deal = await this.dealRepository.createWithStage({
           ownerId,
           title: item.dealTitle,
           value: item.dealValue || 0,
-          stage,
+          stageId: stage.id,
+          stage: legacyDealStageFor(stage),
           contactId: contact.id,
           note: item.dealNote || null,
         })

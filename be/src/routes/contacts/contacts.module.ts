@@ -4,9 +4,10 @@ import { ContactsService } from './contacts.service'
 import { ContactsRepository } from './contacts.repo'
 import { DealRepository } from '../deal/deal.repo' // Import DealRepository
 import { AiModule } from '../ai/ai.module'
+import { PipelineStagesModule } from '../pipeline-stages/pipeline-stages.module'
 
 @Module({
-  imports: [AiModule],
+  imports: [AiModule, PipelineStagesModule],
   controllers: [ContactsController],
   providers: [ContactsService, ContactsRepository, DealRepository], // Add DealRepository here
 })
