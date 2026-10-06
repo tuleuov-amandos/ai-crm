@@ -45,6 +45,9 @@ import { formatCurrency } from "@/lib/helper";
 import { useRelativeTime } from "@/lib/format";
 import type { Deal } from "./types";
 import { EditDealSheet } from "./EditDealSheet";
+import { useDealSelectionStore } from "@/stores/dealSelection-store";
+import { selectAllState } from "@/lib/dealBulk";
+import { SelectionCheckbox, selectAllChecked } from "./SelectionCheckbox";
 
 type SortKey = "title" | "value" | "closeDate";
 type SortState = { key: SortKey; direction: "asc" | "desc" } | null;
@@ -78,6 +81,17 @@ export function ListView({
   const [deletingDeal, setDeletingDeal] = useState<Deal | null>(null);
 
   const deals = useMemo(() => getAllDeals(columns), [columns]);
+
+  // Selection mode: a click on a row toggles it, links do not navigate.
+  // "Select all" acts on the rows listed (the query applies the filters).
+  const selectionMode = useDealSelectionStore((s) => s.selectionMode);
+  const selectedIds = useDealSelectionStore((s) => s.selectedIds);
+  const toggleDeal = useDealSelectionStore((s) => s.toggleDeal);
+  const toggleDeals = useDealSelectionStore((s) => s.toggleDeals);
+  const dealIds = useMemo(() => deals.map((d) => d.id), [deals]);
+  const preventInSelection = (e: React.MouseEvent) => {
+    if (selectionMode) e.preventDefault();
+  };
 
   const sortedDeals = useMemo(() => {
     if (!sort) return deals;
@@ -199,6 +213,16 @@ export function ListView({
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent border-b border-border/60">
+            {selectionMode && (
+              <TableHead className="w-10 pl-4 pr-0 py-3">
+                <SelectionCheckbox
+                  checked={selectAllChecked(selectAllState(selectedIds, dealIds))}
+                  onCheckedChange={() => toggleDeals(dealIds)}
+                  aria-label={t("archive.selectAll")}
+                  title={t("archive.selectAll")}
+                />
+              </TableHead>
+            )}
             <TableHead className={headerClass} style={headerStyle}>
               {sortableHead("title", t("listView.colDeal"))}
             </TableHead>
@@ -233,15 +257,29 @@ export function ListView({
           {sortedDeals.map((deal) => (
             <TableRow
               key={deal.id}
+              data-state={selectedIds.has(deal.id) ? "selected" : undefined}
+              onClick={selectionMode ? () => toggleDeal(deal.id) : undefined}
               className={cn(
                 "group border-b border-border/40 hover:bg-muted/30",
                 isDealArchived(deal) && "opacity-60",
+                selectionMode && "cursor-pointer data-[state=selected]:bg-primary/5",
               )}
             >
+              {selectionMode && (
+                <TableCell className="w-10 pl-4 pr-0 py-3">
+                  <SelectionCheckbox
+                    checked={selectedIds.has(deal.id)}
+                    onCheckedChange={() => toggleDeal(deal.id)}
+                    aria-label={deal.title}
+                  />
+                </TableCell>
+              )}
+
               {/* ── Deal ── */}
               <TableCell className="px-4 py-3">
                 <Link
                   href={`/pipeline/${deal.id}`}
+                  onClick={preventInSelection}
                   className="block text-foreground hover:text-primary transition-colors"
                   style={{
                     fontSize: 13,
@@ -266,6 +304,7 @@ export function ListView({
               <TableCell className="px-4 py-3" style={{ fontSize: 12 }}>
                 <Link
                   href={`/contacts/${deal.contactId}`}
+                  onClick={preventInSelection}
                   className="text-muted-foreground hover:text-foreground transition-colors"
                   style={{ textDecoration: "none" }}
                 >
@@ -309,7 +348,12 @@ export function ListView({
 
               {/* ── Actions (show on row hover) ── */}
               <TableCell className="px-3 py-3 w-[90px]">
-                <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                <div
+                  className={cn(
+                    "flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150",
+                    selectionMode && "invisible",
+                  )}
+                >
                   <Button
                     variant="ghost"
                     size="icon"

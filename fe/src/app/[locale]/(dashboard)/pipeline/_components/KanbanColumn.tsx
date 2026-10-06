@@ -12,6 +12,9 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getStageColors } from "@/lib/pipelineColors";
 import { useStageLabel } from "@/hooks/usePipelineStages";
+import { useDealSelectionStore } from "@/stores/dealSelection-store";
+import { selectAllState } from "@/lib/dealBulk";
+import { SelectionCheckbox, selectAllChecked } from "./SelectionCheckbox";
 
 interface Props {
   stage: BoardColumnStage;
@@ -55,6 +58,13 @@ export function KanbanColumn({
   // SortableContext needs id list in current order
   const dealIds = deals.map((d) => d.id);
 
+  // "Select all" acts on the cards listed in this column (search, filters and
+  // "Show archive" already applied by the query)
+  const selectionMode = useDealSelectionStore((s) => s.selectionMode);
+  const selectedIds = useDealSelectionStore((s) => s.selectedIds);
+  const toggleDeals = useDealSelectionStore((s) => s.toggleDeals);
+  const columnSelection = selectAllState(selectedIds, dealIds);
+
   // Columns share the width down to 220px; past that the board scrolls sideways.
   return (
     <div className="flex flex-col flex-1 min-w-[220px] group/col h-full overflow-hidden">
@@ -62,6 +72,15 @@ export function KanbanColumn({
       <div className="pb-3 pl-0.5">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
+            {selectionMode && (
+              <SelectionCheckbox
+                checked={selectAllChecked(columnSelection)}
+                onCheckedChange={() => toggleDeals(dealIds)}
+                disabled={isEmpty}
+                aria-label={t("archive.selectAll")}
+                title={t("archive.selectAll")}
+              />
+            )}
             <div
               className="size-2 rounded-full shrink-0"
               style={{ background: colors.dot }}

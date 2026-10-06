@@ -7,6 +7,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { ApiError } from "@/lib/types/error";
 import { useApiError } from "@/hooks/useApiError";
 import { contactKeys } from "@/hooks/useContacts";
+import { runInBatches } from "@/lib/dealBulk";
 import {
   CreateDealBodyType,
   UpdateDealBodyType,
@@ -248,3 +249,50 @@ const useSetDealsArchived = (archived: boolean) => {
 export const useArchiveDeals = () => useSetDealsArchived(true);
 
 export const useUnarchiveDeals = () => useSetDealsArchived(false);
+
+// ─────────────────────────────────────────
+// BULK ARCHIVE / UNARCHIVE — selection mode on the pipeline page
+// ─────────────────────────────────────────
+// Batches of 200 ids are sent one after another (runInBatches) and summed into
+// one toast. A failed batch stops the run; the caller keeps the selection so a
+// retry is possible (the backend skips deals already in that state).
+export const dealBulkArchiveKey = [...dealKeys.all, "bulk-archive"] as const;
+
+export const useBulkSetDealsArchived = () => {
+  const queryClient = useQueryClient();
+  const t = useTranslations("pipeline.archive.bulk");
+  const getApiError = useApiError();
+
+  return useMutation({
+    mutationKey: dealBulkArchiveKey,
+    mutationFn: ({ dealIds, archived }: { dealIds: string[]; archived: boolean }) =>
+      runInBatches(
+        dealIds,
+        archived ? dealsService.archiveDeals : dealsService.unarchiveDeals,
+      ),
+    onSuccess: (result, { dealIds, archived }) => {
+      // Earlier batches may have changed deals even when a later one failed
+      if (result.ok || result.updated > 0) {
+        queryClient.invalidateQueries({ queryKey: dealKeys.all });
+        queryClient.invalidateQueries({ queryKey: contactKeys.all });
+      }
+      if (!result.ok) {
+        const failed = t(archived ? "archivePartial" : "unarchivePartial", {
+          done: result.updated,
+          total: dealIds.length,
+        });
+        // 403 has no error code, so only the progress line is shown
+        const reason = getApiError(result.error, failed);
+        toast.error(failed, reason === failed ? undefined : { description: reason });
+        return;
+      }
+      if (result.updated === 0) {
+        toast.info(t("unchanged"));
+        return;
+      }
+      toast.success(
+        t(archived ? "archiveSuccess" : "unarchiveSuccess", { count: result.updated }),
+      );
+    },
+  });
+};
