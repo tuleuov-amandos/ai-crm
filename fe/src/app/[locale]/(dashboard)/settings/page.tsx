@@ -2,27 +2,30 @@
 
 import { useState } from "react";
 import {
-  Building2, Users, Mail, User, Lock, CreditCard, FileText, Bell, Puzzle, BarChart2,
+  Building2, Users, Mail, User, Lock, CreditCard, FileText, Bell, Puzzle, BarChart2, Workflow,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
+import { useMe } from "@/hooks/useAuth";
 
 import { WorkspaceInfo } from "./_components/WorkspaceInfo";
 import { MembersRoles }  from "./_components/MembersRoles";
 import { InvitationsList } from "./_components/InvitationsList";
 import { ProfileSettings } from "./_components/ProfileSettings";
 import { PasswordSettings } from "./_components/PasswordSettings";
+import { PipelineStagesSettings } from "./_components/PipelineStagesSettings";
 
 // ── Nav structure ─────────────────────────────────────────────────────────────
 type SettingsTab =
-  | "workspace-info" | "members" | "invitations"
+  | "workspace-info" | "members" | "invitations" | "pipeline-stages"
   | "profile" | "password"
   | "billing" | "invoices"
   | "notifications" | "integrations";
 
 const NAV_GROUPS: {
   labelKey: string;
-  items: { id: SettingsTab; labelKey: string; Icon: typeof Building2 }[];
+  // adminOnly items are hidden from other roles and while the user loads
+  items: { id: SettingsTab; labelKey: string; Icon: typeof Building2; adminOnly?: boolean }[];
 }[] = [
   {
     labelKey: "groupWorkspace",
@@ -30,6 +33,7 @@ const NAV_GROUPS: {
       { id: "workspace-info", labelKey: "workspaceInfo", Icon: Building2 },
       { id: "members",        labelKey: "members",       Icon: Users      },
       { id: "invitations",    labelKey: "invitations",   Icon: Mail       },
+      { id: "pipeline-stages", labelKey: "pipelineStages", Icon: Workflow, adminOnly: true },
     ],
   },
   {
@@ -73,6 +77,8 @@ function ComingSoonContent({ label }: { label: string }) {
 export default function SettingsPage() {
   const t = useTranslations("settings");
   const [activeTab, setActiveTab] = useState<SettingsTab>("workspace-info");
+  const { data: me } = useMe();
+  const isAdmin = me?.role === "ADMIN";
 
   const activeItem = NAV_GROUPS.flatMap((g) => g.items).find((i) => i.id === activeTab);
   const activeLabel = activeItem ? t(`nav.${activeItem.labelKey}`) : "";
@@ -114,7 +120,7 @@ export default function SettingsPage() {
 
                   {/* Items */}
                   <div className="flex flex-col gap-0.5">
-                    {group.items.map(({ id, labelKey, Icon }) => {
+                    {group.items.filter((item) => !item.adminOnly || isAdmin).map(({ id, labelKey, Icon }) => {
                       const active = activeTab === id;
                       return (
                         <button
@@ -147,7 +153,8 @@ export default function SettingsPage() {
           {activeTab === "invitations"    && <InvitationsList />}
           {activeTab === "profile"        && <ProfileSettings />}
           {activeTab === "password"       && <PasswordSettings />}
-          {!["workspace-info", "members", "invitations", "profile", "password"].includes(activeTab) && (
+          {activeTab === "pipeline-stages" && isAdmin && <PipelineStagesSettings />}
+          {!["workspace-info", "members", "invitations", "pipeline-stages", "profile", "password"].includes(activeTab) && (
             <ComingSoonContent label={activeLabel} />
           )}
         </main>

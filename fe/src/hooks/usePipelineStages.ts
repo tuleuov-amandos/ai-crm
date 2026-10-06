@@ -1,10 +1,25 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import {
+  QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { pipelineStagesService } from "@/services/pipelineStages.service";
 import { findDealStage, stageLabel } from "@/lib/pipelineStages";
+import { applyOpenStageOrder } from "@/lib/pipelineStageSettings";
+import { useApiError } from "@/hooks/useApiError";
+import { dealKeys } from "@/hooks/useDeals";
+import { contactKeys } from "@/hooks/useContacts";
+import type {
+  CreatePipelineStageBodyType,
+  PipelineStage,
+  UpdatePipelineStageBodyType,
+} from "@/lib/validations/pipelineStages.schema";
 
 // ─────────────────────────────────────────
 // QUERY KEYS — source of truth for cache
@@ -80,4 +95,119 @@ export const useStageLabel = () => {
       ),
     [t, getStage],
   );
+};
+
+// ─────────────────────────────────────────
+// INVALIDATION — after any stage mutation
+// ─────────────────────────────────────────
+// Stage names, colors and order are shown everywhere deals are, and a deleted
+// stage moves its deals, so every deal-derived query is refetched: the board
+// and list view and deal detail (["deals", ...]), contact cards with their
+// deals (["contacts", ...]), the dashboard (["dashboard", period]) and all
+// reports (["reports", ...]). The dashboard and reports keys are inline in
+// their pages, hence the literals.
+export const invalidatePipelineStageDependents = (queryClient: QueryClient) =>
+  Promise.all([
+    queryClient.invalidateQueries({ queryKey: pipelineStageKeys.all }),
+    queryClient.invalidateQueries({ queryKey: dealKeys.all }),
+    queryClient.invalidateQueries({ queryKey: contactKeys.all }),
+    queryClient.invalidateQueries({ queryKey: ["dashboard"] }),
+    queryClient.invalidateQueries({ queryKey: ["reports"] }),
+  ]);
+
+// ─────────────────────────────────────────
+// CREATE STAGE — new open stage goes before WON
+// ─────────────────────────────────────────
+// Errors are handled by the caller: a taken name is shown at the name field.
+export const useCreatePipelineStage = () => {
+  const queryClient = useQueryClient();
+  const t = useTranslations("settings.pipelineStages.toasts");
+
+  return useMutation({
+    mutationFn: (data: CreatePipelineStageBodyType) =>
+      pipelineStagesService.create(data),
+    onSuccess: () => {
+      invalidatePipelineStageDependents(queryClient);
+      toast.success(t("createSuccess"));
+    },
+  });
+};
+
+// ─────────────────────────────────────────
+// UPDATE STAGE — only changed fields, WON/LOST only name
+// ─────────────────────────────────────────
+export const useUpdatePipelineStage = () => {
+  const queryClient = useQueryClient();
+  const t = useTranslations("settings.pipelineStages.toasts");
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdatePipelineStageBodyType }) =>
+      pipelineStagesService.update(id, data),
+    onSuccess: () => {
+      invalidatePipelineStageDependents(queryClient);
+      toast.success(t("updateSuccess"));
+    },
+  });
+};
+
+// ─────────────────────────────────────────
+// REORDER STAGES — optimistic via the stages cache
+// ─────────────────────────────────────────
+// The response carries no dealCount, so the cache is refetched instead of
+// being replaced with it.
+export const useReorderPipelineStages = () => {
+  const queryClient = useQueryClient();
+  const t = useTranslations("settings.pipelineStages.toasts");
+  const getApiError = useApiError();
+
+  return useMutation({
+    mutationFn: (stageIds: string[]) =>
+      pipelineStagesService.reorder({ stageIds }),
+
+    onMutate: async (stageIds) => {
+      await queryClient.cancelQueries({ queryKey: pipelineStageKeys.list() });
+      const previous = queryClient.getQueryData<PipelineStage[]>(
+        pipelineStageKeys.list(),
+      );
+      if (previous) {
+        queryClient.setQueryData<PipelineStage[]>(
+          pipelineStageKeys.list(),
+          applyOpenStageOrder(previous, stageIds),
+        );
+      }
+      return { previous };
+    },
+
+    onError: (error, _stageIds, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(pipelineStageKeys.list(), context.previous);
+      }
+      toast.error(getApiError(error, t("reorderError")));
+    },
+
+    onSuccess: () => {
+      invalidatePipelineStageDependents(queryClient);
+    },
+  });
+};
+
+// ─────────────────────────────────────────
+// DELETE STAGE — its deals move to targetStageId
+// ─────────────────────────────────────────
+export const useDeletePipelineStage = () => {
+  const queryClient = useQueryClient();
+  const t = useTranslations("settings.pipelineStages.toasts");
+  const getApiError = useApiError();
+
+  return useMutation({
+    mutationFn: ({ id, targetStageId }: { id: string; targetStageId: string }) =>
+      pipelineStagesService.delete(id, targetStageId),
+    onSuccess: () => {
+      invalidatePipelineStageDependents(queryClient);
+      toast.success(t("deleteSuccess"));
+    },
+    onError: (error) => {
+      toast.error(getApiError(error, t("deleteError")));
+    },
+  });
 };

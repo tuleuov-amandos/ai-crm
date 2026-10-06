@@ -1021,6 +1021,7 @@
       "workspaceInfo": "О рабочем пространстве",
       "members": "Участники и роли",
       "invitations": "Приглашения",
+      "pipelineStages": "Воронка продаж",
       "profile": "Мой профиль",
       "password": "Смена пароля",
       "billing": "Тариф и оплата",
@@ -1226,6 +1227,68 @@
           "confirmMismatch": "Пароли не совпадают.",
           "newSameAsCurrent": "Новый пароль должен отличаться от текущего."
         }
+      }
+    },
+    "pipelineStages": {
+      "heading": "Воронка продаж",
+      "subtitle": "Стадии сделок на доске, в отчётах и на дашборде. Перетащите стадию за ручку, чтобы изменить порядок.",
+      "loading": "Загрузка стадий…",
+      "loadError": "Не удалось загрузить стадии воронки",
+      "addStage": "Добавить стадию",
+      "limitHint": "Достигнут лимит: не больше {max} обычных стадий",
+      "openStages": "Стадии воронки",
+      "closedStages": "Закрытие сделки",
+      "dragHandle": "Перетащить стадию «{name}»",
+      "dealCount": "{count, plural, one {# сделка} few {# сделки} many {# сделок} other {# сделки}}",
+      "edit": "Изменить",
+      "delete": "Удалить",
+      "lastStageHint": "В воронке должна остаться хотя бы одна обычная стадия",
+      "wonCaption": "Успешное закрытие",
+      "lostCaption": "Закрытие без результата",
+      "systemFixed": "Цвет и вероятность фиксированы",
+      "form": {
+        "createTitle": "Новая стадия",
+        "editTitle": "Изменить стадию",
+        "nameLabel": "Название",
+        "namePlaceholder": "Например, Переговоры",
+        "colorLabel": "Цвет",
+        "probabilityLabel": "Вероятность закрытия",
+        "probabilityHint": "Целое число от 0 до 99",
+        "systemNote": "У этой стадии можно изменить только название.",
+        "create": "Добавить"
+      },
+      "colors": {
+        "blue": "Синий",
+        "purple": "Фиолетовый",
+        "orange": "Оранжевый",
+        "teal": "Бирюзовый",
+        "pink": "Розовый",
+        "yellow": "Жёлтый",
+        "gray": "Серый",
+        "indigo": "Индиго"
+      },
+      "validation": {
+        "nameRequired": "Введите название стадии",
+        "nameMax": "Название не длиннее 50 символов",
+        "colorRequired": "Выберите цвет",
+        "probabilityRange": "Введите целое число от 0 до 99"
+      },
+      "deleteDialog": {
+        "title": "Удалить стадию «{name}»?",
+        "bodyWithDeals": "В стадии «{name}» {count, plural, one {# сделка} few {# сделки} many {# сделок} other {# сделки}}. Перенести их в:",
+        "bodyEmpty": "Активных сделок нет. Стадию можно удалить; если в ней остались архивные сделки, они будут перенесены в выбранную стадию",
+        "targetLabel": "Стадия для переноса сделок",
+        "targetPlaceholder": "Выберите стадию",
+        "confirm": "Удалить"
+      },
+      "toasts": {
+        "createSuccess": "Стадия добавлена",
+        "createError": "Не удалось добавить стадию",
+        "updateSuccess": "Стадия сохранена",
+        "updateError": "Не удалось сохранить стадию",
+        "deleteSuccess": "Стадия удалена",
+        "deleteError": "Не удалось удалить стадию",
+        "reorderError": "Не удалось изменить порядок стадий"
       }
     }
   },
@@ -1661,6 +1724,17 @@
     "TENANT_FORBIDDEN": "Изменять эти настройки может только администратор рабочего пространства.",
     "TENANT_LOGO_INVALID_TYPE": "Допустимы только изображения JPG, PNG или WebP.",
     "TENANT_LOGO_TOO_LARGE": "Файл логотипа слишком большой (максимум 2 МБ).",
-    "TENANT_LOGO_FILE_MISSING": "Файл не выбран."
+    "TENANT_LOGO_FILE_MISSING": "Файл не выбран.",
+    "PIPELINE_STAGE_NOT_FOUND": "Стадия воронки не найдена. Обновите страницу.",
+    "PIPELINE_STAGE_NAME_TAKEN": "Стадия с таким названием уже есть.",
+    "PIPELINE_STAGE_SYSTEM_FIELD_IMMUTABLE": "У стадий закрытия сделки можно изменить только название.",
+    "PIPELINE_STAGE_SYSTEM_DELETE_NOT_ALLOWED": "Стадии закрытия сделки удалить нельзя.",
+    "PIPELINE_STAGE_LIMIT_MAX": "В воронке может быть не больше 12 обычных стадий.",
+    "PIPELINE_STAGE_LIMIT_MIN": "В воронке должна остаться хотя бы одна обычная стадия.",
+    "PIPELINE_STAGE_TARGET_REQUIRED": "В стадии есть сделки. Выберите стадию, в которую их перенести.",
+    "PIPELINE_STAGE_TARGET_INVALID": "Стадия для переноса сделок не найдена.",
+    "PIPELINE_STAGE_REORDER_MISMATCH": "Список стадий изменился. Обновите страницу и попробуйте снова.",
+    "PIPELINE_STAGE_INVALID_PROBABILITY": "Недопустимая вероятность для этой стадии.",
+    "PIPELINE_STAGE_CONFLICT": "Воронку одновременно изменили. Попробуйте ещё раз."
   }
 }
