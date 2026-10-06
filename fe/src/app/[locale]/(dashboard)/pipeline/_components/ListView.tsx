@@ -32,6 +32,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { StageBadge } from "@/components/ui/StageBadge";
 import { PaymentStatusBadge } from "@/components/ui/PaymentStatusBadge";
+import { ArchivedBadge } from "@/components/ui/ArchivedBadge";
+import { isDealArchived } from "@/lib/dealArchive";
+import { cn } from "@/lib/utils";
 import {
   findColumnByDealId,
   getAllDeals,
@@ -52,12 +55,14 @@ export function ListView({
   dateTo,
   search,
   isPaid,
+  includeArchived,
 }: {
   ownerId?: string;
   dateFrom?: string;
   dateTo?: string;
   search?: string;
   isPaid?: boolean;
+  includeArchived?: boolean;
 }) {
   const t = useTranslations("pipeline");
   const tCommon = useTranslations("common");
@@ -65,7 +70,7 @@ export function ListView({
 
   const { columns } = useDealPipelineStore();
   // react-query dedupes this against KanbanBoard's call (same queryKey)
-  const { data, isLoading, isError, error } = useGetPipeline({ ownerId, dateFrom, dateTo, search, isPaid });
+  const { data, isLoading, isError, error } = useGetPipeline({ ownerId, dateFrom, dateTo, search, isPaid, includeArchived });
   const deleteDealMutation = useDeleteDeal();
 
   const [sort, setSort] = useState<SortState>(null);
@@ -228,7 +233,10 @@ export function ListView({
           {sortedDeals.map((deal) => (
             <TableRow
               key={deal.id}
-              className="group border-b border-border/40 hover:bg-muted/30"
+              className={cn(
+                "group border-b border-border/40 hover:bg-muted/30",
+                isDealArchived(deal) && "opacity-60",
+              )}
             >
               {/* ── Deal ── */}
               <TableCell className="px-4 py-3">
@@ -243,6 +251,7 @@ export function ListView({
                 >
                   {deal.title}
                 </Link>
+                {isDealArchived(deal) && <ArchivedBadge className="mt-0.5" />}
                 {deal.contact.company ? (
                   <p
                     className="text-muted-foreground"

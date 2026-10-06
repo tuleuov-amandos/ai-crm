@@ -113,6 +113,8 @@ export const GetContactResSchema = ContactBaseSchema.omit({
       stage: z.string(),
       stageId: z.string().nullable(),
       value: z.coerce.number(),
+      // Archived deals are listed too; ISO string or null.
+      archivedAt: z.string().nullable(),
     }),
   ),
   activities: z.array(

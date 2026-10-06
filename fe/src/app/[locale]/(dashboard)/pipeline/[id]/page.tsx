@@ -9,6 +9,8 @@ import {
   Bell,
   Pencil,
   Trash2,
+  Archive,
+  ArchiveRestore,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StageBadge } from "@/components/ui/StageBadge";
@@ -35,9 +37,17 @@ import { DealRightPanel } from "../_components/DealRightPanel";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useDeleteDeal, useGetDealDetail } from "@/hooks/useDeals";
+import {
+  useDeleteDeal,
+  useGetDealDetail,
+  useArchiveDeals,
+  useUnarchiveDeals,
+} from "@/hooks/useDeals";
 import { useDealActivities } from "@/hooks/useActivities";
+import { usePipelineStages } from "@/hooks/usePipelineStages";
+import { isDealArchived, needsArchiveConfirm } from "@/lib/dealArchive";
 import { EditDealSheet } from "../_components/EditDealSheet";
+import { ArchiveDealDialog } from "../_components/ArchiveDealDialog";
 
 export default function DealDetail() {
   const t = useTranslations("pipeline");
@@ -54,10 +64,22 @@ export default function DealDetail() {
 
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const archiveDeals = useArchiveDeals();
+  const unarchiveDeals = useUnarchiveDeals();
+  const { getDealStage } = usePipelineStages();
 
   const handleDelete = () => {
     if (deal) deleteDeal.mutate({ id, stageId: deal.stageId });
     router.push("/pipeline");
+  };
+
+  // Open stage (or stages not loaded yet): confirm first; won/lost: at once.
+  const handleArchiveClick = () => {
+    if (!deal) return;
+    if (isDealArchived(deal)) unarchiveDeals.mutate([id]);
+    else if (needsArchiveConfirm(getDealStage(deal)?.kind)) setArchiveOpen(true);
+    else archiveDeals.mutate([id]);
   };
 
   if (!deal) {
@@ -133,6 +155,17 @@ export default function DealDetail() {
             {t("detail.share")}
           </Button>
 
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs"
+            disabled={archiveDeals.isPending || unarchiveDeals.isPending}
+            onClick={handleArchiveClick}
+          >
+            {isDealArchived(deal) ? <ArchiveRestore size={12} /> : <Archive size={12} />}
+            {isDealArchived(deal) ? t("archive.unarchive") : t("archive.archive")}
+          </Button>
+
           <Button size="sm" className="h-8 gap-1.5 text-xs">
             <Plus size={13} />
             {t("detail.addActivity")}
@@ -178,6 +211,16 @@ export default function DealDetail() {
 
       {/* Edit sheet */}
       <EditDealSheet deal={deal} open={editOpen} onOpenChange={setEditOpen} />
+
+      <ArchiveDealDialog
+        dealTitle={deal.title}
+        open={archiveOpen}
+        onOpenChange={setArchiveOpen}
+        onConfirm={() => {
+          archiveDeals.mutate([id]);
+          setArchiveOpen(false);
+        }}
+      />
 
       {/* Delete confirm */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>

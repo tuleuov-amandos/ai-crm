@@ -409,6 +409,25 @@
       "paymentStatusSuccess": "Payment status updated",
       "paymentStatusError": "Couldn't update payment status"
     },
+    "archive": {
+      "showArchive": "Show archive",
+      "badge": "Archived",
+      "archive": "Archive",
+      "unarchive": "Restore from archive",
+      "dialog": {
+        "title": "Archive this deal?",
+        "description": "The deal <b>{title}</b> is on an open stage and will be hidden from the board. You can find it with “Show archive” and restore it.",
+        "warning": "The deal will stay in reports and the forecast.",
+        "confirm": "Archive"
+      },
+      "toasts": {
+        "archiveSuccess": "Deal archived",
+        "unarchiveSuccess": "Deal restored from archive",
+        "unchanged": "The deal is already in this state",
+        "archiveError": "Failed to archive the deal",
+        "unarchiveError": "Failed to restore the deal from archive"
+      }
+    },
     "paymentStatus": {
       "paid": "Paid",
       "unpaid": "Unpaid",

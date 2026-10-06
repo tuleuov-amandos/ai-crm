@@ -20,6 +20,8 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { StageBadge } from "@/components/ui/StageBadge";
+import { ArchivedBadge } from "@/components/ui/ArchivedBadge";
+import { isDealArchived } from "@/lib/dealArchive";
 import { GetContactResType, ContactTagConst, ContactTagType } from "@/lib/validations/contacts.scheme";
 import { formatCurrency, getInitials } from "@/lib/helper";
 import { useRelativeTime } from "@/lib/format";
@@ -357,6 +359,7 @@ export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
                   {deal.title}
                 </p>
               </div>
+              {isDealArchived(deal) && <ArchivedBadge className="shrink-0" />}
               <StageBadge
                 stageId={deal.stageId}
                 legacyStage={deal.stage}

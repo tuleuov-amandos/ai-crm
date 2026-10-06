@@ -8,6 +8,7 @@ import {
   Check,
   Calendar,
   Search,
+  Archive,
 } from "lucide-react";
 import { useState } from "react";
 import { format } from "date-fns";
@@ -298,6 +299,8 @@ export default function Pipeline() {
   );
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [isPaidFilter, setIsPaidFilter] = useState<boolean | undefined>(undefined);
+  // Shared by the board and the list: both read the same GET /deals/board query
+  const [showArchived, setShowArchived] = useState(false);
   const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebounceValue(search, 300);
 
@@ -381,6 +384,22 @@ export default function Pipeline() {
           <PaymentStatusFilter value={isPaidFilter} onChange={setIsPaidFilter} />
 
           <Button
+            variant="outline"
+            size="sm"
+            aria-pressed={showArchived}
+            onClick={() => setShowArchived((v) => !v)}
+            className={cn(
+              "h-8 gap-1 border-border text-xs",
+              showArchived
+                ? "bg-secondary text-primary"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <Archive size={12} className="shrink-0" />
+            {t("archive.showArchive")}
+          </Button>
+
+          <Button
             size="sm"
             className="h-8 gap-1.5 text-xs"
             onClick={() => {
@@ -404,6 +423,7 @@ export default function Pipeline() {
               dateTo={dateTo}
               search={debouncedSearch}
               isPaid={isPaidFilter}
+              includeArchived={showArchived}
               onAddDeal={handleAddDealInStage}
             />
           </div>
@@ -415,6 +435,7 @@ export default function Pipeline() {
               dateTo={dateTo}
               search={debouncedSearch}
               isPaid={isPaidFilter}
+              includeArchived={showArchived}
             />
           </div>
         )}

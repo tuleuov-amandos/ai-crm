@@ -6,6 +6,7 @@ import { useDealPipelineStore } from "@/stores/dealCards-store";
 import { useShallow } from 'zustand/react/shallow'
 import { ApiError } from "@/lib/types/error";
 import { useApiError } from "@/hooks/useApiError";
+import { contactKeys } from "@/hooks/useContacts";
 import {
   CreateDealBodyType,
   UpdateDealBodyType,
@@ -21,8 +22,8 @@ import { toast } from "sonner";
 // ─────────────────────────────────────────
 export const dealKeys = {
   all: ["deals"] as const,
-  pipeline: (ownerId?: string, dateFrom?: string, dateTo?: string, search?: string, isPaid?: boolean) =>
-    [...dealKeys.all, "pipeline", ownerId, dateFrom, dateTo, search, isPaid] as const,
+  pipeline: (ownerId?: string, dateFrom?: string, dateTo?: string, search?: string, isPaid?: boolean, includeArchived?: boolean) =>
+    [...dealKeys.all, "pipeline", ownerId, dateFrom, dateTo, search, isPaid, includeArchived] as const,
   details: () => [...dealKeys.all, "detail"] as const,
   detail: (id: string) => [...dealKeys.details(), id] as const,
 };
@@ -30,7 +31,7 @@ export const dealKeys = {
 // ─────────────────────────────────────────
 // GET PIPELINE — fetch board columns (GET /deals/board) and sync to Zustand
 // ─────────────────────────────────────────
-export const useGetPipeline = (params?: { ownerId?: string; dateFrom?: string; dateTo?: string; search?: string; isPaid?: boolean }) => {
+export const useGetPipeline = (params?: { ownerId?: string; dateFrom?: string; dateTo?: string; search?: string; isPaid?: boolean; includeArchived?: boolean }) => {
   const t = useTranslations("pipeline");
 
   const { setBoard, setLoading, setError } = useDealPipelineStore(
@@ -42,7 +43,7 @@ export const useGetPipeline = (params?: { ownerId?: string; dateFrom?: string; d
   )
 
   const query = useQuery({
-    queryKey: dealKeys.pipeline(params?.ownerId, params?.dateFrom, params?.dateTo, params?.search, params?.isPaid),
+    queryKey: dealKeys.pipeline(params?.ownerId, params?.dateFrom, params?.dateTo, params?.search, params?.isPaid, params?.includeArchived),
     queryFn: () => dealsService.getBoard(params),
     staleTime: 30_000,
   });
@@ -210,3 +211,40 @@ export const useDeleteDeal = () => {
     },
   });
 };
+
+// ─────────────────────────────────────────
+// ARCHIVE / UNARCHIVE DEALS (no optimistic update)
+// ─────────────────────────────────────────
+// The board, list view, deal detail and contact cards show archivedAt, so all
+// deal and contact queries are refetched. Dashboard and reports ignore the
+// archive, their numbers do not change. updated: 0 means nothing changed (the
+// deal is already in that state or not editable by the user).
+const useSetDealsArchived = (archived: boolean) => {
+  const queryClient = useQueryClient();
+  const t = useTranslations("pipeline.archive.toasts");
+  const getApiError = useApiError();
+
+  return useMutation({
+    mutationFn: (dealIds: string[]) =>
+      archived
+        ? dealsService.archiveDeals(dealIds)
+        : dealsService.unarchiveDeals(dealIds),
+    onSuccess: ({ updated }) => {
+      queryClient.invalidateQueries({ queryKey: dealKeys.all });
+      queryClient.invalidateQueries({ queryKey: contactKeys.all });
+      if (updated === 0) {
+        toast.info(t("unchanged"));
+        return;
+      }
+      toast.success(t(archived ? "archiveSuccess" : "unarchiveSuccess"));
+    },
+    onError: (error: ApiError) => {
+      // 403 has no error code, so the fallback is shown
+      toast.error(getApiError(error, t(archived ? "archiveError" : "unarchiveError")));
+    },
+  });
+};
+
+export const useArchiveDeals = () => useSetDealsArchived(true);
+
+export const useUnarchiveDeals = () => useSetDealsArchived(false);

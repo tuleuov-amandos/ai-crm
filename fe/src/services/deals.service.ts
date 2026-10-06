@@ -7,11 +7,12 @@ import {
   DealCard,
   DealDetail,
   BoardRes,
+  ArchiveDealsRes,
 } from "@/lib/validations/deals.schema";
 
 
 export const dealsService = {
-  getBoard: async (params?: { ownerId?: string; dateFrom?: string; dateTo?: string; search?: string; isPaid?: boolean }): Promise<BoardRes> => {
+  getBoard: async (params?: { ownerId?: string; dateFrom?: string; dateTo?: string; search?: string; isPaid?: boolean; includeArchived?: boolean }): Promise<BoardRes> => {
     const res = await axiosInstance.get("deals/board", { params });
     return res.data;
   },
@@ -49,6 +50,18 @@ export const dealsService = {
 
   delete: async (id: string): Promise<void> => {
     await axiosInstance.delete(`deals/${id}`);
+  },
+
+  // Ids the user may not change or already in the target state are skipped,
+  // so `updated` can be 0.
+  archiveDeals: async (dealIds: string[]): Promise<ArchiveDealsRes> => {
+    const res = await axiosInstance.post("deals/archive", { dealIds });
+    return res.data;
+  },
+
+  unarchiveDeals: async (dealIds: string[]): Promise<ArchiveDealsRes> => {
+    const res = await axiosInstance.post("deals/unarchive", { dealIds });
+    return res.data;
   },
 
   analyze: async (id: string, meetingNote: string): Promise<{ jobId: string }> => {

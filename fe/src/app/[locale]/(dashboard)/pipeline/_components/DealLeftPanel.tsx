@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/select";
 import { StageBadge } from "@/components/ui/StageBadge";
 import { PaymentStatusBadge } from "@/components/ui/PaymentStatusBadge";
+import { ArchivedBadge } from "@/components/ui/ArchivedBadge";
+import { isDealArchived } from "@/lib/dealArchive";
 import { cn } from "@/lib/utils";
 import { DealDetail } from "./types";
 import { Task } from "./types";
@@ -223,6 +225,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                   : undefined
               }
             />
+            {isDealArchived(deal) && <ArchivedBadge />}
           </div>
           <Button
             variant="ghost"
