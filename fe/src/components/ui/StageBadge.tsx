@@ -1,33 +1,36 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-
-// ── Canonical stage type ────────────────────────────────────────────────────
-import { DealStage } from "@/lib/validations/deals.schema";
-import { DEAL_STAGE_META } from "@/lib/dealStageMeta";
+import { getStageColors } from "@/lib/pipelineColors";
+import { usePipelineStages, useStageLabel } from "@/hooks/usePipelineStages";
 
 // ── The reusable badge ──────────────────────────────────────────────────────
 interface StageBadgeProps {
-  /** Accepts a DealStage key ("prospect") or a loose display string ("Closed Won") */
-  stage: DealStage;
+  /** PipelineStage id of the deal */
+  stageId: string | null | undefined;
+  /** Legacy deal.stage, used only when stageId is null (an old, unlinked deal) */
+  legacyStage?: string | null;
   className?: string;
 }
 
-export function StageBadge({ stage, className }: StageBadgeProps) {
-  const t = useTranslations("dealStages");
-  const meta = DEAL_STAGE_META[stage];
+export function StageBadge({ stageId, legacyStage, className }: StageBadgeProps) {
+  const { getDealStage, isLoading } = usePipelineStages();
+  const label = useStageLabel();
+
+  // Nothing while the stages load; a neutral badge for an unknown stage.
+  if (isLoading) return null;
+  const stage = getDealStage({ stageId, stage: legacyStage });
+  const colors = getStageColors(stage?.color);
 
   return (
     <span
       className={cn(
         "inline-flex items-center rounded-full px-2.5 py-0.5 whitespace-nowrap font-medium",
-        meta.badgeClass,
         className
       )}
-      style={{ fontSize: 12 }}
+      style={{ fontSize: 12, background: colors.bg, color: colors.text }}
     >
-      {t(stage)}
+      {stage ? label(stage) : "—"}
     </span>
   );
 }

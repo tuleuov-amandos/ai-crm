@@ -22,14 +22,19 @@ import {
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { getInitials, getAvatarColors, FUNNEL_CHART_COLORS } from "@/lib/helper";
+import { getInitials, getAvatarColors } from "@/lib/helper";
+import { getFunnelBadgeColors } from "@/lib/pipelineColors";
 import { useShortValue } from "@/lib/format";
+import { usePipelineStages, useStageLabel } from "@/hooks/usePipelineStages";
 
 interface Deal {
   id: string;
   title: string;
   company: string;
+  // Legacy DealStage value, used only for a deal without stageId
   stage: string;
+  stageId?: string | null;
+  stageName?: string | null;
   value: number;
   owner: { id: string; name: string };
   daysAgo: number;
@@ -46,6 +51,8 @@ export function RecentDeals({ deals = [], isLoading = false }: RecentDealsProps)
   const t = useTranslations("dashboard.recentDeals");
   const tCommon = useTranslations("common");
   const tStages = useTranslations("dealStages");
+  const { getStage } = usePipelineStages();
+  const stageLabel = useStageLabel();
   const format = useFormatter();
   const shortValue = useShortValue();
   const router = useRouter();
@@ -157,7 +164,13 @@ export function RecentDeals({ deals = [], isLoading = false }: RecentDealsProps)
                   {/* Stage badge */}
                   <TableCell className="px-2 py-3">
                     {(() => {
-                      const stageColors = FUNNEL_CHART_COLORS[deal.stage as keyof typeof FUNNEL_CHART_COLORS] || FUNNEL_CHART_COLORS.PROSPECT;
+                      const stage = getStage(deal.stageId);
+                      // A deal without stageId still sits in the default stage of its legacy value
+                      const legacyKey = stage ? stage.legacyKey : deal.stageId ? null : deal.stage;
+                      const stageColors = getFunnelBadgeColors(legacyKey, stage?.color);
+                      const label = stage
+                        ? stageLabel(stage)
+                        : deal.stageName ?? (tStages.has(deal.stage) ? tStages(deal.stage) : deal.stage);
                       return (
                         <span
                           className="inline-block rounded-full px-2 py-0.5 whitespace-nowrap"
@@ -168,7 +181,7 @@ export function RecentDeals({ deals = [], isLoading = false }: RecentDealsProps)
                             background: stageColors.bg,
                           }}
                         >
-                          {tStages(deal.stage)}
+                          {label}
                         </span>
                       );
                     })()}

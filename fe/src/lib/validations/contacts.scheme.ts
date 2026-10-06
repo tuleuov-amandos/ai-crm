@@ -109,7 +109,9 @@ export const GetContactResSchema = ContactBaseSchema.omit({
     z.object({
       id: z.string(),
       title: z.string(),
+      // Legacy DealStage value; show the stage by stageId (null on an old deal).
       stage: z.string(),
+      stageId: z.string().nullable(),
       value: z.coerce.number(),
     }),
   ),

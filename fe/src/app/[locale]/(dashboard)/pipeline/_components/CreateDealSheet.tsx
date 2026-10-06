@@ -32,9 +32,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import ContactDialog from "@/app/[locale]/(dashboard)/contacts/_components/ContactDialog";
-import type { Stage } from "./types";
 import { useGetContacts } from "@/hooks/useContacts";
 import { useCreateDeal } from "@/hooks/useDeals";
+import { usePipelineStages, useStageLabel } from "@/hooks/usePipelineStages";
 import { useGetUsers } from "@/hooks/useUsers";
 import { Contact } from "@/lib/validations/contacts.scheme";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -51,6 +51,8 @@ const buildCreateDealSchema = (tv: (key: string) => string) =>
       .max(200, tv("nameMax")),
     contactId: z.string().min(1, tv("contactRequired")),
     ownerId: z.string().min(1, tv("ownerRequired")),
+    // PipelineStage id; empty lets the backend pick the first open stage
+    stageId: z.string(),
     value: z.number().nonnegative(tv("valueNonNegative")),
     closeDate: z.string().optional(),
     note: z.string().optional(),
@@ -61,13 +63,13 @@ type CreateDealFormValues = z.infer<ReturnType<typeof buildCreateDealSchema>>;
 interface CreateDealSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  defaultStage?: Stage;
+  defaultStageId?: string;
 }
 
 export function CreateDealSheet({
   open,
   onOpenChange,
-  defaultStage,
+  defaultStageId,
 }: CreateDealSheetProps) {
   const t = useTranslations("pipeline.form");
   const tv = useTranslations("pipeline.form.validation");
@@ -82,6 +84,10 @@ export function CreateDealSheet({
     search: debouncedContactSearch,
   });
   const usersQuery = useGetUsers();
+  const { stages, isLoading: stagesLoading } = usePipelineStages();
+  const stageLabel = useStageLabel();
+  const initialStageId =
+    defaultStageId ?? stages.find((stage) => stage.kind === "OPEN")?.id ?? "";
   const [contactDialogOpen, setContactDialogOpen] = useState(false);
   const [contactPopoverOpen, setContactPopoverOpen] = useState(false);
   const [isContactRequisitesOpen, setIsContactRequisitesOpen] = useState(false);
@@ -112,6 +118,7 @@ export function CreateDealSheet({
       title: "",
       contactId: "",
       ownerId: "",
+      stageId: "",
       value: 0,
       closeDate: "",
       note: "",
@@ -124,12 +131,20 @@ export function CreateDealSheet({
         title: "",
         contactId: "",
         ownerId: "",
+        stageId: "",
         value: 0,
         closeDate: "",
         note: "",
       });
     }
   }, [form, open]);
+
+  // Preselect the column's stage (or the first open stage) once stages load.
+  useEffect(() => {
+    if (open && initialStageId && !form.getValues("stageId")) {
+      form.setValue("stageId", initialStageId);
+    }
+  }, [form, open, initialStageId]);
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
@@ -159,7 +174,7 @@ export function CreateDealSheet({
       value: values.value,
       closeDate: values.closeDate ? new Date(values.closeDate) : new Date(),
       note: values.note?.trim() ? values.note.trim() : undefined,
-      stage: defaultStage,
+      stageId: values.stageId || undefined,
     });
 
     handleOpenChange(false);
@@ -400,6 +415,41 @@ export function CreateDealSheet({
                           style={{ fontSize: 13 }}
                         >
                           {user.name} - {user.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage style={{ fontSize: 11 }} />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="stageId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel style={{ fontSize: 12 }}>{t("stageLabel")}</FormLabel>
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    disabled={stagesLoading || isPending}
+                  >
+                    <FormControl>
+                      <SelectTrigger size="sm" style={{ fontSize: 13 }} className="bg-[#F8F8F7] dark:bg-card border-[#E8E7E2] dark:border-border text-foreground">
+                        <SelectValue
+                          placeholder={stagesLoading ? tCommon("loading") : undefined}
+                        />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="bg-background border-border">
+                      {stages.map((stage) => (
+                        <SelectItem
+                          key={stage.id}
+                          value={stage.id}
+                          style={{ fontSize: 13 }}
+                        >
+                          {stageLabel(stage)}
                         </SelectItem>
                       ))}
                     </SelectContent>

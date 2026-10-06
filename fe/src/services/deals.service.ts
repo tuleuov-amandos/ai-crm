@@ -6,13 +6,13 @@ import {
   UpdateDealPaymentStatusBodyType,
   DealCard,
   DealDetail,
-  PipelineRes,
+  BoardRes,
 } from "@/lib/validations/deals.schema";
 
 
 export const dealsService = {
-  getPipeline: async (params?: { ownerId?: string; dateFrom?: string; dateTo?: string; search?: string; isPaid?: boolean }): Promise<PipelineRes> => {
-    const res = await axiosInstance.get("deals/pipeline", { params });
+  getBoard: async (params?: { ownerId?: string; dateFrom?: string; dateTo?: string; search?: string; isPaid?: boolean }): Promise<BoardRes> => {
+    const res = await axiosInstance.get("deals/board", { params });
     return res.data;
   },
 

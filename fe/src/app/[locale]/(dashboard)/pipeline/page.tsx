@@ -17,7 +17,6 @@ import { useDebounceValue } from "usehooks-ts";
 import { KanbanBoard } from "@/app/[locale]/(dashboard)/pipeline/_components/KanbanBoard";
 import { ListView } from "@/app/[locale]/(dashboard)/pipeline/_components/ListView";
 import { CreateDealSheet } from "@/app/[locale]/(dashboard)/pipeline/_components/CreateDealSheet";
-import type { Stage } from "@/app/[locale]/(dashboard)/pipeline/_components/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -287,8 +286,8 @@ function RepRow({
 export default function Pipeline() {
   const t = useTranslations("pipeline");
   const [createOpen, setCreateOpen] = useState(false);
-  const [createDefaultStage, setCreateDefaultStage] = useState<
-    Stage | undefined
+  const [createDefaultStageId, setCreateDefaultStageId] = useState<
+    string | undefined
   >(undefined);
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const [selectedOwnerId, setSelectedOwnerId] = useState<string | undefined>(
@@ -307,8 +306,8 @@ export default function Pipeline() {
     : undefined;
   const dateTo = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined;
 
-  function handleAddDealInStage(stage: Stage) {
-    setCreateDefaultStage(stage);
+  function handleAddDealInStage(stageId?: string) {
+    setCreateDefaultStageId(stageId);
     setCreateOpen(true);
   }
 
@@ -385,7 +384,7 @@ export default function Pipeline() {
             size="sm"
             className="h-8 gap-1.5 text-xs"
             onClick={() => {
-              setCreateDefaultStage(undefined);
+              setCreateDefaultStageId(undefined);
               setCreateOpen(true);
             }}
           >
@@ -424,7 +423,7 @@ export default function Pipeline() {
       <CreateDealSheet
         open={createOpen}
         onOpenChange={setCreateOpen}
-        defaultStage={createDefaultStage}
+        defaultStageId={createDefaultStageId}
       />
     </div>
   );

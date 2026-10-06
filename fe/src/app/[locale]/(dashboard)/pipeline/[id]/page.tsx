@@ -56,7 +56,7 @@ export default function DealDetail() {
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const handleDelete = () => {
-    if (deal) deleteDeal.mutate({ id, stage: deal.stage });
+    if (deal) deleteDeal.mutate({ id, stageId: deal.stageId });
     router.push("/pipeline");
   };
 
@@ -109,7 +109,7 @@ export default function DealDetail() {
             <span className="text-foreground" style={{ fontSize: 13, fontWeight: 500 }}>
               {deal?.title ?? "Security Audit Platform"}
             </span>
-            <StageBadge stage={deal?.stage ?? "proposal"} className="ml-0.5" />
+            <StageBadge stageId={deal.stageId} legacyStage={deal.stage} className="ml-0.5" />
           </div>
         </div>
 

@@ -1,15 +1,5 @@
 import { z } from "zod";
-
-// ─── Enum — mirror backend DealStage ─────────────────────────────────────────
-export const DealStage = {
-  PROSPECT: "PROSPECT",
-  QUALIFIED: "QUALIFIED",
-  PROPOSAL: "PROPOSAL",
-  CLOSED_WON: "CLOSED_WON",
-  CLOSED_LOST: "CLOSED_LOST",
-} as const;
-
-export type DealStage = (typeof DealStage)[keyof typeof DealStage];
+import { PipelineStageSchema } from "@/lib/validations/pipelineStages.schema";
 
 // ─── Base schemas (internal) ────────────────────────────────────────────────────
 const DealOwnerSchema = z.object({
@@ -31,13 +21,11 @@ export const DealCardSchema = z.object({
   ownerId: z.string(),
   title: z.string(),
   value: z.coerce.number(),
-  stage: z.enum([
-    "PROSPECT",
-    "QUALIFIED",
-    "PROPOSAL",
-    "CLOSED_WON",
-    "CLOSED_LOST",
-  ]),
+  // Legacy DealStage value, still dual-written by the backend (a custom stage
+  // gives "PROSPECT"). Never use it for stage logic, use stageId.
+  stage: z.string(),
+  // Null only for an old deal the backend has not linked to a stage yet.
+  stageId: z.string().nullable(),
   isPaid: z.boolean().default(false),
   closeDate: z.coerce.date(),
   note: z.string().nullable(),
@@ -49,16 +37,31 @@ export const DealCardSchema = z.object({
 
 export type DealCard = z.infer<typeof DealCardSchema>;
 
-// ─── Pipeline Response — GET /deals/pipeline ─────────────────────────────────
-export const PipelineResSchema = z.object({
-  PROSPECT: z.array(DealCardSchema),
-  QUALIFIED: z.array(DealCardSchema),
-  PROPOSAL: z.array(DealCardSchema),
-  CLOSED_WON: z.array(DealCardSchema),
-  CLOSED_LOST: z.array(DealCardSchema),
+// ─── Board Response — GET /deals/board ───────────────────────────────────────
+// One column per tenant pipeline stage, in stage order. A deal belongs to the
+// column it is listed in (the backend places a deal without stageId by its
+// legacy stage), so take the stage from the column, not from the card.
+export const BoardColumnStageSchema = PipelineStageSchema.pick({
+  id: true,
+  name: true,
+  color: true,
+  order: true,
+  kind: true,
+  probability: true,
 });
 
-export type PipelineRes = z.infer<typeof PipelineResSchema>;
+export type BoardColumnStage = z.infer<typeof BoardColumnStageSchema>;
+
+export const BoardColumnSchema = z.object({
+  stage: BoardColumnStageSchema,
+  deals: z.array(DealCardSchema),
+});
+
+export type BoardColumn = z.infer<typeof BoardColumnSchema>;
+
+export const BoardResSchema = z.array(BoardColumnSchema);
+
+export type BoardRes = z.infer<typeof BoardResSchema>;
 
 // ─── Deal Detail — GET /deals/:id ─────────────────────────────────────────────
 export const DealDetailSchema = DealCardSchema.extend({
@@ -125,9 +128,8 @@ export const CreateDealBodySchema = z.object({
   value: z.coerce.number().nonnegative().default(0),
   closeDate: z.coerce.date(),
   note: z.string().optional(),
-  stage: z
-    .enum(["PROSPECT", "QUALIFIED", "PROPOSAL", "CLOSED_WON", "CLOSED_LOST"])
-    .optional(),
+  // PipelineStage id; without it the backend uses the first open stage.
+  stageId: z.string().optional(),
 });
 
 export type CreateDealBodyType = z.infer<typeof CreateDealBodySchema>;
@@ -147,13 +149,7 @@ export type UpdateDealBodyType = z.infer<typeof UpdateDealBodySchema>;
 
 // ─── UPDATE STAGE — PATCH /deals/:id/stage ───────────────────────────────────
 export const UpdateDealStageBodySchema = z.object({
-  stage: z.enum([
-    "PROSPECT",
-    "QUALIFIED",
-    "PROPOSAL",
-    "CLOSED_WON",
-    "CLOSED_LOST",
-  ]),
+  stageId: z.string(),
 });
 
 export type UpdateDealStageBodyType = z.infer<typeof UpdateDealStageBodySchema>;

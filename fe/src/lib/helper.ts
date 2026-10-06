@@ -42,14 +42,6 @@ export function getAvatarColors(id: string) {
   return AVATAR_COLORS[index];
 }
 
-export const FUNNEL_CHART_COLORS = {
-  PROSPECT: { funnel: '#C4C0F0', bg: '#EEEDFE', text: '#534AB7' },
-  QUALIFIED: { funnel: '#9B94E3', bg: '#E6F4D7', text: '#3B6D11' },
-  PROPOSAL: { funnel: '#7168CC', bg: '#FEF3E2', text: '#854F0B' },
-  CLOSED_WON: { funnel: '#534AB7', bg: '#DCFCE7', text: '#166534' },
-  CLOSED_LOST: { funnel: '#E11D48', bg: '#FEE2E2', text: '#A32D2D' },
-} as const;
-
 export const ACTIVITY_CONFIG = {
   CALL: { bg: '#E6F4D7', color: '#3B6D11', label: 'Call' },
   EMAIL: { bg: '#EEEDFE', color: '#534AB7', label: 'Email' },
