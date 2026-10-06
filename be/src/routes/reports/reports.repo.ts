@@ -1,14 +1,18 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/common/services/prisma.service'
-import { DealStage } from '../../../generated/prisma-client/enums'
+import type { PipelineStageKind } from '../../../generated/prisma-client/enums'
 
+// Deal queries pass tenantId explicitly on top of the Prisma tenant extension,
+// like the pipeline stage and deal repositories. Won/lost deals are picked by
+// the kind of their PipelineStage, never by the legacy Deal.stage column.
 @Injectable()
 export class ReportsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  findDealsInPeriod(start: Date, end: Date, userFilter: Record<string, any>) {
+  findDealsInPeriod(tenantId: string, start: Date, end: Date, userFilter: Record<string, any>) {
     return this.prisma.deal.findMany({
       where: {
+        tenantId,
         deletedAt: null,
         createdAt: { gte: start, lte: end },
         ...userFilter,
@@ -31,10 +35,11 @@ export class ReportsRepository {
     })
   }
 
-  findTopWonDeals(start: Date, end: Date, userFilter: Record<string, any>, take: number) {
+  findTopWonDeals(tenantId: string, start: Date, end: Date, userFilter: Record<string, any>, take: number) {
     return this.prisma.deal.findMany({
       where: {
-        stage: DealStage.CLOSED_WON,
+        tenantId,
+        pipelineStage: { tenantId, kind: 'WON' },
         closeDate: { gte: start, lte: end },
         deletedAt: null,
         ...userFilter,
@@ -42,6 +47,7 @@ export class ReportsRepository {
       include: {
         contact: { select: { company: true } },
         owner: { select: { id: true, name: true } },
+        pipelineStage: { select: { id: true, name: true } },
       },
       orderBy: { value: 'desc' },
       take,
@@ -58,11 +64,12 @@ export class ReportsRepository {
     })
   }
 
-  findUserClosedDeals(userId: string, stage: DealStage, start: Date, end: Date) {
+  findUserClosedDeals(tenantId: string, userId: string, kind: PipelineStageKind, start: Date, end: Date) {
     return this.prisma.deal.findMany({
       where: {
+        tenantId,
         ownerId: userId,
-        stage,
+        pipelineStage: { tenantId, kind },
         closeDate: { gte: start, lte: end },
         deletedAt: null,
       },
@@ -93,9 +100,10 @@ export class ReportsRepository {
     })
   }
 
-  findAllDeals(userFilter: Record<string, any>) {
+  findAllDeals(tenantId: string, userFilter: Record<string, any>) {
     return this.prisma.deal.findMany({
       where: {
+        tenantId,
         deletedAt: null,
         ...userFilter,
       },

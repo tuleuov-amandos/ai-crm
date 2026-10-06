@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { AppException, ReportErrorCode } from 'src/common/errors'
 import { AccessTokenPayload } from 'src/common/types/jwt.type'
-import { DealStage } from '../../../../generated/prisma-client/enums'
 import { UpdateKpiTargetDto } from '../reports.dto'
 import { ReportsRepository } from '../reports.repo'
 import { parseDates } from './report-helpers'
@@ -35,10 +34,10 @@ export class TeamReportService {
 
     const repsPerformance = await Promise.all(
       users.map(async (u) => {
-        const wonDeals = await this.reportsRepo.findUserClosedDeals(u.id, DealStage.CLOSED_WON, start, end)
+        const wonDeals = await this.reportsRepo.findUserClosedDeals(user.tenantId, u.id, 'WON', start, end)
         const actual = wonDeals.reduce((sum, d) => sum + Number(d.value), 0)
 
-        const lostDeals = await this.reportsRepo.findUserClosedDeals(u.id, DealStage.CLOSED_LOST, start, end)
+        const lostDeals = await this.reportsRepo.findUserClosedDeals(user.tenantId, u.id, 'LOST', start, end)
 
         const targets = await this.reportsRepo.findKpiTargets({ userId: u.id })
 

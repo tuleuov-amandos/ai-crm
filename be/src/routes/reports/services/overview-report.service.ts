@@ -1,17 +1,21 @@
 import { Injectable } from '@nestjs/common'
 import { AppException, ReportErrorCode } from 'src/common/errors'
 import { AccessTokenPayload } from 'src/common/types/jwt.type'
-import { DealStage } from '../../../../generated/prisma-client/enums'
+import { rootLogger } from 'src/common/logger/root-logger'
 import { ReportsRepository } from '../reports.repo'
-import { parseDates, STAGE_PROBABILITIES } from './report-helpers'
+import { parseDates, stageResolver, weightedValue } from './report-helpers'
 import { CaslAbilityFactory } from 'src/common/casl/casl-ability.factory'
 import { subject } from '@casl/ability'
+import { PipelineStagesRepository } from '../../pipeline-stages/pipeline-stages.repo'
+
+const log = rootLogger.child({ context: 'OverviewReportService' })
 
 @Injectable()
 export class OverviewReportService {
   constructor(
     private readonly reportsRepo: ReportsRepository,
     private readonly caslAbilityFactory: CaslAbilityFactory,
+    private readonly pipelineStagesRepo: PipelineStagesRepository,
   ) {}
 
   async getOverview(startDateStr: string | undefined, endDateStr: string | undefined, user: AccessTokenPayload) {
@@ -32,14 +36,26 @@ export class OverviewReportService {
     const prevEnd = new Date(start.getTime())
 
     // ─── Metrics ───
-    const [currentDeals, previousDeals] = await Promise.all([
-      this.reportsRepo.findDealsInPeriod(start, end, userFilter),
-      this.reportsRepo.findDealsInPeriod(prevStart, prevEnd, userFilter),
+    const [currentDeals, previousDeals, stages] = await Promise.all([
+      this.reportsRepo.findDealsInPeriod(user.tenantId, start, end, userFilter),
+      this.reportsRepo.findDealsInPeriod(user.tenantId, prevStart, prevEnd, userFilter),
+      this.pipelineStagesRepo.findAll(user.tenantId),
     ])
+    const stageOf = stageResolver(stages)
+    const kindOf = (d: { stageId: string | null }) => stageOf(d)?.kind
+    const unstagedCount = currentDeals.filter((d) => !stageOf(d)).length
+    if (unstagedCount > 0) {
+      log.warn({
+        event: 'reports.deal_stage_missing',
+        tenantId: user.tenantId,
+        report: 'overview',
+        count: unstagedCount,
+      })
+    }
 
-    // Metric 1: Total Revenue (CLOSED_WON deals value in period)
-    const currentWon = currentDeals.filter((d) => d.stage === DealStage.CLOSED_WON)
-    const prevWon = previousDeals.filter((d) => d.stage === DealStage.CLOSED_WON)
+    // Metric 1: Total Revenue (WON stage deals value in period)
+    const currentWon = currentDeals.filter((d) => kindOf(d) === 'WON')
+    const prevWon = previousDeals.filter((d) => kindOf(d) === 'WON')
     const totalRev = currentWon.reduce((sum, d) => sum + Number(d.value), 0)
     const prevRev = prevWon.reduce((sum, d) => sum + Number(d.value), 0)
     const revDeltaVal = prevRev > 0 ? ((totalRev - prevRev) / prevRev) * 100 : totalRev > 0 ? 100 : 0
@@ -50,12 +66,8 @@ export class OverviewReportService {
     }
 
     // Metric 2: Total Closed Deals (won or lost in period)
-    const currentClosedCount = currentDeals.filter(
-      (d) => d.stage === DealStage.CLOSED_WON || d.stage === DealStage.CLOSED_LOST,
-    ).length
-    const prevClosedCount = previousDeals.filter(
-      (d) => d.stage === DealStage.CLOSED_WON || d.stage === DealStage.CLOSED_LOST,
-    ).length
+    const currentClosedCount = currentDeals.filter((d) => kindOf(d) === 'WON' || kindOf(d) === 'LOST').length
+    const prevClosedCount = previousDeals.filter((d) => kindOf(d) === 'WON' || kindOf(d) === 'LOST').length
     const closedDeltaVal = currentClosedCount - prevClosedCount
     const closedDeals = {
       value: currentClosedCount,
@@ -65,8 +77,8 @@ export class OverviewReportService {
 
     // Metric 3: Avg Win Rate
     const getWinRate = (deals: typeof currentDeals) => {
-      const won = deals.filter((d) => d.stage === DealStage.CLOSED_WON).length
-      const lost = deals.filter((d) => d.stage === DealStage.CLOSED_LOST).length
+      const won = deals.filter((d) => kindOf(d) === 'WON').length
+      const lost = deals.filter((d) => kindOf(d) === 'LOST').length
       const total = won + lost
       return total > 0 ? (won / total) * 100 : 0
     }
@@ -93,9 +105,7 @@ export class OverviewReportService {
 
     // Metric 5: Avg Days to Close
     const getAvgDaysToClose = (deals: typeof currentDeals) => {
-      const closed = deals.filter(
-        (d) => (d.stage === DealStage.CLOSED_WON || d.stage === DealStage.CLOSED_LOST) && d.closeDate,
-      )
+      const closed = deals.filter((d) => (kindOf(d) === 'WON' || kindOf(d) === 'LOST') && d.closeDate)
       if (closed.length === 0) return 0
       const totalDays = closed.reduce((sum, d) => {
         const days = Math.round((d.closeDate.getTime() - d.createdAt.getTime()) / (1000 * 60 * 60 * 24))
@@ -153,14 +163,11 @@ export class OverviewReportService {
       const wonSum = monthWon.reduce((sum, d) => sum + Number(d.value), 0)
 
       const openDeals = currentDeals.filter((d) => {
-        if (d.stage === DealStage.CLOSED_WON || d.stage === DealStage.CLOSED_LOST) return false
+        if (kindOf(d) !== 'OPEN') return false
         const dDate = d.closeDate || d.createdAt
         return dDate.getFullYear() < m.year || (dDate.getFullYear() === m.year && dDate.getMonth() + 1 <= m.month)
       })
-      const openWeightedSum = openDeals.reduce(
-        (sum, d) => sum + Number(d.value) * (STAGE_PROBABILITIES[d.stage] || 0),
-        0,
-      )
+      const openWeightedSum = openDeals.reduce((sum, d) => sum + weightedValue(d.value, stageOf(d).probability), 0)
 
       cumActual = wonSum
       cumForecast = wonSum + openWeightedSum
@@ -172,8 +179,8 @@ export class OverviewReportService {
       }
     })
 
-    // Top CLOSED_WON deals
-    const topDealsRaw = await this.reportsRepo.findTopWonDeals(start, end, userFilter, 6)
+    // Top deals of the WON stage
+    const topDealsRaw = await this.reportsRepo.findTopWonDeals(user.tenantId, start, end, userFilter, 6)
 
     const topDeals = topDealsRaw.map((d) => {
       return {
@@ -187,42 +194,40 @@ export class OverviewReportService {
         value: Number(d.value), // raw number
         closedAt: d.closeDate ? d.closeDate.toISOString() : d.createdAt.toISOString(),
         stage: 'CLOSED_WON',
+        stageId: d.pipelineStage.id,
+        stageName: d.pipelineStage.name,
       }
     })
 
-    // Calculate Win/Loss by stage conversion heuristic
-    const winLossStages = [
-      { stage: 'Prospect', winCount: 0, lossCount: 0 },
-      { stage: 'Qualified', winCount: 0, lossCount: 0 },
-      { stage: 'Proposal', winCount: 0, lossCount: 0 },
-      { stage: 'Closed', winCount: 0, lossCount: 0 },
-    ]
+    // Win/Loss by stage, a heuristic (the stage a lost deal left is not stored):
+    // a won deal passed every stage; a lost deal is taken to have moved one open
+    // stage forward per activity after the first and to be lost at the stage it
+    // reached (≤ 1 activity: the first stage). Rows are the open stages by order
+    // plus a closing row, for lost deals that got past the last open stage.
+    // On the default stages these are the old Prospect/Qualified/Proposal/Closed
+    // rows with the same thresholds (≤1, 2, 3, ≥4 activities).
+    const openStages = stages.filter((s) => s.kind === 'OPEN')
+    const closingName = ['WON', 'LOST']
+      .map((kind) => stages.find((s) => s.kind === kind)?.name)
+      .filter(Boolean)
+      .join(' / ')
+    const winLossStages = [...openStages.map((s) => s.name), closingName].map((stage) => ({
+      stage,
+      winCount: 0,
+      lossCount: 0,
+    }))
+    const closingIndex = winLossStages.length - 1
 
     for (const d of currentDeals) {
-      const activitiesList = (d as any).activities || []
-      const actCount = activitiesList.length
+      const actCount = d.activities.length
+      const kind = kindOf(d)
 
-      if (d.stage === DealStage.CLOSED_WON) {
-        winLossStages[0].winCount++
-        winLossStages[1].winCount++
-        winLossStages[2].winCount++
-        winLossStages[3].winCount++
-      } else if (d.stage === DealStage.CLOSED_LOST) {
-        if (actCount <= 1) {
-          winLossStages[0].lossCount++
-        } else if (actCount === 2) {
-          winLossStages[0].winCount++
-          winLossStages[1].lossCount++
-        } else if (actCount === 3) {
-          winLossStages[0].winCount++
-          winLossStages[1].winCount++
-          winLossStages[2].lossCount++
-        } else {
-          winLossStages[0].winCount++
-          winLossStages[1].winCount++
-          winLossStages[2].winCount++
-          winLossStages[3].lossCount++
-        }
+      if (kind === 'WON') {
+        winLossStages.forEach((s) => s.winCount++)
+      } else if (kind === 'LOST') {
+        const lostAt = Math.min(Math.max(actCount - 1, 0), closingIndex)
+        winLossStages.slice(0, lostAt).forEach((s) => s.winCount++)
+        winLossStages[lostAt].lossCount++
       }
     }
 

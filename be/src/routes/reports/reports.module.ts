@@ -7,8 +7,10 @@ import { OverviewReportService } from './services/overview-report.service'
 import { TeamReportService } from './services/team-report.service'
 import { PipelineReportService } from './services/pipeline-report.service'
 import { ActivityReportService } from './services/activity-report.service'
+import { PipelineStagesModule } from '../pipeline-stages/pipeline-stages.module'
 
 @Module({
+  imports: [PipelineStagesModule],
   controllers: [ReportsController],
   providers: [
     ReportsService,

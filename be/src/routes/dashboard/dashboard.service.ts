@@ -1,12 +1,15 @@
 import { Injectable } from '@nestjs/common'
 import { AppException, DashboardErrorCode } from 'src/common/errors'
-import { DealStage } from '../../../generated/prisma-client/enums'
 import { DashboardPeriodType, DashboardResType } from './dashboard.model'
 import { RedisService } from 'src/common/services/redis.service'
 import { DashboardRepository } from './dashboard.repo'
 import { CaslAbilityFactory } from 'src/common/casl/casl-ability.factory'
 import { AccessTokenPayload } from 'src/common/types/jwt.type'
 import { subject } from '@casl/ability'
+import { rootLogger } from 'src/common/logger/root-logger'
+import { PipelineStagesRepository } from '../pipeline-stages/pipeline-stages.repo'
+
+const log = rootLogger.child({ context: 'DashboardService' })
 
 // Target revenue configurable via env, default to 500M VND
 const TARGET_REVENUE_VND = process.env.MONTHLY_REVENUE_TARGET
@@ -66,6 +69,7 @@ export class DashboardService {
     private readonly dashboardRepo: DashboardRepository,
     private readonly redisService: RedisService,
     private readonly caslAbilityFactory: CaslAbilityFactory,
+    private readonly pipelineStagesRepo: PipelineStagesRepository,
   ) {}
 
   async getDashboardData(
@@ -102,10 +106,21 @@ export class DashboardService {
     const ranges = getPeriodRanges(period)
 
     // ─── 1. QUERY DEALS FOR METRICS ───
-    const [currentDeals, previousDeals] = await Promise.all([
+    const [currentDeals, previousDeals, stages] = await Promise.all([
       this.dashboardRepo.findDealsInPeriod(tenantId, ranges.current.start, ranges.current.end, userFilter),
       this.dashboardRepo.findDealsInPeriod(tenantId, ranges.previous.start, ranges.previous.end, userFilter),
+      this.pipelineStagesRepo.findAll(tenantId),
     ])
+
+    // A deal's stage comes from Deal.stageId only: a custom stage writes
+    // PROSPECT into Deal.stage. A deal without stageId is in no stage.
+    const stageById = new Map(stages.map((stage) => [stage.id, stage]))
+    const stageOf = (d: { stageId: string | null }) => (d.stageId ? stageById.get(d.stageId) : undefined)
+    const kindOf = (d: { stageId: string | null }) => stageOf(d)?.kind
+    const unstagedCount = currentDeals.filter((d) => !stageOf(d)).length
+    if (unstagedCount > 0) {
+      log.warn({ event: 'reports.deal_stage_missing', tenantId, report: 'dashboard', count: unstagedCount })
+    }
 
     // Metric 1: Total Deal Value
     const currentTotalValue = currentDeals.reduce((sum, d) => sum + Number(d.value), 0)
@@ -118,15 +133,14 @@ export class DashboardService {
     }
 
     // Metric 2: Open Deals
-    const openStages: DealStage[] = [DealStage.PROSPECT, DealStage.QUALIFIED, DealStage.PROPOSAL]
-    const currentOpenDeals = currentDeals.filter((d) => openStages.includes(d.stage))
-    const prevOpenDeals = previousDeals.filter((d) => openStages.includes(d.stage))
+    const currentOpenDeals = currentDeals.filter((d) => kindOf(d) === 'OPEN')
+    const prevOpenDeals = previousDeals.filter((d) => kindOf(d) === 'OPEN')
     const openDealsDiff = currentOpenDeals.length - prevOpenDeals.length
 
     // Metric 3: Win Rate
     const getWinRate = (dealsList: typeof currentDeals) => {
-      const closedWon = dealsList.filter((d) => d.stage === DealStage.CLOSED_WON).length
-      const closedLost = dealsList.filter((d) => d.stage === DealStage.CLOSED_LOST).length
+      const closedWon = dealsList.filter((d) => kindOf(d) === 'WON').length
+      const closedLost = dealsList.filter((d) => kindOf(d) === 'LOST').length
       const totalClosed = closedWon + closedLost
       return totalClosed > 0 ? Math.round((closedWon / totalClosed) * 100) : 0
     }
@@ -135,25 +149,25 @@ export class DashboardService {
     const winRateDiff = currentWinRate - prevWinRate
 
     // Metric 4: Revenue against Target (always monthly target)
-    const closedWonDealsInPeriod = currentDeals.filter((d) => d.stage === DealStage.CLOSED_WON)
+    const closedWonDealsInPeriod = currentDeals.filter((d) => kindOf(d) === 'WON')
     const actualRevenue = closedWonDealsInPeriod.reduce((sum, d) => sum + Number(d.value), 0)
     const targetRevenue = TARGET_REVENUE_VND
 
     // ─── 2. PIPELINE FUNNEL ───
-    const funnelStages = [
-      { name: 'Prospect', key: DealStage.PROSPECT },
-      { name: 'Qualified', key: DealStage.QUALIFIED },
-      { name: 'Proposal', key: DealStage.PROPOSAL },
-      { name: 'Closed Won', key: DealStage.CLOSED_WON },
-    ]
+    // One column per tenant stage by order, the WON stage included and LOST
+    // left out; deals of that stage only (not cumulative).
+    const funnelStages = stages.filter((stage) => stage.kind !== 'LOST')
 
     const pipelineStages = funnelStages.map((stage) => {
-      const stageDeals = currentDeals.filter((d) => d.stage === stage.key)
+      const stageDeals = currentDeals.filter((d) => stageOf(d)?.id === stage.id)
       const count = stageDeals.length
       const totalValue = stageDeals.reduce((sum, d) => sum + Number(d.value), 0)
       return {
         name: stage.name,
-        key: stage.key,
+        // The current frontend keys on the old enum value; null for a custom stage.
+        key: stage.legacyKey,
+        stageId: stage.id,
+        legacyKey: stage.legacyKey,
         count,
         value: totalValue,
       }
@@ -217,6 +231,8 @@ export class DashboardService {
         title: d.title,
         company: d.contact?.company || 'N/A',
         stage: d.stage,
+        stageId: d.stageId,
+        stageName: d.pipelineStage?.name ?? null,
         value: Number(d.value),
         owner: {
           id: d.owner.id,

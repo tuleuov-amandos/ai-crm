@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/common/services/prisma.service'
-import { DealStage } from '../../../generated/prisma-client/enums'
 
 @Injectable()
 export class DashboardRepository {
@@ -21,7 +20,8 @@ export class DashboardRepository {
     return this.prisma.deal.findMany({
       where: {
         tenantId,
-        stage: DealStage.CLOSED_WON,
+        // By the stage kind, not Deal.stage (the legacy column).
+        pipelineStage: { tenantId, kind: 'WON' },
         deletedAt: null,
         createdAt: { gte: start, lte: end },
         ...userFilter,
@@ -50,6 +50,7 @@ export class DashboardRepository {
       include: {
         contact: { select: { company: true } },
         owner: { select: { id: true, name: true } },
+        pipelineStage: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: 'desc' },
       take,
