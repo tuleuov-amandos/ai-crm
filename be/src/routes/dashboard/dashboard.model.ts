@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { DealStage } from '../../../generated/prisma-client/enums'
 
 export const DashboardPeriodEnum = z.enum(['week', 'month', 'quarter'])
 export type DashboardPeriodType = z.infer<typeof DashboardPeriodEnum>
@@ -30,9 +29,14 @@ export const MetricCardSchema = z.object({
     .optional(),
 })
 
+// key is the stage legacyKey (null for a custom stage), kept for the current
+// frontend. stageId/legacyKey are optional only so a response cached in Redis
+// before they existed (cache:dashboard:*, TTL 300 s) still serializes.
 export const PipelineStageSchema = z.object({
   name: z.string(),
-  key: z.nativeEnum(DealStage),
+  key: z.string().nullable(),
+  stageId: z.string().optional(),
+  legacyKey: z.string().nullable().optional(),
   count: z.number(),
   value: z.number(),
 })
@@ -50,6 +54,9 @@ export const RecentDealSchema = z.object({
   title: z.string(),
   company: z.string(),
   stage: z.string(),
+  // Optional for the same cached-response reason; null for a deal without stageId.
+  stageId: z.string().nullable().optional(),
+  stageName: z.string().nullable().optional(),
   value: z.number(),
   owner: z.object({
     id: z.string(),

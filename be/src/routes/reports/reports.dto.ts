@@ -1,6 +1,5 @@
 import { createZodDto } from 'nestjs-zod'
 import { z } from 'zod'
-import { DealStage } from '../../../generated/prisma-client/enums'
 
 // ─── Query DTOs ──────────────────────────────────────────────────────────────
 export const ReportsQuerySchema = z
@@ -65,6 +64,8 @@ export const OverviewResSchema = z.object({
       value: z.number(),
       closedAt: z.string(),
       stage: z.string(),
+      stageId: z.string(),
+      stageName: z.string(),
     }),
   ),
 })
@@ -87,7 +88,10 @@ export class TeamPerformanceResDto extends createZodDto(z.object({ reps: TeamPer
 // ─── Pipeline Analysis Response DTO ──────────────────────────────────────────
 export const FunnelStageSchema = z.object({
   stage: z.string(),
-  stageKey: z.nativeEnum(DealStage),
+  stageId: z.string(),
+  // Same as legacyKey (null for a custom stage), kept for the current frontend.
+  stageKey: z.string().nullable(),
+  legacyKey: z.string().nullable(),
   count: z.number(),
   value: z.number(),
   percentage: z.number(),
