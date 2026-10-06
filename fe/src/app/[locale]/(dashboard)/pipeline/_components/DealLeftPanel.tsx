@@ -39,6 +39,7 @@ import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as ShadcnCalendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { fromDateOnly, toDateOnly } from "@/lib/dateOnly";
 import { useMe } from "@/hooks/useAuth";
 import { useGetUsers } from "@/hooks/useUsers";
 import { usePipelineStages, useStageLabel } from "@/hooks/usePipelineStages";
@@ -512,15 +513,15 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                           className="h-7 px-2 text-xs flex items-center gap-1.5 bg-background border-border text-muted-foreground hover:text-foreground"
                         >
                           <Calendar size={12} />
-                          {editingDueDate ? format(new Date(editingDueDate), "dd/MM/yyyy") : t("pickDueDate")}
+                          {editingDueDate ? format(fromDateOnly(editingDueDate)!, "dd/MM/yyyy") : t("pickDueDate")}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0 bg-white dark:bg-card" align="start">
                         <ShadcnCalendar
                           mode="single"
-                          selected={editingDueDate ? new Date(editingDueDate) : undefined}
+                          selected={fromDateOnly(editingDueDate)}
                           onSelect={(date) => {
-                            setEditingDueDate(date ? date.toISOString().split("T")[0] : null);
+                            setEditingDueDate(date ? toDateOnly(date) : null);
                           }}
                         />
                       </PopoverContent>
@@ -666,15 +667,15 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                       className="h-7 px-2 text-xs flex items-center gap-1.5 bg-background border-border text-muted-foreground hover:text-foreground"
                     >
                       <Calendar size={12} />
-                      {newDueDate ? format(new Date(newDueDate), "dd/MM/yyyy") : t("pickDueDate")}
+                      {newDueDate ? format(fromDateOnly(newDueDate)!, "dd/MM/yyyy") : t("pickDueDate")}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0 bg-white dark:bg-card" align="start">
                     <ShadcnCalendar
                       mode="single"
-                      selected={newDueDate ? new Date(newDueDate) : undefined}
+                      selected={fromDateOnly(newDueDate)}
                       onSelect={(date) => {
-                        setNewDueDate(date ? date.toISOString().split("T")[0] : null);
+                        setNewDueDate(date ? toDateOnly(date) : null);
                       }}
                     />
                   </PopoverContent>

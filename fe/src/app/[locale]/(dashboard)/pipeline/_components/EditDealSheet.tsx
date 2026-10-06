@@ -36,6 +36,7 @@ import { useGetUsers } from "@/hooks/useUsers";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { fromDateOnly, toDateOnly } from "@/lib/dateOnly";
 import { Calendar as CalendarIcon } from "lucide-react";
 
 const buildFormSchema = (tv: (key: string) => string) =>
@@ -275,7 +276,7 @@ export function EditDealSheet({ deal, open, onOpenChange }: Props) {
                             className="w-full h-8 pl-3 text-left font-normal text-xs bg-[#F8F8F7] dark:bg-card border border-[#E8E7E2] dark:border-border text-foreground hover:bg-gray-100 dark:hover:bg-muted"
                           >
                             {field.value ? (
-                              format(new Date(field.value), "dd/MM/yyyy")
+                              format(fromDateOnly(field.value)!, "dd/MM/yyyy")
                             ) : (
                               <span className="text-muted-foreground">{t("pickDate")}</span>
                             )}
@@ -286,9 +287,9 @@ export function EditDealSheet({ deal, open, onOpenChange }: Props) {
                       <PopoverContent className="w-auto p-0 bg-white dark:bg-card border dark:border-border" align="start">
                         <Calendar
                           mode="single"
-                          selected={field.value ? new Date(field.value) : undefined}
+                          selected={fromDateOnly(field.value)}
                           onSelect={(date) => {
-                            field.onChange(date ? date.toISOString().split("T")[0] : "");
+                            field.onChange(date ? toDateOnly(date) : "");
                           }}
                           disabled={(date) =>
                             date < new Date("1900-01-01")
