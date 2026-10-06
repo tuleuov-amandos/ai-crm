@@ -11,20 +11,30 @@ import { useTranslations } from "next-intl";
 import * as XLSX from "xlsx";
 import { ChartCard } from "./ChartCard";
 import { EmptyState } from "./EmptyState";
-import { FUNNEL_CHART_COLORS } from "@/lib/helper";
+import { getFunnelColor } from "@/lib/pipelineColors";
 import { useShortValue } from "@/lib/format";
-import { reportsService } from "@/services/reports.service";
+import { useStageLabel } from "@/hooks/usePipelineStages";
+import { reportsService, type FunnelStage } from "@/services/reports.service";
 
 import { CustomTooltipProps } from "@/lib/types/chart";
+
+// Label from the stage name in the response (localized for a default stage).
+function funnelStageLabel(
+  step: Pick<FunnelStage, "stage" | "stageId" | "stageKey">,
+  stageLabel: ReturnType<typeof useStageLabel>,
+) {
+  return stageLabel({ id: step.stageId, name: step.stage, legacyKey: step.stageKey });
+}
 
 const FunnelTooltip = ({ active, payload }: CustomTooltipProps) => {
   const t = useTranslations("reports.pipelineTab");
   const shortValue = useShortValue();
+  const stageLabel = useStageLabel();
   if (!active || !payload?.length) return null;
-  const data = payload[0].payload as { stage: string; stageKey: "PROSPECT" | "QUALIFIED" | "PROPOSAL" | "CLOSED_WON"; count: number; value: number; percentage: number };
+  const data = payload[0].payload as { stage: string; stageId: string; stageKey: string | null; count: number; value: number; percentage: number };
   return (
     <div className="bg-white dark:bg-card border border-[#E8E7E2] dark:border-border rounded-lg shadow-md px-3 py-2.5 text-xs text-left">
-      <p className="text-[#1A1A18] dark:text-foreground mb-1.5" style={{ fontWeight: 600 }}>{t(`funnelStages.${data.stageKey}`)}</p>
+      <p className="text-[#1A1A18] dark:text-foreground mb-1.5" style={{ fontWeight: 600 }}>{funnelStageLabel(data, stageLabel)}</p>
       <div className="space-y-1">
         <div className="flex justify-between gap-6">
           <span className="text-[#6B6B67] dark:text-muted-foreground">{t("tooltipCount")}</span>
@@ -67,6 +77,7 @@ const ForecastTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 export function PipelineAnalysisTab() {
   const t = useTranslations("reports.pipelineTab");
   const shortValue = useShortValue();
+  const stageLabel = useStageLabel();
   const { data, isLoading } = useQuery({
     queryKey: ["reports", "pipeline-analysis"],
     queryFn: () => reportsService.getPipelineAnalysis(),
@@ -82,6 +93,9 @@ export function PipelineAnalysisTab() {
 
   if (!data) return null;
 
+  const funnelLabels = new Map(
+    (data.conversionFunnel ?? []).map((d) => [d.stageId, funnelStageLabel(d, stageLabel)]),
+  );
   const isFunnelEmpty = !data.conversionFunnel || data.conversionFunnel.length === 0 || data.conversionFunnel.every(d => d.count === 0);
   const isForecastEmpty = !data.weightedForecast || data.weightedForecast.length === 0 || data.weightedForecast.every(d => !d.actual && !d.forecast && !d.target);
 
@@ -124,9 +138,9 @@ export function PipelineAnalysisTab() {
                 >
                   <XAxis type="number" domain={[0, 100]} hide />
                   <YAxis
-                    dataKey="stageKey"
+                    dataKey="stageId"
                     type="category"
-                    tickFormatter={(value) => t(`funnelStages.${value}`)}
+                    tickFormatter={(value) => funnelLabels.get(value) ?? ""}
                     tick={{ fontSize: 11, fill: "var(--foreground)", fontWeight: 500 }}
                     axisLine={false}
                     tickLine={false}
@@ -140,7 +154,7 @@ export function PipelineAnalysisTab() {
                     background={{ fill: "var(--muted)", radius: 4 }}
                   >
                     {data.conversionFunnel.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={FUNNEL_CHART_COLORS[entry.stageKey].funnel} />
+                      <Cell key={`cell-${index}`} fill={getFunnelColor(entry.stageKey, index)} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -148,11 +162,11 @@ export function PipelineAnalysisTab() {
 
               {/* Funnel breakdown legends */}
               <div className="grid grid-cols-4 border-t border-[#E8E7E2] dark:border-border pt-4 text-center">
-                {data.conversionFunnel.map((d) => (
-                  <div key={d.stage} className="flex flex-col gap-1 border-r border-[#E8E7E2] dark:border-border last:border-0">
-                    <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 10 }}>{t(`funnelStages.${d.stageKey}`)}</span>
+                {data.conversionFunnel.map((d, index) => (
+                  <div key={d.stageId} className="flex flex-col gap-1 border-r border-[#E8E7E2] dark:border-border last:border-0">
+                    <span className="text-[#6B6B67] dark:text-muted-foreground" style={{ fontSize: 10 }}>{funnelLabels.get(d.stageId)}</span>
                     <span className="text-[#1A1A18] dark:text-foreground font-bold" style={{ fontSize: 13 }}>{d.count}</span>
-                    <span className="font-semibold" style={{ fontSize: 10, color: FUNNEL_CHART_COLORS[d.stageKey].funnel }}>{d.percentage}%</span>
+                    <span className="font-semibold" style={{ fontSize: 10, color: getFunnelColor(d.stageKey, index) }}>{d.percentage}%</span>
                   </div>
                 ))}
               </div>

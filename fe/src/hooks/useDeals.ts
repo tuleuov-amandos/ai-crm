@@ -8,7 +8,6 @@ import { ApiError } from "@/lib/types/error";
 import { useApiError } from "@/hooks/useApiError";
 import {
   CreateDealBodyType,
-  DealStage,
   UpdateDealBodyType,
   UpdateDealStageBodyType,
   UpdateDealPaymentStatusBodyType,
@@ -29,14 +28,14 @@ export const dealKeys = {
 };
 
 // ─────────────────────────────────────────
-// GET PIPELINE — fetch and sync to Zustand
+// GET PIPELINE — fetch board columns (GET /deals/board) and sync to Zustand
 // ─────────────────────────────────────────
 export const useGetPipeline = (params?: { ownerId?: string; dateFrom?: string; dateTo?: string; search?: string; isPaid?: boolean }) => {
   const t = useTranslations("pipeline");
 
-  const { setPipeline, setLoading, setError } = useDealPipelineStore(
+  const { setBoard, setLoading, setError } = useDealPipelineStore(
     useShallow((state) => ({
-      setPipeline: state.setPipeline, 
+      setBoard: state.setBoard,
       setLoading: state.setLoading,
       setError: state.setError })
     )
@@ -44,13 +43,13 @@ export const useGetPipeline = (params?: { ownerId?: string; dateFrom?: string; d
 
   const query = useQuery({
     queryKey: dealKeys.pipeline(params?.ownerId, params?.dateFrom, params?.dateTo, params?.search, params?.isPaid),
-    queryFn: () => dealsService.getPipeline(params),
+    queryFn: () => dealsService.getBoard(params),
     staleTime: 30_000,
   });
 
   useEffect(() => {
     if (query.data) {
-      setPipeline(query.data);
+      setBoard(query.data);
       setError(null);
     }
   }, [query.data]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -116,8 +115,9 @@ export const useUpdateDealStage = () => {
       data,
     }: {
       id: string;
-      from: DealStage;
-      to: DealStage;
+      // PipelineStage ids of the optimistic move, used for the rollback
+      from: string;
+      to: string;
       data: UpdateDealStageBodyType;
     }) => dealsService.updateStage(id, data),
 
@@ -189,12 +189,13 @@ export const useDeleteDeal = () => {
   const { removeDeal } = useDealPipelineStore();
 
   return useMutation({
-    mutationFn: ({ id }: { id: string; stage: DealStage }) =>
+    // stageId narrows the store lookup; the deal is found by id without it
+    mutationFn: ({ id }: { id: string; stageId?: string | null }) =>
       dealsService.delete(id),
 
     // optimistic: delete from store immediately
-    onMutate: ({ id, stage }) => {
-      removeDeal(id, stage);
+    onMutate: ({ id, stageId }) => {
+      removeDeal(id, stageId);
     },
 
     onSuccess: () => {

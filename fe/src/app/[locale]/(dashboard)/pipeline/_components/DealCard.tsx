@@ -16,6 +16,8 @@ import { useUpdateDealPaymentStatus } from "@/hooks/useDeals";
 
 interface Props {
   deal: Deal;
+  // The column's stage is the WON stage
+  isWon?: boolean;
   onEdit: () => void;
   onDelete: () => void;
 }
@@ -37,7 +39,7 @@ function formatValue(value: number, units: { billion: string; million: string })
   return `${millions % 1 === 0 ? millions : millions.toFixed(1)}${units.million}`;
 }
 
-export function DealCard({ deal, onEdit, onDelete }: Props) {
+export function DealCard({ deal, isWon = false, onEdit, onDelete }: Props) {
   const t = useTranslations("pipeline");
   const units = { billion: t("units.billion"), million: t("units.million") };
   const {
@@ -49,12 +51,9 @@ export function DealCard({ deal, onEdit, onDelete }: Props) {
     isDragging,
   } = useSortable({
     id: deal.id,
-    // data passed into active.data.current in onDragEnd
-    data: { stage: deal.stage },
   });
 
   const [hovered, setHovered] = useState(false);
-  const isWon = deal.stage === "CLOSED_WON";
 
   const { data: me } = useMe();
   const canTogglePayment = me?.role === "ADMIN" || me?.role === "MANAGER";

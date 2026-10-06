@@ -16,9 +16,14 @@ export const MetricCardSchema = z.object({
   }).optional(),
 });
 
+// key is the stage legacyKey, null for a custom stage. stageId/legacyKey (and
+// stageId/stageName of recent deals) are optional: the backend caches the
+// dashboard for 5 minutes, so a response cached before they existed lacks them.
 export const PipelineStageSchema = z.object({
   name: z.string(),
-  key: z.enum(["PROSPECT", "QUALIFIED", "PROPOSAL", "CLOSED_WON", "CLOSED_LOST"]),
+  key: z.string().nullable(),
+  stageId: z.string().optional(),
+  legacyKey: z.string().nullish(),
   count: z.number(),
   value: z.number(),
 });
@@ -35,7 +40,10 @@ export const RecentDealSchema = z.object({
   id: z.string(),
   title: z.string(),
   company: z.string(),
+  // Legacy DealStage value; null stageId means an old deal without a stage link.
   stage: z.string(),
+  stageId: z.string().nullish(),
+  stageName: z.string().nullish(),
   value: z.number(),
   owner: z.object({
     id: z.string(),

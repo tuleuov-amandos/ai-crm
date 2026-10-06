@@ -14,27 +14,34 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FUNNEL_CHART_COLORS } from "@/lib/helper";
+import { getFunnelColor } from "@/lib/pipelineColors";
 import { useShortValue } from "@/lib/format";
+import { useStageLabel } from "@/hooks/usePipelineStages";
 
-type PipelineStageKey =
-  | "PROSPECT"
-  | "QUALIFIED"
-  | "PROPOSAL"
-  | "CLOSED_WON"
-  | "CLOSED_LOST";
+type FunnelStage = {
+  name: string;
+  // legacyKey of the stage, null for a custom stage
+  key: string | null;
+  stageId?: string;
+  legacyKey?: string | null;
+  count: number;
+  value: number;
+};
 
-function getStageColor(key: PipelineStageKey): string {
-  return FUNNEL_CHART_COLORS[key].funnel;
-}
+// stageId/legacyKey are missing in a dashboard response cached before them.
+const legacyKeyOf = (stage: FunnelStage) =>
+  stage.legacyKey !== undefined ? stage.legacyKey : stage.key;
+
+// Funnel colors stay on the purple gradient: by legacyKey for a default
+// stage, by position for a custom one.
+const colorOf = (stage: FunnelStage, index: number) =>
+  getFunnelColor(legacyKeyOf(stage), index);
+
+const keyOf = (stage: FunnelStage, index: number) =>
+  stage.stageId ?? stage.key ?? String(index);
 
 interface PipelineChartProps {
-  stages?: {
-    name: string;
-    key: PipelineStageKey;
-    count: number;
-    value: number;
-  }[];
+  stages?: FunnelStage[];
   totalCount?: number;
   totalValue?: number;
   isLoading?: boolean;
@@ -47,9 +54,11 @@ export function PipelineChart({
   isLoading = false,
 }: PipelineChartProps) {
   const t = useTranslations("dashboard.pipelineChart");
-  const tStages = useTranslations("dealStages");
+  const stageLabel = useStageLabel();
   const shortValue = useShortValue();
   const maxCount = stages.reduce((max, s) => Math.max(max, s.count), 0) || 1;
+  const labelOf = (stage: FunnelStage) =>
+    stageLabel({ id: stage.stageId, name: stage.name, legacyKey: legacyKeyOf(stage) });
 
   return (
     <Card className="shadow-none border-border/70 gap-0 py-0 h-full flex flex-col">
@@ -103,16 +112,16 @@ export function PipelineChart({
                 : null;
 
             return (
-              <div key={stage.key} className="space-y-1.5">
+              <div key={keyOf(stage, i)} className="space-y-1.5">
                 {/* Label row */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div
                       className="size-2 rounded-sm shrink-0"
-                      style={{ background: getStageColor(stage.key) }}
+                      style={{ background: colorOf(stage, i) }}
                     />
                     <span className="text-foreground" style={{ fontSize: 13 }}>
-                      {tStages(stage.key)}
+                      {labelOf(stage)}
                     </span>
                     {convRate !== null && !isNaN(convRate) && isFinite(convRate) && (
                       <span className="text-muted-foreground bg-muted border border-border/50 px-1.5 py-px rounded-full" style={{ fontSize: 10 }}>
@@ -137,7 +146,7 @@ export function PipelineChart({
                 <div className="h-6 bg-muted rounded-md overflow-hidden">
                   <div
                     className="h-full rounded-md transition-all duration-700"
-                    style={{ width: `${widthPct}%`, background: getStageColor(stage.key) }}
+                    style={{ width: `${widthPct}%`, background: colorOf(stage, i) }}
                   />
                 </div>
               </div>
@@ -161,14 +170,14 @@ export function PipelineChart({
       ) : (
         <CardFooter className="border-t px-5 py-3 flex items-center justify-between">
           <div className="flex gap-4">
-            {stages.map((s) => (
-              <div key={s.key} className="flex items-center gap-1.5">
+            {stages.map((s, i) => (
+              <div key={keyOf(s, i)} className="flex items-center gap-1.5">
                 <div
                   className="size-1.5 rounded-sm shrink-0"
-                  style={{ background: getStageColor(s.key) }}
+                  style={{ background: colorOf(s, i) }}
                 />
                 <span className="text-muted-foreground" style={{ fontSize: 11 }}>
-                  {tStages(s.key)}
+                  {labelOf(s)}
                 </span>
               </div>
             ))}

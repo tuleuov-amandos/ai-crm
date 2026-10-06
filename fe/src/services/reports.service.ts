@@ -46,6 +46,8 @@ export interface OverviewRes {
     value: number;
     closedAt: string;
     stage: string;
+    stageId: string;
+    stageName: string;
   }[];
 }
 
@@ -60,8 +62,12 @@ export interface TeamRepPerformance {
 }
 
 export interface FunnelStage {
+  // Stage name
   stage: string;
-  stageKey: "PROSPECT" | "QUALIFIED" | "PROPOSAL" | "CLOSED_WON";
+  stageId: string;
+  // legacyKey of the stage (stageKey is the same value), null for a custom stage
+  stageKey: string | null;
+  legacyKey: string | null;
   count: number;
   value: number;
   percentage: number;

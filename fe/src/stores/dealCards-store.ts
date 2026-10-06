@@ -1,113 +1,74 @@
 "use client";
 
 import { create } from "zustand";
+import { BoardColumn, DealCard } from "@/lib/validations/deals.schema";
 import {
-  DealCard,
-  PipelineRes,
-  DealStage,
-} from "@/lib/validations/deals.schema";
+  moveDealBetweenColumns,
+  removeDealFromColumns,
+  reorderDealInColumn,
+  replaceDeal,
+  rollbackDealMove,
+} from "./dealBoard";
 
-const initialPipeline: PipelineRes = {
-  PROSPECT: [],
-  QUALIFIED: [],
-  PROPOSAL: [],
-  CLOSED_WON: [],
-  CLOSED_LOST: [],
-};
+// Selector helpers; derive them with useMemo, a zustand selector that returns
+// a new array on every call re-renders forever.
+export { getAllDeals, findColumnByDealId } from "./dealBoard";
 
 type PipelineState = {
-  pipeline: PipelineRes;
+  // Board columns from GET /deals/board, one per tenant stage in stage order.
+  columns: BoardColumn[];
   isLoading: boolean;
   error: string | null;
 } & PipelineActions;
 
+// Stage arguments are PipelineStage ids. An unknown id is ignored.
 type PipelineActions = {
-  setPipeline: (data: PipelineRes) => void;
-  moveDeal: (dealId: string, from: DealStage, to: DealStage) => void;
-  rollbackMoveDeal: (dealId: string, from: DealStage, to: DealStage) => void;
+  setBoard: (columns: BoardColumn[]) => void;
+  moveDeal: (dealId: string, fromStageId: string, toStageId: string) => void;
+  rollbackMoveDeal: (dealId: string, fromStageId: string, toStageId: string) => void;
   // Reorder in same column (sort)
-  reorderDeal: (stage: DealStage, fromIndex: number, toIndex: number) => void;
+  reorderDeal: (stageId: string, fromIndex: number, toIndex: number) => void;
   updateDeal: (deal: DealCard) => void;
-  removeDeal: (dealId: string, stage: DealStage) => void;
+  removeDeal: (dealId: string, stageId?: string | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 };
 
-export const useDealPipelineStore = create<PipelineState>((set, get) => ({
-  pipeline: initialPipeline,
+export const useDealPipelineStore = create<PipelineState>((set) => ({
+  columns: [],
   isLoading: false,
   error: null,
 
-  setPipeline: (data) => set({ pipeline: data }),
+  setBoard: (columns) => set({ columns }),
 
   setLoading: (loading) => set({ isLoading: loading }),
 
   setError: (error) => set({ error }),
 
   // Optimistic update: move deal immediately on UI
-  moveDeal: (dealId, from, to) => {
-    const pipeline = get().pipeline;
-    const deal = pipeline[from].find((d) => d.id === dealId);
-    if (!deal) return;
-
-    set({
-      pipeline: {
-        ...pipeline,
-        [from]: pipeline[from].filter((d) => d.id !== dealId),
-        [to]: [{ ...deal, stage: to }, ...pipeline[to]],
-      },
-    });
-  },
+  moveDeal: (dealId, fromStageId, toStageId) =>
+    set((state) => ({
+      columns: moveDealBetweenColumns(state.columns, dealId, fromStageId, toStageId),
+    })),
 
   // Rollback: undo moveDeal when API fails
-  rollbackMoveDeal: (dealId, from, to) => {
-    // from/to is the moved direction — rollback in reverse (to -> from)
-    const pipeline = get().pipeline;
-    const deal = pipeline[to].find((d) => d.id === dealId);
-    if (!deal) return;
+  rollbackMoveDeal: (dealId, fromStageId, toStageId) =>
+    set((state) => ({
+      columns: rollbackDealMove(state.columns, dealId, fromStageId, toStageId),
+    })),
 
-    set({
-      pipeline: {
-        ...pipeline,
-        [to]: pipeline[to].filter((d) => d.id !== dealId),
-        [from]: [...pipeline[from], { ...deal, stage: from }],
-      },
-    });
-  },
+  // Update deal in the column that holds it
+  updateDeal: (deal) =>
+    set((state) => ({ columns: replaceDeal(state.columns, deal) })),
 
-  // Update deal in its correct column
-  updateDeal: (updatedDeal) => {
-    const pipeline = get().pipeline;
-    const stage = updatedDeal.stage;
+  // Delete deal from its column (optimistic soft delete)
+  removeDeal: (dealId, stageId) =>
+    set((state) => ({
+      columns: removeDealFromColumns(state.columns, dealId, stageId),
+    })),
 
-    set({
-      pipeline: {
-        ...pipeline,
-        [stage]: pipeline[stage].map((d) =>
-          d.id === updatedDeal.id ? updatedDeal : d,
-        ),
-      },
-    });
-  },
-
-  // Delete deal from column after successful soft delete
-  removeDeal: (dealId, stage) => {
-    const pipeline = get().pipeline;
-    set({
-      pipeline: {
-        ...pipeline,
-        [stage]: pipeline[stage].filter((d) => d.id !== dealId),
-      },
-    });
-  },
-
-  // Reorder in same column — use arrayMove helper
-  reorderDeal: (stage, fromIndex, toIndex) => {
-    const pipeline = get().pipeline;
-    const items = [...pipeline[stage]];
-    // arrayMove: take item out of fromIndex, insert into toIndex
-    const [moved] = items.splice(fromIndex, 1);
-    items.splice(toIndex, 0, moved);
-    set({ pipeline: { ...pipeline, [stage]: items } });
-  },
+  reorderDeal: (stageId, fromIndex, toIndex) =>
+    set((state) => ({
+      columns: reorderDealInColumn(state.columns, stageId, fromIndex, toIndex),
+    })),
 }));

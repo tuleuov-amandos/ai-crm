@@ -28,7 +28,6 @@ import {
 } from "@/components/ui/select";
 import { StageBadge } from "@/components/ui/StageBadge";
 import { PaymentStatusBadge } from "@/components/ui/PaymentStatusBadge";
-import { DealStage } from "./types";
 import { cn } from "@/lib/utils";
 import { DealDetail } from "./types";
 import { Task } from "./types";
@@ -42,16 +41,9 @@ import { Calendar as ShadcnCalendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useMe } from "@/hooks/useAuth";
 import { useGetUsers } from "@/hooks/useUsers";
+import { usePipelineStages, useStageLabel } from "@/hooks/usePipelineStages";
 
 const UNASSIGNED = "__unassigned__";
-
-const PIPELINE_STAGES: { key: DealStage }[] = [
-  { key: "PROSPECT" },
-  { key: "QUALIFIED" },
-  { key: "PROPOSAL" },
-  { key: "CLOSED_WON" },
-  { key: "CLOSED_LOST" },
-];
 
 type DealLeftPanelProps = {
   deal: DealDetail;
@@ -62,7 +54,8 @@ type DealLeftPanelProps = {
 export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
   const t = useTranslations("pipeline.leftPanel");
   const tCommon = useTranslations("common");
-  const tStages = useTranslations("dealStages");
+  const stageLabel = useStageLabel();
+  const { stages, getDealStage } = usePipelineStages();
   const locale = useLocale();
   const [tasks, setTasks]         = useState<Task[]>(deal?.tasks || []);
   const [prevDealTasks, setPrevDealTasks] = useState(deal?.tasks);
@@ -196,8 +189,15 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
     }
   };
 
-  const currentStageIdx = PIPELINE_STAGES.findIndex(
-    (s) => s.key === deal?.stage as DealStage
+  // Progress bar: open stages by order, then Won, then Lost
+  const progressStages = [
+    ...stages.filter((s) => s.kind === "OPEN"),
+    ...stages.filter((s) => s.kind === "WON"),
+    ...stages.filter((s) => s.kind === "LOST"),
+  ];
+  const currentStageId = getDealStage(deal)?.id;
+  const currentStageIdx = progressStages.findIndex(
+    (s) => s.id === currentStageId
   );
   const pendingCount = tasks.filter((t) => !t.done).length;
   const doneCount    = tasks.filter((t) =>  t.done).length;
@@ -211,7 +211,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
         {/* Stage badge + payment status + edit */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1.5">
-            <StageBadge stage={deal.stage} />
+            <StageBadge stageId={deal.stageId} legacyStage={deal.stage} />
             <PaymentStatusBadge
               isPaid={deal.isPaid}
               disabled={updatePaymentStatus.isPending}
@@ -318,12 +318,12 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
         {/* Pipeline stage progress */}
         <div>
           <div className="flex gap-1 mb-1.5">
-            {PIPELINE_STAGES.map((s, i) => {
+            {progressStages.map((s, i) => {
               const isPast   = i < currentStageIdx;
               const isActive = i === currentStageIdx;
               return (
                 <div
-                  key={s.key}
+                  key={s.id}
                   className="h-1 flex-1 rounded-full transition-all"
                   style={{
                     background: isPast
@@ -337,18 +337,18 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
             })}
           </div>
           <div className="flex">
-            {PIPELINE_STAGES.map((s, i) => {
+            {progressStages.map((s, i) => {
               const isActive = i === currentStageIdx;
               const isPast   = i < currentStageIdx;
               return (
-                <div key={s.key} className="flex-1 text-center">
+                <div key={s.id} className="flex-1 text-center">
                   <span
                     className={cn(
                       isPast || isActive ? "text-primary" : "text-muted-foreground/60"
                     )}
                     style={{ fontSize: 10, fontWeight: isActive ? 600 : 400 }}
                   >
-                    {tStages(s.key)}
+                    {stageLabel(s)}
                   </span>
                 </div>
               );

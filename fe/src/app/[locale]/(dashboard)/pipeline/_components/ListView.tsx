@@ -32,11 +32,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { StageBadge } from "@/components/ui/StageBadge";
 import { PaymentStatusBadge } from "@/components/ui/PaymentStatusBadge";
-import { useDealPipelineStore } from "@/stores/dealCards-store";
+import {
+  findColumnByDealId,
+  getAllDeals,
+  useDealPipelineStore,
+} from "@/stores/dealCards-store";
 import { useGetPipeline, useDeleteDeal } from "@/hooks/useDeals";
 import { formatCurrency } from "@/lib/helper";
 import { useRelativeTime } from "@/lib/format";
-import { STAGES, type Deal } from "./types";
+import type { Deal } from "./types";
 import { EditDealSheet } from "./EditDealSheet";
 
 type SortKey = "title" | "value" | "closeDate";
@@ -59,7 +63,7 @@ export function ListView({
   const tCommon = useTranslations("common");
   const relativeTime = useRelativeTime();
 
-  const { pipeline } = useDealPipelineStore();
+  const { columns } = useDealPipelineStore();
   // react-query dedupes this against KanbanBoard's call (same queryKey)
   const { data, isLoading, isError, error } = useGetPipeline({ ownerId, dateFrom, dateTo, search, isPaid });
   const deleteDealMutation = useDeleteDeal();
@@ -68,7 +72,7 @@ export function ListView({
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
   const [deletingDeal, setDeletingDeal] = useState<Deal | null>(null);
 
-  const deals = useMemo(() => STAGES.flatMap((s) => pipeline[s]), [pipeline]);
+  const deals = useMemo(() => getAllDeals(columns), [columns]);
 
   const sortedDeals = useMemo(() => {
     if (!sort) return deals;
@@ -99,7 +103,7 @@ export function ListView({
     if (deletingDeal) {
       deleteDealMutation.mutate({
         id: deletingDeal.id,
-        stage: deletingDeal.stage,
+        stageId: findColumnByDealId(columns, deletingDeal.id)?.stage.id,
       });
       setDeletingDeal(null);
     }
@@ -278,7 +282,7 @@ export function ListView({
 
               {/* ── Stage ── */}
               <TableCell className="px-4 py-3">
-                <StageBadge stage={deal.stage} />
+                <StageBadge stageId={deal.stageId} legacyStage={deal.stage} />
               </TableCell>
 
               {/* ── Payment status ── */}

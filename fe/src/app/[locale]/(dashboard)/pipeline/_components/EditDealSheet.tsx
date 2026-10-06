@@ -27,8 +27,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Deal, DealDetail, STAGES } from "./types";
+import { Deal, DealDetail } from "./types";
 import { useUpdateDeal } from "@/hooks/useDeals";
+import { usePipelineStages, useStageLabel } from "@/hooks/usePipelineStages";
 import { useGetUsers } from "@/hooks/useUsers";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -38,7 +39,7 @@ import { Calendar as CalendarIcon } from "lucide-react";
 const buildFormSchema = (tv: (key: string) => string) =>
   z.object({
     title:     z.string().min(1, tv("nameRequired")),
-    stage:     z.enum(STAGES, tv("stageRequired")),
+    stageId:   z.string(),
     contactId: z.string(),
     ownerId:   z.string().min(1, tv("ownerRequired")),
     value:     z.number().nonnegative(tv("valueNonNegative")),
@@ -56,7 +57,6 @@ interface Props {
 
 export function EditDealSheet({ deal, open, onOpenChange }: Props) {
   const t = useTranslations("pipeline.form");
-  const tStages = useTranslations("dealStages");
   const tv = useTranslations("pipeline.form.validation");
   const tCommon = useTranslations("common");
   const formSchema = useMemo(() => buildFormSchema(tv), [tv]);
@@ -64,12 +64,15 @@ export function EditDealSheet({ deal, open, onOpenChange }: Props) {
   const usersQuery = useGetUsers();
   const users = usersQuery.data ?? [];
   const usersLoading = usersQuery.isLoading;
+  const { stages, getDealStage, isLoading: stagesLoading } = usePipelineStages();
+  const stageLabel = useStageLabel();
+  const dealStageId = getDealStage(deal)?.id ?? "";
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title:     deal?.title ?? "",
-      stage:     "PROSPECT",
+      stageId:   "",
       contactId: "",
       ownerId:   "",
       value:     0,
@@ -78,12 +81,12 @@ export function EditDealSheet({ deal, open, onOpenChange }: Props) {
     },
   });
 
-  // Populate form when deal changes / sheet opens
+  // Populate form when deal changes / sheet opens / stages finish loading
   useEffect(() => {
     if (deal && open) {
       form.reset({
         title:     deal.title,
-        stage:     deal.stage,
+        stageId:   dealStageId,
         contactId: deal.contactId || "",
         ownerId:   deal.ownerId || "",
         value:     Number(deal.value) || 0,
@@ -91,7 +94,7 @@ export function EditDealSheet({ deal, open, onOpenChange }: Props) {
         note:      deal.note || "",
       });
     }
-  }, [deal, open, form]);
+  }, [deal, open, form, dealStageId]);
 
   const onSubmit = (values: FormValues) => {
     if (!deal) return;
@@ -143,20 +146,20 @@ export function EditDealSheet({ deal, open, onOpenChange }: Props) {
             <div className="grid grid-cols-2 gap-3">
               <FormField
                 control={form.control}
-                name="stage"
+                name="stageId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel style={{ fontSize: 12 }}>{t("stageLabel")}</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <Select value={field.value} onValueChange={field.onChange} disabled={stagesLoading}>
                       <FormControl>
                         <SelectTrigger size="sm" style={{ fontSize: 13 }} className="bg-[#F8F8F7] dark:bg-card border-[#E8E7E2] dark:border-border text-foreground">
-                          <SelectValue />
+                          <SelectValue placeholder={stagesLoading ? tCommon("loading") : undefined} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {STAGES.map((s) => (
-                          <SelectItem key={s} value={s} style={{ fontSize: 13 }}>
-                            {tStages(s)}
+                        {stages.map((s) => (
+                          <SelectItem key={s.id} value={s.id} style={{ fontSize: 13 }}>
+                            {stageLabel(s)}
                           </SelectItem>
                         ))}
                       </SelectContent>

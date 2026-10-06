@@ -21,7 +21,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { StageBadge } from "@/components/ui/StageBadge";
 import { GetContactResType, ContactTagConst, ContactTagType } from "@/lib/validations/contacts.scheme";
-import type { DealStage } from "@/lib/validations/deals.schema";
 import { formatCurrency, getInitials } from "@/lib/helper";
 import { useRelativeTime } from "@/lib/format";
 import {
@@ -359,7 +358,8 @@ export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
                 </p>
               </div>
               <StageBadge
-                stage={deal.stage as DealStage}
+                stageId={deal.stageId}
+                legacyStage={deal.stage}
                 className="shrink-0 text-[11px] px-2 py-0.5"
               />
               <span

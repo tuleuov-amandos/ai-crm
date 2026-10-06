@@ -6,17 +6,19 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { Plus } from "lucide-react";
-import { Deal, Stage, STAGE_CONFIG } from "./types";
+import { BoardColumnStage, Deal } from "./types";
 import { DealCard } from "./DealCard";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { getStageColors } from "@/lib/pipelineColors";
+import { useStageLabel } from "@/hooks/usePipelineStages";
 
 interface Props {
-  stage: Stage;
+  stage: BoardColumnStage;
   deals: Deal[];
   onEdit: (deal: Deal) => void;
   onDelete: (deal: Deal) => void;
-  onAddDeal: (stage: Stage) => void;
+  onAddDeal: (stageId: string) => void;
 }
 
 function formatTotal(total: number, units: { billion: string; million: string }): string {
@@ -34,12 +36,13 @@ export function KanbanColumn({
   onAddDeal,
 }: Props) {
   const t = useTranslations("pipeline");
-  const tStages = useTranslations("dealStages");
+  const stageLabel = useStageLabel();
   const units = { billion: t("units.billion"), million: t("units.million") };
-  const config = STAGE_CONFIG[stage];
+  const colors = getStageColors(stage.color);
+  const isWon = stage.kind === "WON";
 
-  // Column is droppable target — id = stage string
-  const { setNodeRef, isOver } = useDroppable({ id: stage });
+  // Column is droppable target — id = PipelineStage id
+  const { setNodeRef, isOver } = useDroppable({ id: stage.id });
 
   const totalValue = deals.reduce((sum, d) => sum + Number(d.value), 0);
   const isEmpty = deals.length === 0;
@@ -47,6 +50,7 @@ export function KanbanColumn({
   // SortableContext needs id list in current order
   const dealIds = deals.map((d) => d.id);
 
+  // Columns share the width down to 220px; past that the board scrolls sideways.
   return (
     <div className="flex flex-col flex-1 min-w-[220px] group/col h-full overflow-hidden">
       {/* ── Column header ─────────────────────────────────────────────── */}
@@ -55,21 +59,21 @@ export function KanbanColumn({
           <div className="flex items-center gap-2 min-w-0">
             <div
               className="size-2 rounded-full shrink-0"
-              style={{ background: config.dot }}
+              style={{ background: colors.dot }}
             />
             <span
               className="text-foreground truncate"
               style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.2 }}
             >
-              {tStages(stage)}
+              {stageLabel(stage)}
             </span>
             <span
               className="rounded-full px-1.5 tabular-nums shrink-0"
               style={{
                 fontSize: 11,
                 fontWeight: 600,
-                color: config.badgeColor,
-                background: config.badgeBg,
+                color: colors.text,
+                background: colors.bg,
               }}
             >
               {deals.length}
@@ -81,7 +85,7 @@ export function KanbanColumn({
             className="size-6 shrink-0 text-muted-foreground hover:text-primary hover:bg-primary/8"
             title={t("column.addDeal")}
             aria-label={t("column.addDeal")}
-            onClick={() => onAddDeal(stage)}
+            onClick={() => onAddDeal(stage.id)}
           >
             <Plus size={14} />
           </Button>
@@ -128,7 +132,7 @@ export function KanbanColumn({
                 size="sm"
                 className="h-7 gap-1.5 text-muted-foreground hover:text-primary hover:bg-primary/8 px-3"
                 style={{ fontSize: 12 }}
-                onClick={() => onAddDeal(stage)}
+                onClick={() => onAddDeal(stage.id)}
               >
                 <Plus size={12} />
                 {t("column.addDeal")}
@@ -139,6 +143,7 @@ export function KanbanColumn({
               <DealCard
                 key={deal.id}
                 deal={deal}
+                isWon={isWon}
                 onEdit={() => onEdit(deal)}
                 onDelete={() => onDelete(deal)}
               />
@@ -151,7 +156,7 @@ export function KanbanColumn({
             size="sm"
             className="h-7 gap-1.5 text-muted-foreground hover:text-primary hover:bg-primary/8 px-3 mt-1 shrink-0"
             style={{ fontSize: 12 }}
-            onClick={() => onAddDeal(stage)}
+            onClick={() => onAddDeal(stage.id)}
           >
             <Plus size={12} />
             {t("column.addDeal")}

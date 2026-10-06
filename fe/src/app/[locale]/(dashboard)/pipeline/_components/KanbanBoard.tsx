@@ -14,12 +14,14 @@ import {
   TouchSensor,
   pointerWithin,
 } from "@dnd-kit/core";
-import { arrayMove } from "@dnd-kit/sortable";
-import { STAGES, Stage } from "./types";
 import { KanbanColumn } from "./KanbanColumn";
 import { DealCard } from "./DealCard";
 import { Button } from "@/components/ui/button";
-import { useDealPipelineStore } from "@/stores/dealCards-store";
+import {
+  findColumnByDealId,
+  getAllDeals,
+  useDealPipelineStore,
+} from "@/stores/dealCards-store";
 import { useGetPipeline, useUpdateDealStage, useDeleteDeal } from "@/hooks/useDeals";
 import type { Deal } from "./types";
 import { EditDealSheet } from "./EditDealSheet";
@@ -157,18 +159,20 @@ export function KanbanBoard({
   dateTo?: string;
   search?: string;
   isPaid?: boolean;
-  onAddDeal: (stage: Stage) => void;
+  // stageId of the column; without it the create form picks the first open stage
+  onAddDeal: (stageId?: string) => void;
 }) {
   const t = useTranslations("pipeline");
   const tCommon = useTranslations("common");
-  const { pipeline, moveDeal, setPipeline } = useDealPipelineStore();
+  const { columns, moveDeal, reorderDeal } = useDealPipelineStore();
   const { data, isLoading, isError, error } = useGetPipeline({ ownerId, dateFrom, dateTo, search, isPaid });
   const updateDealStage = useUpdateDealStage();
 
   const [activeDeal, setActiveDeal] = useState<Deal | null>(null);
-  // Track original stage at start of drag — active.data.current doesn't update on its own
-  const dragOriginStage = useRef<Stage | null>(null);
-  const lastOverStage = useRef<Stage | null>(null);
+  const [activeDealWon, setActiveDealWon] = useState(false);
+  // Track original stage id at start of drag — active.data.current doesn't update on its own
+  const dragOriginStage = useRef<string | null>(null);
+  const lastOverStage = useRef<string | null>(null);
 
   const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
   const [deletingDeal, setDeletingDeal] = useState<Deal | null>(null);
@@ -176,7 +180,10 @@ export function KanbanBoard({
 
   const handleDelete = () => {
     if (deletingDeal) {
-      deleteDealMutation.mutate({ id: deletingDeal.id, stage: deletingDeal.stage });
+      deleteDealMutation.mutate({
+        id: deletingDeal.id,
+        stageId: findColumnByDealId(columns, deletingDeal.id)?.stage.id,
+      });
       setDeletingDeal(null);
     }
   };
@@ -223,21 +230,27 @@ export function KanbanBoard({
     );
   }
 
-  const allEmpty = STAGES.every((s) => pipeline[s].length === 0);
+  const allEmpty = columns.every((column) => column.deals.length === 0);
 
-  // ── find stage containing dealId ───────────────────────────────────────
-  function findStage(dealId: string): Stage | undefined {
-    const currentPipeline = useDealPipelineStore.getState().pipeline;
-    return STAGES.find((s) => currentPipeline[s].some((d) => d.id === dealId));
+  // ── find stage id of the column containing dealId ───────────────────────
+  function findStage(dealId: string): string | undefined {
+    const currentColumns = useDealPipelineStore.getState().columns;
+    return findColumnByDealId(currentColumns, dealId)?.stage.id;
+  }
+
+  // ── droppable column ids are stage ids, sortable ids are deal ids ───────
+  function isStageId(id: string): boolean {
+    return useDealPipelineStore
+      .getState()
+      .columns.some((column) => column.stage.id === id);
   }
 
   // ── onDragStart: save dragged deal + original stage ─────────────────────────
   function handleDragStart(event: DragStartEvent) {
     const dealId = event.active.id as string;
-    const deal = STAGES.flatMap((s) => pipeline[s]).find(
-      (d) => d.id === dealId,
-    );
+    const deal = getAllDeals(columns).find((d) => d.id === dealId);
     setActiveDeal(deal ?? null);
+    setActiveDealWon(findColumnByDealId(columns, dealId)?.stage.kind === "WON");
     dragOriginStage.current = findStage(dealId) ?? null;
     lastOverStage.current = dragOriginStage.current;
   }
@@ -253,10 +266,7 @@ export function KanbanBoard({
     const fromStage = lastOverStage.current;
     if (!fromStage) return;
 
-    const isOverStage = (STAGES as readonly string[]).includes(overId);
-    const toStage: Stage | undefined = isOverStage
-      ? (overId as Stage)
-      : findStage(overId);
+    const toStage = isStageId(overId) ? overId : findStage(overId);
 
     if (!toStage || fromStage === toStage) return;
 
@@ -281,17 +291,16 @@ export function KanbanBoard({
     // Current stage in store (after handleDragOver has previewed)
     const currentStage = findStage(dealId);
     if (!currentStage) return;
-    const isOverStage = (STAGES as readonly string[]).includes(overId);
 
-    if (isOverStage) {
+    if (isStageId(overId)) {
       // Drop into column header/empty area
-      const toStage = overId as Stage;
+      const toStage = overId;
       if (originStage !== toStage) {
         updateDealStage.mutate({
           id: dealId,
           from: originStage,
           to: toStage,
-          data: { stage: toStage },
+          data: { stageId: toStage },
         });
       }
       return;
@@ -303,12 +312,11 @@ export function KanbanBoard({
 
     if (originStage === overStage) {
       // ── Same-column reorder ──────────────────────────────────────────
-      const items = pipeline[currentStage];
+      const items = findColumnByDealId(columns, dealId)?.deals ?? [];
       const oldIndex = items.findIndex((d) => d.id === dealId);
       const newIndex = items.findIndex((d) => d.id === overId);
       if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-        const reordered = arrayMove(items, oldIndex, newIndex);
-        setPipeline({ ...pipeline, [currentStage]: reordered });
+        reorderDeal(currentStage, oldIndex, newIndex);
         // Backend doesn't store order -> API not called
       }
     } else {
@@ -317,7 +325,7 @@ export function KanbanBoard({
         id: dealId,
         from: originStage,
         to: overStage,
-        data: { stage: overStage },
+        data: { stageId: overStage },
       });
     }
   }
@@ -352,7 +360,7 @@ export function KanbanBoard({
               <Button
                 size="sm"
                 className="h-8 gap-1.5 text-xs px-4"
-                onClick={() => onAddDeal(STAGES[0])}
+                onClick={() => onAddDeal()}
               >
                 <Plus size={13} />
                 {t("empty.cta")}
@@ -361,11 +369,11 @@ export function KanbanBoard({
           </div>
         ) : (
           <div className="flex gap-4 h-full items-start">
-            {STAGES.map((stage) => (
+            {columns.map((column) => (
               <KanbanColumn
-                key={stage}
-                stage={stage}
-                deals={pipeline[stage]}
+                key={column.stage.id}
+                stage={column.stage}
+                deals={column.deals}
                 onEdit={setEditingDeal}
                 onDelete={setDeletingDeal}
                 onAddDeal={onAddDeal}
@@ -380,6 +388,7 @@ export function KanbanBoard({
         {activeDeal ? (
           <DealCard
             deal={activeDeal}
+            isWon={activeDealWon}
             onDelete={() => {}}
             onEdit={() => {}}
           />
