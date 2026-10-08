@@ -880,7 +880,7 @@
   "reports": {
     "title": "Reports",
     "subtitle": "In-depth analytics & reporting",
-    "exportCsv": "Export CSV",
+    "exportCsv": "Export Excel",
     "exportPdf": "Export PDF",
     "tabs": {
       "overview": "Sales Overview",

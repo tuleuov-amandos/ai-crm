@@ -119,7 +119,6 @@ export default function Activities() {
 
   // ── Filter state ─────────────────────────────────────────────────────────
   const [activeFilter, setActiveFilter] = useState<"all" | ActivityType>("all");
-  const [showEmpty, setShowEmpty] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | undefined>(
     undefined,
   );
@@ -166,9 +165,9 @@ export default function Activities() {
 
   // ── Group by day for timeline ────────────────────────────────
   const groups = useMemo(
-    () => (showEmpty ? [] : groupActivitiesByDate(allActivities, formatDateLabel)),
+    () => (groupActivitiesByDate(allActivities, formatDateLabel)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [allActivities, showEmpty],
+    [allActivities],
   );
 
   // ── isEmpty check  ───────────────────────────────────────────────
@@ -202,8 +201,6 @@ export default function Activities() {
       <ActivitiesFilters
         activeFilter={activeFilter}
         onFilterChange={setActiveFilter}
-        showEmpty={showEmpty}
-        onToggleEmpty={() => setShowEmpty((v) => !v)}
         selectedUserId={selectedUserId}
         onUserChange={setSelectedUserId}
         selectedContactId={selectedContact?.id}
@@ -225,13 +222,13 @@ export default function Activities() {
               <>
                 <ActivitiesTimeline
                   groups={groups}
-                  showEmpty={isEmpty || showEmpty}
+                  showEmpty={isEmpty}
                   onCreate={handleOpenCreate}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                 />
 
-                {hasNextPage && !showEmpty && (
+                {hasNextPage && (
                   <div className="flex justify-center mt-6">
                     <Button
                       variant="outline"

@@ -129,7 +129,7 @@ export default function DealDetail() {
             </Link>
             <span className="text-muted-foreground/40" style={{ fontSize: 12 }}>/</span>
             <span className="text-foreground" style={{ fontSize: 13, fontWeight: 500 }}>
-              {deal?.title ?? "Security Audit Platform"}
+              {deal?.title ?? ""}
             </span>
             <StageBadge stageId={deal.stageId} legacyStage={deal.stage} className="ml-0.5" />
           </div>

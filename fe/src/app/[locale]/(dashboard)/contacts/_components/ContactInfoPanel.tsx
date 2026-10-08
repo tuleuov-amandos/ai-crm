@@ -12,7 +12,6 @@ import {
   Landmark,
   Hash,
   Calendar,
-  ChevronRight,
   Edit2,
   Trash2,
   MessageCircle,
@@ -336,13 +335,6 @@ export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
           >
             {t("relatedDeals")}
           </p>
-          <button
-            className="flex items-center gap-0.5 text-primary bg-transparent border-0 cursor-pointer p-0"
-            style={{ fontSize: 11 }}
-          >
-            {t("viewAll")}
-            <ChevronRight size={11} />
-          </button>
         </div>
 
         <div className="space-y-2">

@@ -880,7 +880,7 @@
   "reports": {
     "title": "Отчёты",
     "subtitle": "Глубокая аналитика и отчёты",
-    "exportCsv": "Экспорт CSV",
+    "exportCsv": "Экспорт Excel",
     "exportPdf": "Экспорт PDF",
     "tabs": {
       "overview": "Обзор продаж",
