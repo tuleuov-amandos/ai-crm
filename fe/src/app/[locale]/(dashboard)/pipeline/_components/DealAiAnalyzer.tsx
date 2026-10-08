@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 import { dealsService } from "@/services/deals.service";
 import { API_BASE_URL } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
-import { dealKeys } from "@/hooks/useDeals";
+import { dealKeys, useGetDealDetail } from "@/hooks/useDeals";
 import { toast } from "sonner";
 
 interface AITask {
@@ -54,6 +54,7 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
   const [tasksAccepted, setTasksAccepted] = useState(false);
 
   const queryClient = useQueryClient();
+  const contactEmail = useGetDealDetail(dealId).data?.contact.email?.trim() ?? "";
   const realTasksRef = useRef<AITask[]>([]);
   const rawTasksRef = useRef<Array<{ title: string; dueDate?: string | null }>>([]);
   const realEmailRef = useRef<string>("");
@@ -459,9 +460,11 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
               <p className="text-foreground" style={{ fontSize: 13, fontWeight: 600 }}>
                 {tAi("emailTitle")}
               </p>
-              <p className="text-muted-foreground" style={{ fontSize: 10, marginTop: 1 }}>
-                {tAi("emailTo", { email: "example@example.com" })}
-              </p>
+              {contactEmail && (
+                <p className="text-muted-foreground" style={{ fontSize: 10, marginTop: 1 }}>
+                  {tAi("emailTo", { email: contactEmail })}
+                </p>
+              )}
             </div>
             <span
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-primary bg-secondary"
