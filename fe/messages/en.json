@@ -24,6 +24,8 @@
     "today": "Today",
     "yesterday": "Yesterday",
     "tomorrow": "Tomorrow",
+    "tabInfo": "Info",
+    "tabActivity": "Activity",
     "systemRoleDescription": {
       "ADMIN": "Administrator",
       "MANAGER": "Manager",
@@ -302,6 +304,12 @@
       "share": "Share",
       "addActivity": "Add activity",
       "editDeal": "Edit deal",
+      "quickActions": "Quick actions",
+      "call": "Call",
+      "whatsapp": "WhatsApp",
+      "closeConfirmTitle": "Close the deal as “{stage}”?",
+      "closeConfirmDescription": "The deal will move to the “{stage}” stage and count as closed.",
+      "closeConfirm": "Confirm",
       "deleteDeal": "Delete deal"
     },
     "leftPanel": {
@@ -321,6 +329,7 @@
       "unassigned": "Unassigned",
       "tasksCompleted": "{done}/{total} tasks completed",
       "probability": "Win probability",
+      "stageProgress": "{current} of {total}",
       "toasts": {
         "taskStatusError": "Failed to update task status.",
         "taskAdded": "New task added!",

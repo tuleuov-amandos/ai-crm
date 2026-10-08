@@ -21,6 +21,8 @@ import { Button } from "@/components/ui/button";
 import { StageBadge } from "@/components/ui/StageBadge";
 import { ArchivedBadge } from "@/components/ui/ArchivedBadge";
 import { isDealArchived } from "@/lib/dealArchive";
+import { buildTelHref, buildWhatsAppHref } from "@/lib/dealQuickActions";
+import { cn } from "@/lib/utils";
 import { GetContactResType, ContactTagConst, ContactTagType } from "@/lib/validations/contacts.scheme";
 import { formatCurrency, getInitials } from "@/lib/helper";
 import { useRelativeTime } from "@/lib/format";
@@ -42,11 +44,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import ContactDialog from "./ContactDialog";
 
-function getWhatsAppLink(phone: string) {
-  const digitsOnly = phone.replace(/\D/g, "");
-  return `https://wa.me/${digitsOnly}`;
-}
-
 const CONTACT_TAG_COLOR: Record<ContactTagType, string> = {
   [ContactTagConst.Enterprise]: "bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
   [ContactTagConst.Vip]: "bg-purple-100 text-purple-800 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800",
@@ -55,9 +52,10 @@ const CONTACT_TAG_COLOR: Record<ContactTagType, string> = {
 
 interface ContactInfoPanelProps {
   contact: GetContactResType;
+  className?: string;
 }
 
-export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
+export function ContactInfoPanel({ contact, className }: ContactInfoPanelProps) {
   const t = useTranslations("contacts.infoPanel");
   const tCommon = useTranslations("common");
   const relativeTime = useRelativeTime();
@@ -66,6 +64,12 @@ export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const whatsAppHref = buildWhatsAppHref(contact.phone);
+  // Phone and email values are links (tel:, mailto:)
+  const rowHref: Record<string, string | null> = {
+    phone: buildTelHref(contact.phone),
+    email: contact.email ? `mailto:${contact.email}` : null,
+  };
 
   const handleDelete = async () => {
     try {
@@ -149,7 +153,7 @@ export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
   ];
 
   return (
-    <div className="w-[35%] min-w-[300px] bg-background border-r border-border flex flex-col overflow-y-auto shrink-0">
+    <div className={cn("w-[35%] min-w-[300px] bg-background border-r border-border flex flex-col overflow-y-auto shrink-0 max-md:w-full max-md:min-w-0 max-md:border-r-0", className)}>
       {/* Header / Avatar area */}
       <div className="px-5 pt-6 pb-5 border-b border-border">
         {/* Edit button */}
@@ -159,7 +163,7 @@ export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 gap-1 border-border text-muted-foreground hover:text-foreground cursor-pointer"
+                className="h-7 gap-1 border-border text-muted-foreground hover:text-foreground cursor-pointer max-md:h-11 max-md:px-3"
                 style={{ fontSize: 12 }}
               >
                 <Edit2 size={11} />
@@ -286,6 +290,24 @@ export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
         <div className="space-y-2.5">
           {infoRows.map((row) => {
             const Icon = row.icon;
+            const href = rowHref[row.key];
+            const valueClassName = "min-w-0 flex-1";
+            const value = (
+              <>
+                <p
+                  className="text-muted-foreground"
+                  style={{ fontSize: 10, marginBottom: 1 }}
+                >
+                  {row.label}
+                </p>
+                <p
+                  className="text-foreground truncate"
+                  style={{ fontSize: 12 }}
+                >
+                  {row.value}
+                </p>
+              </>
+            );
             return (
               <div key={row.key} className="flex items-center gap-2.5">
                 <div className="size-7 rounded-[7px] bg-[#F8F8F7] border border-border flex items-center justify-center shrink-0">
@@ -295,26 +317,25 @@ export function ContactInfoPanel({ contact }: ContactInfoPanelProps) {
                     strokeWidth={1.7}
                   />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p
-                    className="text-muted-foreground"
-                    style={{ fontSize: 10, marginBottom: 1 }}
-                  >
-                    {row.label}
-                  </p>
-                  <p
-                    className="text-foreground truncate"
-                    style={{ fontSize: 12 }}
-                  >
-                    {row.value}
-                  </p>
-                </div>
-                {row.key === "phone" && contact.phone && (
+                {href ? (
                   <a
-                    href={getWhatsAppLink(contact.phone)}
+                    href={href}
+                    className={cn(
+                      valueClassName,
+                      "max-md:min-h-11 max-md:flex max-md:flex-col max-md:justify-center",
+                    )}
+                  >
+                    {value}
+                  </a>
+                ) : (
+                  <div className={valueClassName}>{value}</div>
+                )}
+                {row.key === "phone" && whatsAppHref && (
+                  <a
+                    href={whatsAppHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="shrink-0 flex items-center justify-center size-6 rounded-full hover:bg-[#F8F8F7] transition-colors"
+                    className="shrink-0 flex items-center justify-center size-6 rounded-full hover:bg-[#F8F8F7] transition-colors max-md:size-11"
                     title="WhatsApp"
                   >
                     <MessageCircle size={15} style={{ color: "#25D366" }} strokeWidth={1.8} />
