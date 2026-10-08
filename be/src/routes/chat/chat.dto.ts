@@ -4,6 +4,7 @@ import {
   ChannelResSchema,
   GetChannelsResSchema,
   CreateMessageBodySchema,
+  UpdateMessageBodySchema,
   MessageResSchema,
   GetMessagesQuerySchema,
   GetMessagesPaginatedResSchema,
@@ -23,6 +24,8 @@ export class GetChannelsResDto extends createZodDto(GetChannelsResSchema) {}
 export class GetChannelMembersResDto extends createZodDto(GetChannelMembersResSchema) {}
 
 export class CreateMessageBodyDto extends createZodDto(CreateMessageBodySchema) {}
+
+export class UpdateMessageBodyDto extends createZodDto(UpdateMessageBodySchema) {}
 
 export class MessageResDto extends createZodDto(MessageResSchema) {}
 

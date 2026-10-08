@@ -104,6 +104,9 @@ export const MessageBaseSchema = z.object({
   content: z.string(),
   createdAt: zIsoDatetime,
   editedAt: zIsoDatetime.nullable(),
+  // Soft delete: a deleted message keeps its id, author and createdAt, but is
+  // always sent with content '' and attachments [] (see toMessageResponse).
+  deletedAt: zIsoDatetime.nullable(),
   sender: z.object({
     id: z.string(),
     name: z.string(),
@@ -124,6 +127,16 @@ export const CreateMessageBodySchema = z
   .strict()
 
 export type CreateMessageBodyType = z.infer<typeof CreateMessageBodySchema>
+
+// PATCH /chat/channels/:id/messages/:messageId — same max length as sending,
+// but the text is required here: an edit can't turn a message into "files only".
+export const UpdateMessageBodySchema = z
+  .object({
+    content: z.string().trim().min(1).max(5000),
+  })
+  .strict()
+
+export type UpdateMessageBodyType = z.infer<typeof UpdateMessageBodySchema>
 
 export const MessageResSchema = MessageBaseSchema
 

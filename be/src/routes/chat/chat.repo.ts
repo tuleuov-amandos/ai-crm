@@ -61,11 +61,12 @@ export class ChatRepository {
       // For a channel the user hasn't joined, the LEFT JOIN to ChannelMember
       // has no row, cm.id is NULL, and the FILTER clause excludes every
       // message — unreadCount comes out 0 rather than the channel's full
-      // history.
+      // history. Soft-deleted messages never count as unread.
       this.prisma.$queryRaw<{ channelId: string; unreadCount: bigint }[]>(Prisma.sql`
         SELECT c.id AS "channelId",
                COUNT(m.id) FILTER (
                  WHERE cm.id IS NOT NULL AND m."createdAt" > COALESCE(cm."lastReadAt", cm."joinedAt")
+                   AND m."deletedAt" IS NULL
                ) AS "unreadCount"
         FROM "Channel" c
         LEFT JOIN "ChannelMember" cm ON cm."channelId" = c.id AND cm."userId" = ${userId}
@@ -183,6 +184,80 @@ export class ChatRepository {
     return this.prisma.message.findFirst({
       where: { id: messageId },
       include: messageInclude,
+    })
+  }
+
+  // Edit/delete lookups: the message must belong to this channel and tenant
+  // (tenantId passed explicitly, not only via the CLS-scoped extension).
+  findMessageInChannel(tenantId: string, channelId: string, messageId: string): Promise<MessageBaseType | null> {
+    return this.prisma.message.findFirst({
+      where: { id: messageId, channelId, tenantId },
+      include: messageInclude,
+    })
+  }
+
+  // Conditional write so a concurrent delete (or the window closing) can't be
+  // overwritten by an edit: returns the number of rows changed (0 or 1) and
+  // the caller re-reads to report the right error when it is 0.
+  async updateMessageContent(params: {
+    tenantId: string
+    channelId: string
+    messageId: string
+    senderId: string
+    content: string
+    editedAt: Date
+    editableSince: Date
+  }): Promise<number> {
+    const { count } = await this.prisma.message.updateMany({
+      where: {
+        id: params.messageId,
+        channelId: params.channelId,
+        tenantId: params.tenantId,
+        senderId: params.senderId,
+        deletedAt: null,
+        createdAt: { gte: params.editableSince },
+      },
+      data: { content: params.content, editedAt: params.editedAt },
+    })
+    return count
+  }
+
+  // Soft delete: sets deletedAt (same conditional write as above) and drops the
+  // message's MessageAttachment rows in one transaction. Returns the removed
+  // attachments so the caller can delete the Cloudinary files after commit,
+  // or null when no row matched (already deleted, not the author, expired).
+  // Message.content is kept in the database; it is never sent to clients.
+  softDeleteMessage(params: {
+    tenantId: string
+    channelId: string
+    messageId: string
+    senderId: string
+    deletedAt: Date
+    editableSince: Date
+  }): Promise<{ publicId: string; mimeType: string }[] | null> {
+    return this.prisma.$transaction(async (tx) => {
+      const { count } = await tx.message.updateMany({
+        where: {
+          id: params.messageId,
+          channelId: params.channelId,
+          tenantId: params.tenantId,
+          senderId: params.senderId,
+          deletedAt: null,
+          createdAt: { gte: params.editableSince },
+        },
+        data: { deletedAt: params.deletedAt },
+      })
+      if (count === 0) return null
+
+      // MessageAttachment has no tenantId of its own, so the tenant is
+      // checked through the parent message.
+      const attachmentWhere = { messageId: params.messageId, message: { tenantId: params.tenantId } }
+      const attachments = await tx.messageAttachment.findMany({
+        where: attachmentWhere,
+        select: { publicId: true, mimeType: true },
+      })
+      await tx.messageAttachment.deleteMany({ where: attachmentWhere })
+      return attachments
     })
   }
 

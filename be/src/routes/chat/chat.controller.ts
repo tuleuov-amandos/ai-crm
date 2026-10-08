@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -30,6 +31,7 @@ import {
   GetMessagesPaginatedResDto,
   GetMessagesQueryDto,
   MessageResDto,
+  UpdateMessageBodyDto,
   UploadMessageAttachmentsResDto,
 } from './chat.dto'
 
@@ -136,6 +138,33 @@ export class ChatController {
     @Body() body: CreateMessageBodyDto,
   ) {
     return this.chatService.createMessage(user.tenantId, channelId, user.userId, body.content)
+  }
+
+  // PATCH /chat/channels/:id/messages/:messageId — author only, within
+  // MESSAGE_EDIT_WINDOW_MS of sending (see ChatService.updateMessage).
+  @Patch(':id/messages/:messageId')
+  @ApiOkResponse({ type: MessageResDto })
+  @ZodSerializerDto(MessageResDto)
+  updateMessage(
+    @CurrentUser() user: AccessTokenPayload,
+    @Param('id') channelId: string,
+    @Param('messageId') messageId: string,
+    @Body() body: UpdateMessageBodyDto,
+  ) {
+    return this.chatService.updateMessage(user.tenantId, channelId, messageId, user.userId, body.content)
+  }
+
+  // DELETE /chat/channels/:id/messages/:messageId — soft delete, author only,
+  // same window; idempotent (see ChatService.deleteMessage).
+  @Delete(':id/messages/:messageId')
+  @ApiOkResponse({ type: MessageResDto })
+  @ZodSerializerDto(MessageResDto)
+  deleteMessage(
+    @CurrentUser() user: AccessTokenPayload,
+    @Param('id') channelId: string,
+    @Param('messageId') messageId: string,
+  ) {
+    return this.chatService.deleteMessage(user.tenantId, channelId, messageId, user.userId)
   }
 }
 
