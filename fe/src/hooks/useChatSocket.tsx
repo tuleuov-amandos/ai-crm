@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/api";
 import { useMe } from "@/hooks/useAuth";
 import { chatKeys, useMarkChannelRead } from "@/hooks/useChat";
+import { applyMessageDeleted, applyMessageUpdate } from "@/lib/chatMessages";
 import {
   GetChannelMembersResType,
   GetChannelsResType,
@@ -250,6 +251,28 @@ export function ChatSocketProvider({ children }: { children: ReactNode }) {
             };
           },
         );
+      },
+    );
+
+    // A message was edited or deleted by its author (who gets these too, after
+    // their own mutation already patched the cache — both are idempotent).
+    // No sound and no unread bump: nothing new arrived.
+    socket.on("messageUpdated", (message: Message) => {
+      queryClient.setQueryData<InfiniteData<GetMessagesPaginatedResType>>(
+        chatKeys.messages(message.channelId),
+        (old) => applyMessageUpdate(old, message),
+      );
+    });
+
+    socket.on(
+      "messageDeleted",
+      (payload: { channelId: string; messageId: string; deletedAt: string }) => {
+        queryClient.setQueryData<InfiniteData<GetMessagesPaginatedResType>>(
+          chatKeys.messages(payload.channelId),
+          (old) => applyMessageDeleted(old, payload),
+        );
+        // A deleted message no longer counts as unread.
+        queryClient.invalidateQueries({ queryKey: chatKeys.channels() });
       },
     );
 

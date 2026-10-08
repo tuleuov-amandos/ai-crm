@@ -6,6 +6,7 @@ import {
   GetMessagesParamsType,
   GetMessagesPaginatedResType,
   Message,
+  UpdateMessageBodyType,
 } from "@/lib/validations/chat.scheme";
 
 export const chatService = {
@@ -86,6 +87,32 @@ export const chatService = {
     const res = await axiosInstance.post(
       `chat/channels/${channelId}/messages`,
       { content },
+    );
+    return res.data;
+  },
+
+  // PATCH /chat/channels/:id/messages/:messageId — own message, within 24h
+  updateMessage: async (
+    channelId: string,
+    messageId: string,
+    content: string,
+  ): Promise<Message> => {
+    const body: UpdateMessageBodyType = { content };
+    const res = await axiosInstance.patch(
+      `chat/channels/${channelId}/messages/${messageId}`,
+      body,
+    );
+    return res.data;
+  },
+
+  // DELETE /chat/channels/:id/messages/:messageId — soft delete; the response
+  // has deletedAt set, content '' and attachments []
+  deleteMessage: async (
+    channelId: string,
+    messageId: string,
+  ): Promise<Message> => {
+    const res = await axiosInstance.delete(
+      `chat/channels/${channelId}/messages/${messageId}`,
     );
     return res.data;
   },

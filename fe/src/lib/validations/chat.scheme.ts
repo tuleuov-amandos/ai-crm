@@ -97,6 +97,9 @@ export const MessageSchema = z.object({
   content: z.string(),
   createdAt: z.string(),
   editedAt: z.string().nullable(),
+  // Soft delete: a deleted message always comes with content '' and no
+  // attachments. Optional only while the backend field is rolling out.
+  deletedAt: z.string().nullable().optional(),
   sender: z.object({
     id: z.string(),
     name: z.string(),
@@ -115,6 +118,16 @@ export const CreateMessageBodySchema = z
   .strict();
 
 export type CreateMessageBodyType = z.infer<typeof CreateMessageBodySchema>;
+
+// PATCH /chat/channels/:id/messages/:messageId — text is required: an edit
+// can't turn a message into "files only".
+export const UpdateMessageBodySchema = z
+  .object({
+    content: z.string().trim().min(1).max(5000),
+  })
+  .strict();
+
+export type UpdateMessageBodyType = z.infer<typeof UpdateMessageBodySchema>;
 
 // GET /chat/channels/:id/messages?page=&limit= — newest first
 export const GetMessagesParamsSchema = z.object({

@@ -1,10 +1,16 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslations, useFormatter } from "next-intl";
 import { isToday, isYesterday, isSameDay } from "date-fns";
 import { Check, Loader2, Paperclip } from "lucide-react";
-import { useChannelMembers, useMessages } from "@/hooks/useChat";
+import {
+  isStaleMessageError,
+  useChannelMembers,
+  useDeleteMessage,
+  useMessages,
+  useUpdateMessage,
+} from "@/hooks/useChat";
 import { useMe } from "@/hooks/useAuth";
 import { useRelativeTime } from "@/lib/format";
 import { getAvatarColors, getInitials } from "@/lib/helper";
@@ -17,9 +23,26 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ChannelMember, Message } from "@/lib/validations/chat.scheme";
+import { canDeleteMessage, canEditMessage } from "@/lib/chatMessages";
+import { ApiError } from "@/types/error.type";
+import MessageActions from "./MessageActions";
+import EditMessageForm from "./EditMessageForm";
+import DeleteMessageDialog from "./DeleteMessageDialog";
 
 const NEAR_BOTTOM_THRESHOLD = 80;
 const NEAR_TOP_THRESHOLD = 80;
+// How often the 24h edit window is re-checked, so the actions menu goes away
+// on its own once a message gets too old.
+const NOW_TICK_MS = 60_000;
+
+function useNow(): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), NOW_TICK_MS);
+    return () => clearInterval(id);
+  }, []);
+  return now;
+}
 
 interface MessageListProps {
   channelId: string;
@@ -33,10 +56,21 @@ export default function MessageList({ channelId }: MessageListProps) {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
     useMessages(channelId);
   const { data: members } = useChannelMembers(channelId);
+  const updateMessage = useUpdateMessage(channelId);
+  const deleteMessage = useDeleteMessage(channelId);
+  const now = useNow();
+
+  // One message at a time is edited / confirmed for deletion. The channel id
+  // is stored alongside so switching channels drops both without an effect.
+  const [editing, setEditing] = useState<{ channelId: string; messageId: string } | null>(null);
+  const [deleting, setDeleting] = useState<{ channelId: string; message: Message } | null>(null);
+  const editingId = editing?.channelId === channelId ? editing.messageId : null;
+  const deletingMessage = deleting?.channelId === channelId ? deleting.message : null;
 
   const containerRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
   const prevNewestIdRef = useRef<string | undefined>(undefined);
+  const prevOldestIdRef = useRef<string | undefined>(undefined);
   const prevScrollHeightRef = useRef<number | undefined>(undefined);
   const isLoadingMoreRef = useRef(false);
 
@@ -48,19 +82,28 @@ export default function MessageList({ channelId }: MessageListProps) {
   }, [data]);
 
   const newestMessage = messages[messages.length - 1];
+  const oldestMessageId = messages[0]?.id;
 
   useLayoutEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
-    if (isLoadingMoreRef.current && prevScrollHeightRef.current !== undefined) {
+    if (
+      isLoadingMoreRef.current &&
+      prevScrollHeightRef.current !== undefined &&
+      // Only once the older page has actually landed: an edit/delete patching
+      // the cache meanwhile must not consume this adjustment.
+      oldestMessageId !== prevOldestIdRef.current
+    ) {
       // Older messages were prepended at the top — keep the visual scroll
       // position stable instead of jumping.
       el.scrollTop = el.scrollHeight - prevScrollHeightRef.current + el.scrollTop;
       isLoadingMoreRef.current = false;
       prevScrollHeightRef.current = undefined;
+      prevOldestIdRef.current = oldestMessageId;
       return;
     }
+    prevOldestIdRef.current = oldestMessageId;
 
     if (newestMessage?.id !== prevNewestIdRef.current) {
       if (prevNewestIdRef.current === undefined || isNearBottomRef.current) {
@@ -68,7 +111,7 @@ export default function MessageList({ channelId }: MessageListProps) {
       }
     }
     prevNewestIdRef.current = newestMessage?.id;
-  }, [messages, newestMessage]);
+  }, [messages, newestMessage, oldestMessageId]);
 
   const handleScroll = () => {
     const el = containerRef.current;
@@ -81,7 +124,46 @@ export default function MessageList({ channelId }: MessageListProps) {
     const el = containerRef.current;
     if (el) prevScrollHeightRef.current = el.scrollHeight;
     isLoadingMoreRef.current = true;
-    fetchNextPage();
+    fetchNextPage().then((result) => {
+      // Nothing was prepended — drop the pending scroll adjustment.
+      if (result.isError) {
+        isLoadingMoreRef.current = false;
+        prevScrollHeightRef.current = undefined;
+      }
+    });
+  };
+
+  const closeEditing = () => setEditing(null);
+  // A late response must not close the form of another message opened since.
+  const closeEditingOf = (messageId: string) =>
+    setEditing((current) => (current?.messageId === messageId ? null : current));
+
+  const handleSaveEdit = (messageId: string, content: string) => {
+    updateMessage.mutate(
+      { messageId, content },
+      {
+        onSuccess: () => closeEditingOf(messageId),
+        onError: (error: ApiError) => {
+          if (isStaleMessageError(error)) closeEditingOf(messageId);
+        },
+      },
+    );
+  };
+
+  const closeDeleting = () => setDeleting(null);
+
+  const handleConfirmDelete = () => {
+    if (!deletingMessage) return;
+    const messageId = deletingMessage.id;
+    deleteMessage.mutate(messageId, {
+      onSuccess: () => {
+        closeDeleting();
+        closeEditingOf(messageId);
+      },
+      onError: (error: ApiError) => {
+        if (isStaleMessageError(error)) closeDeleting();
+      },
+    });
   };
 
   const formatDayLabel = (date: Date): string => {
@@ -147,11 +229,27 @@ export default function MessageList({ channelId }: MessageListProps) {
                 relativeTime={relativeTime}
                 isOwn={message.senderId === me?.id}
                 members={members}
+                canEdit={canEditMessage(message, me?.id, now)}
+                canDelete={canDeleteMessage(message, me?.id, now)}
+                isEditing={editingId === message.id}
+                isSaving={updateMessage.isPending}
+                onEdit={() => setEditing({ channelId, messageId: message.id })}
+                onCancelEdit={closeEditing}
+                onSaveEdit={(content) => handleSaveEdit(message.id, content)}
+                onDelete={() => setDeleting({ channelId, message })}
               />
             </div>
           );
         })
       )}
+
+      <DeleteMessageDialog
+        open={!!deletingMessage}
+        hasAttachments={(deletingMessage?.attachments.length ?? 0) > 0}
+        isPending={deleteMessage.isPending}
+        onConfirm={handleConfirmDelete}
+        onClose={closeDeleting}
+      />
     </div>
   );
 }
@@ -161,13 +259,51 @@ function MessageRow({
   relativeTime,
   isOwn,
   members,
+  canEdit,
+  canDelete,
+  isEditing,
+  isSaving,
+  onEdit,
+  onCancelEdit,
+  onSaveEdit,
+  onDelete,
 }: {
   message: Message;
   relativeTime: (date?: string | Date | null) => string;
   isOwn: boolean;
   members: ChannelMember[] | undefined;
+  canEdit: boolean;
+  canDelete: boolean;
+  isEditing: boolean;
+  isSaving: boolean;
+  onEdit: () => void;
+  onCancelEdit: () => void;
+  onSaveEdit: (content: string) => void;
+  onDelete: () => void;
 }) {
+  const t = useTranslations("chat.messages");
   const colors = getAvatarColors(message.senderId);
+  const isDeleted = message.deletedAt != null;
+  // A message deleted meanwhile (another tab) closes its edit form.
+  const showEditForm = isOwn && isEditing && !isDeleted;
+
+  const deletedPlaceholder = (
+    <div className="rounded-2xl border border-border px-3 py-2 min-w-0 inline-block">
+      <p className="text-muted-foreground italic" style={{ fontSize: 13 }}>
+        {t("deleted")}
+      </p>
+    </div>
+  );
+
+  const editedMark = message.editedAt && !isDeleted && (
+    <span
+      className="text-muted-foreground"
+      style={{ fontSize: 11 }}
+      title={t("editedAt", { time: relativeTime(message.editedAt) })}
+    >
+      {t("edited")}
+    </span>
+  );
 
   const attachments = message.attachments.length > 0 && (
     <div className="flex flex-wrap gap-2 mt-1.5">
@@ -204,21 +340,45 @@ function MessageRow({
 
   if (isOwn) {
     return (
-      <div className="flex items-start justify-end gap-2.5">
-        <div className="flex flex-col items-end max-w-[75%]">
-          <div className="bg-primary text-primary-foreground rounded-2xl px-3 py-2 min-w-0">
-            {message.content && (
-              <p className="whitespace-pre-wrap break-words" style={{ fontSize: 13 }}>
-                {message.content}
-              </p>
-            )}
-            {attachments}
-          </div>
+      <div className="group flex items-start justify-end gap-2.5">
+        <div className={cn("flex flex-col items-end max-w-[75%]", showEditForm && "w-full")}>
+          {isDeleted ? (
+            deletedPlaceholder
+          ) : showEditForm ? (
+            <>
+              <EditMessageForm
+                initialContent={message.content}
+                isPending={isSaving}
+                onSave={onSaveEdit}
+                onCancel={onCancelEdit}
+              />
+              {attachments && (
+                <div className="bg-primary text-primary-foreground rounded-2xl px-3 py-2 mt-1.5 min-w-0">
+                  {attachments}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex items-center gap-1 max-w-full">
+              {canDelete && (
+                <MessageActions canEdit={canEdit} onEdit={onEdit} onDelete={onDelete} />
+              )}
+              <div className="bg-primary text-primary-foreground rounded-2xl px-3 py-2 min-w-0">
+                {message.content && (
+                  <p className="whitespace-pre-wrap break-words" style={{ fontSize: 13 }}>
+                    {message.content}
+                  </p>
+                )}
+                {attachments}
+              </div>
+            </div>
+          )}
           <div className="flex items-center gap-2 mt-1">
             <span className="text-muted-foreground" style={{ fontSize: 11 }}>
               {relativeTime(message.createdAt)}
             </span>
-            <ReadReceipt message={message} members={members} />
+            {editedMark}
+            {!isDeleted && <ReadReceipt message={message} members={members} />}
           </div>
         </div>
       </div>
@@ -247,16 +407,21 @@ function MessageRow({
           <span className="text-muted-foreground" style={{ fontSize: 11 }}>
             {relativeTime(message.createdAt)}
           </span>
+          {editedMark}
         </div>
 
-        <div className="bg-muted rounded-2xl px-3 py-2 mt-1 min-w-0 inline-block">
-          {message.content && (
-            <p className="text-foreground whitespace-pre-wrap break-words" style={{ fontSize: 13 }}>
-              {message.content}
-            </p>
-          )}
-          {attachments}
-        </div>
+        {isDeleted ? (
+          <div className="mt-1">{deletedPlaceholder}</div>
+        ) : (
+          <div className="bg-muted rounded-2xl px-3 py-2 mt-1 min-w-0 inline-block">
+            {message.content && (
+              <p className="text-foreground whitespace-pre-wrap break-words" style={{ fontSize: 13 }}>
+                {message.content}
+              </p>
+            )}
+            {attachments}
+          </div>
+        )}
       </div>
     </div>
   );
