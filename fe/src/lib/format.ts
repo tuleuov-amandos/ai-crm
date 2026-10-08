@@ -25,6 +25,6 @@ export function useRelativeTime() {
   const format = useFormatter();
   return (date?: string | Date | null) => {
     if (!date) return "";
-    return format.relativeTime(new Date(date));
+    return format.relativeTime(new Date(date), new Date());
   };
 }
