@@ -14,7 +14,15 @@ import { ClsService } from 'nestjs-cls'
 import { AppException, ValidationErrorCode } from 'src/common/errors'
 import { corsOriginValidator } from 'src/common/utils/cors-origin.util'
 import { WsAuthenticatedUser, WsJwtGuard } from 'src/common/guards/ws-jwt.guard'
-import { ChannelReadEventPayload, ChatService, CHANNEL_READ_EVENT, MESSAGE_CREATED_EVENT } from './chat.service'
+import {
+  ChannelReadEventPayload,
+  ChatService,
+  CHANNEL_READ_EVENT,
+  MESSAGE_CREATED_EVENT,
+  MESSAGE_DELETED_EVENT,
+  MESSAGE_UPDATED_EVENT,
+  MessageDeletedEventPayload,
+} from './chat.service'
 import { CreateMessageBodySchema, MessageBaseType } from './chat.model'
 
 function channelRoom(tenantId: string, channelId: string) {
@@ -179,6 +187,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @OnEvent(CHANNEL_READ_EVENT)
   handleChannelRead({ tenantId, channelId, userId, lastReadAt }: ChannelReadEventPayload) {
     this.server.to(channelRoom(tenantId, channelId)).emit('channelRead', { channelId, userId, lastReadAt })
+  }
+
+  // The payload is already shaped by toMessageResponse in ChatService.
+  @OnEvent(MESSAGE_UPDATED_EVENT)
+  handleMessageUpdated(message: MessageBaseType) {
+    this.server.to(channelRoom(message.tenantId, message.channelId)).emit('messageUpdated', message)
+  }
+
+  // Only ids and the timestamp: the deleted text is never sent anywhere.
+  @OnEvent(MESSAGE_DELETED_EVENT)
+  handleMessageDeleted({ tenantId, channelId, messageId, deletedAt }: MessageDeletedEventPayload) {
+    this.server.to(channelRoom(tenantId, channelId)).emit('messageDeleted', { channelId, messageId, deletedAt })
   }
 
   private requireUser(client: Socket): WsAuthenticatedUser | undefined {

@@ -212,4 +212,31 @@ export class CloudinaryService {
     })
     return { url: result.secure_url, publicId: result.public_id }
   }
+
+  /**
+   * Removes one chat attachment asset. Unlike the best-effort helpers above it
+   * THROWS on failure, so the caller can log it with its own context.
+   *
+   * `destroy` needs the asset's resource type (it defaults to `image`).
+   * `uploadChatAttachment` uploads with `resource_type: 'auto'`, under which
+   * Cloudinary stores JPEG/PNG and PDF as `image`; video and anything else
+   * (`raw`) are mapped too in case the accepted types are ever widened.
+   */
+  async destroyChatAttachment(publicId: string, mimeType: string): Promise<void> {
+    if (!this.configured) return
+    const resourceType =
+      mimeType.startsWith('image/') || mimeType === 'application/pdf'
+        ? 'image'
+        : mimeType.startsWith('video/')
+          ? 'video'
+          : 'raw'
+    const result = (await cloudinary.uploader.destroy(publicId, {
+      resource_type: resourceType,
+      invalidate: true,
+    })) as { result?: string }
+    if (result?.result !== 'ok') {
+      throw new Error(`Cloudinary destroy returned "${result?.result ?? 'no result'}"`)
+    }
+    log.info({ event: 'cloudinary.chat_attachment_deleted', publicId })
+  }
 }

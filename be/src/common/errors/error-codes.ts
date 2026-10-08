@@ -127,6 +127,12 @@ export enum ChatErrorCode {
   /** Some memberIds/userIds are not active users of the tenant (foreign, missing or deactivated — deliberately indistinguishable). */
   INVALID_MEMBERS = 'CHAT_INVALID_MEMBERS',
   MESSAGE_NOT_FOUND = 'CHAT_MESSAGE_NOT_FOUND',
+  /** Only the author may edit or delete a message, and only while they can access its channel. */
+  MESSAGE_FORBIDDEN = 'CHAT_MESSAGE_FORBIDDEN',
+  /** The edit/delete window (MESSAGE_EDIT_WINDOW_MS after createdAt) has passed. */
+  MESSAGE_EDIT_EXPIRED = 'CHAT_MESSAGE_EDIT_EXPIRED',
+  /** The message has no text (attachments only), so there is nothing to edit. */
+  MESSAGE_NOT_EDITABLE = 'CHAT_MESSAGE_NOT_EDITABLE',
   /** No file was sent with the attachment upload request. */
   ATTACHMENT_FILE_MISSING = 'CHAT_ATTACHMENT_FILE_MISSING',
   /** Uploaded attachment is not an accepted file type (PDF, JPEG, PNG). */
