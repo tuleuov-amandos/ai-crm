@@ -1687,6 +1687,11 @@
       "logout": "Sign out"
     }
   },
+  "desktopOnly": {
+    "title": "Open on a computer",
+    "description": "This section isn't available on a phone. Open it on a computer or tablet.",
+    "button": "Go to dashboard"
+  },
   "errors": {
     "unknown": "Something went wrong. Please try again.",
     "AUTH_COMPANY_NAME_TAKEN": "This company name is already taken. Please choose another.",

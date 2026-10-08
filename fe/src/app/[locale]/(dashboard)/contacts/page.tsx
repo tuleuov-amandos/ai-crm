@@ -12,6 +12,7 @@ import ContactTable from "@/app/[locale]/(dashboard)/contacts/_components/Contac
 import { Contact, ContactTagConst } from "@/lib/validations/contacts.scheme";
 import { KZ_CITIES } from "@/lib/kz-cities";
 import ContactDialog from "@/app/[locale]/(dashboard)/contacts/_components/ContactDialog";
+import { DesktopOnly } from "@/components/desktop-only";
 import ImportExcelDialog from "@/app/[locale]/(dashboard)/contacts/_components/ImportExcelDialog";
 import {
   DropdownMenu,
@@ -51,7 +52,7 @@ const ContactsPage = () => {
       <div className="h-screen flex">
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
           {/* ── Top bar ──────────────────────────────────────────────────────── */}
-          <header className="h-14 shrink-0 border-b bg-background flex items-center justify-between px-6 gap-3">
+          <header className="h-14 shrink-0 border-b bg-background flex items-center justify-between px-6 gap-3 max-md:h-auto max-md:min-h-14 max-md:flex-wrap max-md:px-3 max-md:py-2">
             <h1
               className="text-foreground tracking-tight"
               style={{ fontSize: 15, fontWeight: 600, lineHeight: 1 }}
@@ -59,12 +60,12 @@ const ContactsPage = () => {
               {t("title")}
             </h1>
 
-            <div className="flex items-center gap-2">
-              <div className="relative">
+            <div className="flex items-center gap-2 max-md:w-full max-md:flex-wrap">
+              <div className="relative max-md:w-full">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
                 <Input
                   placeholder={t("searchPlaceholder")}
-                  className="h-8 pl-8 w-44 text-xs bg-background border-border"
+                  className="h-8 pl-8 w-44 max-md:w-full text-xs bg-background border-border"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
@@ -130,15 +131,17 @@ const ContactsPage = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs cursor-pointer"
-                onClick={() => setIsImportOpen(true)}
-              >
-                <FileSpreadsheet size={13} className="text-green-600" />
-                {t("importExcel")}
-              </Button>
+              <DesktopOnly feature="contacts-import">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs cursor-pointer"
+                  onClick={() => setIsImportOpen(true)}
+                >
+                  <FileSpreadsheet size={13} className="text-green-600" />
+                  {t("importExcel")}
+                </Button>
+              </DesktopOnly>
 
               <Button
                 size="sm"
@@ -171,10 +174,12 @@ const ContactsPage = () => {
         {...dialog}
         onOpenChange={(open) => setDialog((s) => ({ ...s, isOpen: open }))}
       />
-      <ImportExcelDialog
-        isOpen={isImportOpen}
-        onOpenChange={setIsImportOpen}
-      />
+      <DesktopOnly feature="contacts-import">
+        <ImportExcelDialog
+          isOpen={isImportOpen}
+          onOpenChange={setIsImportOpen}
+        />
+      </DesktopOnly>
     </>
   );
 };

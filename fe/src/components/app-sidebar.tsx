@@ -37,6 +37,7 @@ import { useWorkspace } from "@/hooks/useWorkspace";
 import { useChannels } from "@/hooks/useChat";
 import { useChatSocketContext } from "@/hooks/useChatSocket";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { isDesktopOnlyRoute } from "@/lib/mobileAccess";
 
 const capitalize = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 
@@ -206,7 +207,13 @@ export function AppSidebar() {
               const active = isActive(group.path);
               const Icon = group.icon!;
               return (
-                <div key={gIdx} className="px-1 relative">
+                <div
+                  key={gIdx}
+                  className={cn(
+                    "px-1 relative",
+                    isDesktopOnlyRoute(group.path) && "max-md:hidden"
+                  )}
+                >
                   <Link
                     href={group.path}
                     onClick={() => setOpenMobile(false)}
@@ -246,7 +253,14 @@ export function AppSidebar() {
             }
             // Case 2: Group is a header with indented children
             return (
-              <div key={gIdx} className="space-y-1">
+              <div
+                key={gIdx}
+                className={cn(
+                  "space-y-1",
+                  group.items?.every((item) => isDesktopOnlyRoute(item.path)) &&
+                    "max-md:hidden"
+                )}
+              >
                 {/* At --sidebar-width:200px "АДМИНИСТРИРОВАНИЕ" fits on one line
                     (~156px box vs ~145px text). `break-words` stays as a safety
                     net: on wider system fonts (Windows/Linux) or with a visible
@@ -265,6 +279,7 @@ export function AppSidebar() {
                         onClick={() => setOpenMobile(false)}
                         className={cn(
                           "flex items-center gap-3 w-full px-3 py-1.5 rounded-lg text-sm transition-all no-underline font-normal",
+                          isDesktopOnlyRoute(item.path) && "max-md:hidden",
                           active
                             ? "bg-[#EEEDFE] text-[#534AB7] font-medium"
                             : "text-[#495057] hover:bg-[#E9ECEF] hover:text-[#212529]"

@@ -35,6 +35,8 @@ import { cn } from "@/lib/utils";
 import { useGetUsers } from "@/hooks/useUsers";
 import { dealBulkArchiveKey } from "@/hooks/useDeals";
 import { useDealSelectionStore } from "@/stores/dealSelection-store";
+import { DesktopOnly } from "@/components/desktop-only";
+import { MOBILE_BREAKPOINT } from "@/hooks/use-mobile";
 
 // ─── PERIOD FILTER ────────────────────────────────────────────────────────────
 function PeriodFilter({
@@ -315,6 +317,14 @@ export default function Pipeline() {
     : undefined;
   const dateTo = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined;
 
+  // На телефоне воронка открывается списком. Решаем один раз после монтирования
+  // (useIsMobile на первом рендере всегда false, а на SSR ширины нет); дальше выбор
+  // пользователя не трогаем.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time post-mount read of the viewport width (SSR-safe hydration)
+    if (window.innerWidth < MOBILE_BREAKPOINT) setViewMode("list");
+  }, []);
+
   // ── Selection mode (board and list) ─────────────────────────────────────
   const selectionMode = useDealSelectionStore((s) => s.selectionMode);
   const enterSelection = useDealSelectionStore((s) => s.enterSelection);
@@ -350,9 +360,9 @@ export default function Pipeline() {
   return (
     <div className="flex h-full flex-col flex-1 min-w-0 overflow-hidden">
       {/* Top bar */}
-      <header className="h-14 shrink-0 border-b bg-background flex items-center justify-between px-6 gap-3">
+      <header className="h-14 shrink-0 border-b bg-background flex items-center justify-between px-6 gap-3 max-md:h-auto max-md:min-h-14 max-md:flex-wrap max-md:px-3 max-md:py-2">
         {/* Left: title + period selector */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 max-md:w-full max-md:flex-wrap">
           <h1
             className="text-foreground tracking-tight"
             style={{ fontSize: 15, fontWeight: 600, lineHeight: 1 }}
@@ -366,7 +376,7 @@ export default function Pipeline() {
         </div>
 
         {/* Right: actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 max-md:w-full max-md:flex-wrap">
           {/* View toggle */}
           <div className="flex border border-border rounded-lg overflow-hidden">
             <button
@@ -393,13 +403,13 @@ export default function Pipeline() {
             </button>
           </div>
 
-          <Separator orientation="vertical" className="h-5" />
+          <Separator orientation="vertical" className="h-5 max-md:hidden" />
 
-          <div className="relative">
+          <div className="relative max-md:w-full">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
             <Input
               placeholder={t("toolbar.searchPlaceholder")}
-              className="h-8 pl-8 w-44 text-xs bg-background border-border"
+              className="h-8 pl-8 w-44 max-md:w-full text-xs bg-background border-border"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -432,26 +442,28 @@ export default function Pipeline() {
             {t("archive.showArchive")}
           </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            aria-pressed={selectionMode}
-            disabled={bulkPending}
-            onClick={selectionMode ? exitSelection : enterSelection}
-            className={cn(
-              "h-8 gap-1 border-border text-xs",
-              selectionMode
-                ? "bg-secondary text-primary"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {selectionMode ? (
-              <X size={12} className="shrink-0" />
-            ) : (
-              <ListChecks size={12} className="shrink-0" />
-            )}
-            {selectionMode ? t("archive.cancelSelect") : t("archive.select")}
-          </Button>
+          <DesktopOnly feature="deal-selection">
+            <Button
+              variant="outline"
+              size="sm"
+              aria-pressed={selectionMode}
+              disabled={bulkPending}
+              onClick={selectionMode ? exitSelection : enterSelection}
+              className={cn(
+                "h-8 gap-1 border-border text-xs",
+                selectionMode
+                  ? "bg-secondary text-primary"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {selectionMode ? (
+                <X size={12} className="shrink-0" />
+              ) : (
+                <ListChecks size={12} className="shrink-0" />
+              )}
+              {selectionMode ? t("archive.cancelSelect") : t("archive.select")}
+            </Button>
+          </DesktopOnly>
 
           <Button
             size="sm"
