@@ -65,12 +65,15 @@ interface CreateDealSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultStageId?: string;
+  // Contact to preselect (e.g. when opened from the contact card).
+  defaultContact?: Contact;
 }
 
 export function CreateDealSheet({
   open,
   onOpenChange,
   defaultStageId,
+  defaultContact,
 }: CreateDealSheetProps) {
   const t = useTranslations("pipeline.form");
   const tv = useTranslations("pipeline.form.validation");
@@ -109,8 +112,14 @@ export function CreateDealSheet({
       contactMap.set(contact.id, contact);
     }
 
+    // Keep the preselected contact selectable/visible even when it is not in the
+    // fetched page (the list is capped at 100 and filtered by search).
+    if (defaultContact && !contactMap.has(defaultContact.id)) {
+      contactMap.set(defaultContact.id, defaultContact);
+    }
+
     return Array.from(contactMap.values());
-  }, [createdContacts, fetchedContacts]);
+  }, [createdContacts, defaultContact, fetchedContacts]);
   const users = usersQuery.data ?? [];
 
   const form = useForm<CreateDealFormValues>({
@@ -139,6 +148,17 @@ export function CreateDealSheet({
       });
     }
   }, [form, open]);
+
+  // Preselect the contact on every open; the reset above clears it on close.
+  const defaultContactId = defaultContact?.id;
+  useEffect(() => {
+    if (open && defaultContactId) {
+      form.setValue("contactId", defaultContactId, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  }, [form, open, defaultContactId]);
 
   // Preselect the column's stage (or the first open stage) once stages load.
   useEffect(() => {

@@ -94,6 +94,7 @@ export const useCreateDeal = () => {
     onSuccess: () => {
       // invalidate pipeline to refetch and sync back to store
       queryClient.invalidateQueries({ queryKey: [...dealKeys.all, "pipeline"] });
+      queryClient.invalidateQueries({ queryKey: contactKeys.all });
       toast.success(t("createSuccess"));
     },
     onError: (error: ApiError) => {
