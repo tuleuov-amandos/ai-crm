@@ -195,6 +195,6 @@ export class ChatMessagesController {
     @Param('id') messageId: string,
     @UploadedFiles() files: Express.Multer.File[],
   ) {
-    return this.chatService.uploadAttachments(messageId, user.tenantId, files)
+    return this.chatService.uploadAttachments(messageId, user.tenantId, user.userId, files)
   }
 }
