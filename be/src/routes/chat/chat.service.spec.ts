@@ -416,12 +416,16 @@ describe('ChatService.uploadAttachments', () => {
   const file = (name: string) =>
     ({ buffer: Buffer.from('x'), originalname: name, mimetype: 'image/png', size: 1 }) as Express.Multer.File
 
-  const live = { id: 'm1', tenantId: 't1', channelId: 'c1', deletedAt: null }
+  const AUTHOR = 'u1'
+  const EDITABLE_SINCE = new Date(NOW.getTime() - MESSAGE_EDIT_WINDOW_MS)
+  const live = { id: 'm1', tenantId: 't1', channelId: 'c1', senderId: AUTHOR, createdAt: NOW, deletedAt: null }
   const deleted = { ...live, deletedAt: NOW }
 
-  const setup = () => {
+  const setup = (opts: { channel?: { tenantId: string; isPrivate: boolean }; isMember?: boolean } = {}) => {
     const repo = {
       findMessageById: jest.fn().mockResolvedValue(live),
+      findChannelById: jest.fn().mockResolvedValue({ id: 'c1', tenantId: 't1', isPrivate: false, ...opts.channel }),
+      isMember: jest.fn().mockResolvedValue(opts.isMember ?? true),
       addAttachments: jest.fn().mockResolvedValue({ ...live, content: '', attachments: [] }),
     }
     const eventEmitter = { emit: jest.fn() }
@@ -450,12 +454,124 @@ describe('ChatService.uploadAttachments', () => {
     expect(err.getResponse()).toEqual(expect.objectContaining({ code: ChatErrorCode.MESSAGE_NOT_FOUND }))
   }
 
-  beforeEach(() => log.warn.mockClear())
+  const expectAppError = async (p: Promise<unknown>, status: number, code: ChatErrorCode) => {
+    const err = await p.then(
+      () => null,
+      (e) => e,
+    )
+    expect(err).toBeInstanceOf(AppException)
+    expect(err.getStatus()).toBe(status)
+    expect(err.getResponse()).toEqual(expect.objectContaining({ code }))
+  }
+
+  // Every rejected precondition must stop before Cloudinary and before any write.
+  const expectNothingUploaded = (
+    repo: ReturnType<typeof setup>['repo'],
+    cloudinary: ReturnType<typeof setup>['cloudinary'],
+    eventEmitter: ReturnType<typeof setup>['eventEmitter'],
+  ) => {
+    expect(cloudinary.uploadChatAttachment).not.toHaveBeenCalled()
+    expect(repo.addAttachments).not.toHaveBeenCalled()
+    expect(eventEmitter.emit).not.toHaveBeenCalled()
+  }
+
+  beforeEach(() => {
+    log.warn.mockClear()
+    jest.useFakeTimers({ now: NOW })
+  })
+
+  afterEach(() => jest.useRealTimers())
+
+  it('lets the author attach files within the 24 hour window', async () => {
+    const { repo, eventEmitter, cloudinary, service } = setup()
+    await service.uploadAttachments('m1', 't1', AUTHOR, [file('a.png')])
+    expect(cloudinary.uploadChatAttachment).toHaveBeenCalledTimes(1)
+    expect(repo.addAttachments).toHaveBeenCalledTimes(1)
+    expect(eventEmitter.emit).toHaveBeenCalledTimes(1)
+  })
+
+  it('rejects a non-author in a public channel with 403 CHAT_MESSAGE_FORBIDDEN', async () => {
+    const { repo, eventEmitter, cloudinary, service } = setup()
+    await expectAppError(
+      service.uploadAttachments('m1', 't1', 'u2', [file('a.png')]),
+      403,
+      ChatErrorCode.MESSAGE_FORBIDDEN,
+    )
+    expectNothingUploaded(repo, cloudinary, eventEmitter)
+  })
+
+  it('rejects a caller who is not a member of the private channel with 403 FORBIDDEN_PRIVATE_CHANNEL_ACCESS', async () => {
+    const { repo, eventEmitter, cloudinary, service } = setup({
+      channel: { tenantId: 't1', isPrivate: true },
+      isMember: false,
+    })
+    await expectAppError(
+      service.uploadAttachments('m1', 't1', AUTHOR, [file('a.png')]),
+      403,
+      ChatErrorCode.FORBIDDEN_PRIVATE_CHANNEL_ACCESS,
+    )
+    expect(repo.isMember).toHaveBeenCalledWith('c1', AUTHOR)
+    expectNothingUploaded(repo, cloudinary, eventEmitter)
+  })
+
+  it('checks channel access before authorship (non-member non-author gets the channel error)', async () => {
+    const { repo, eventEmitter, cloudinary, service } = setup({
+      channel: { tenantId: 't1', isPrivate: true },
+      isMember: false,
+    })
+    await expectAppError(
+      service.uploadAttachments('m1', 't1', 'u2', [file('a.png')]),
+      403,
+      ChatErrorCode.FORBIDDEN_PRIVATE_CHANNEL_ACCESS,
+    )
+    expectNothingUploaded(repo, cloudinary, eventEmitter)
+  })
+
+  it('rejects a message older than 24 hours with 400 CHAT_MESSAGE_EDIT_EXPIRED', async () => {
+    const { repo, eventEmitter, cloudinary, service } = setup()
+    repo.findMessageById.mockResolvedValue({ ...live, createdAt: new Date(EDITABLE_SINCE.getTime() - 1) })
+    await expectAppError(
+      service.uploadAttachments('m1', 't1', AUTHOR, [file('a.png')]),
+      400,
+      ChatErrorCode.MESSAGE_EDIT_EXPIRED,
+    )
+    expectNothingUploaded(repo, cloudinary, eventEmitter)
+  })
+
+  it('still allows an upload exactly at the 24 hour boundary', async () => {
+    const { repo, service } = setup()
+    repo.findMessageById.mockResolvedValue({ ...live, createdAt: EDITABLE_SINCE })
+    await service.uploadAttachments('m1', 't1', AUTHOR, [file('a.png')])
+    expect(repo.addAttachments).toHaveBeenCalledTimes(1)
+  })
+
+  it('checks the window before validating files (expired + no files -> 400 EDIT_EXPIRED)', async () => {
+    const { repo, cloudinary, service } = setup()
+    repo.findMessageById.mockResolvedValue({ ...live, createdAt: new Date(EDITABLE_SINCE.getTime() - 1) })
+    await expectAppError(service.uploadAttachments('m1', 't1', AUTHOR, []), 400, ChatErrorCode.MESSAGE_EDIT_EXPIRED)
+    expect(cloudinary.uploadChatAttachment).not.toHaveBeenCalled()
+  })
+
+  it('returns 404 for a message of another tenant, before any channel lookup or upload', async () => {
+    const { repo, eventEmitter, cloudinary, service } = setup()
+    repo.findMessageById.mockResolvedValue({ ...live, tenantId: 't2' })
+    await expectNotFound(service.uploadAttachments('m1', 't1', AUTHOR, [file('a.png')]))
+    expect(repo.findChannelById).not.toHaveBeenCalled()
+    expectNothingUploaded(repo, cloudinary, eventEmitter)
+  })
+
+  it('returns 404 for a missing message', async () => {
+    const { repo, eventEmitter, cloudinary, service } = setup()
+    repo.findMessageById.mockResolvedValue(null)
+    await expectNotFound(service.uploadAttachments('m1', 't1', AUTHOR, [file('a.png')]))
+    expectNothingUploaded(repo, cloudinary, eventEmitter)
+  })
 
   it('returns 404 for an already deleted message, before any upload or write', async () => {
     const { repo, cloudinary, service } = setup()
     repo.findMessageById.mockResolvedValue(deleted)
-    await expectNotFound(service.uploadAttachments('m1', 't1', [file('a.png')]))
+    await expectNotFound(service.uploadAttachments('m1', 't1', AUTHOR, [file('a.png')]))
+    expect(repo.findChannelById).not.toHaveBeenCalled()
     expect(cloudinary.uploadChatAttachment).not.toHaveBeenCalled()
     expect(repo.addAttachments).not.toHaveBeenCalled()
   })
@@ -463,7 +579,7 @@ describe('ChatService.uploadAttachments', () => {
   it('cleans up uploaded files and returns 404 when the message is deleted during the upload', async () => {
     const { repo, eventEmitter, cloudinary, service } = setup()
     repo.findMessageById.mockResolvedValueOnce(live).mockResolvedValueOnce(deleted)
-    await expectNotFound(service.uploadAttachments('m1', 't1', [file('a.png'), file('b.png')]))
+    await expectNotFound(service.uploadAttachments('m1', 't1', AUTHOR, [file('a.png'), file('b.png')]))
     expect(cloudinary.destroyChatAttachment).toHaveBeenCalledWith('p1', 'image/png')
     expect(cloudinary.destroyChatAttachment).toHaveBeenCalledWith('p2', 'image/png')
     expect(repo.addAttachments).not.toHaveBeenCalled()
@@ -473,7 +589,7 @@ describe('ChatService.uploadAttachments', () => {
   it('also cleans up when the message disappeared during the upload', async () => {
     const { repo, cloudinary, service } = setup()
     repo.findMessageById.mockResolvedValueOnce(live).mockResolvedValueOnce(null)
-    await expectNotFound(service.uploadAttachments('m1', 't1', [file('a.png')]))
+    await expectNotFound(service.uploadAttachments('m1', 't1', AUTHOR, [file('a.png')]))
     expect(cloudinary.destroyChatAttachment).toHaveBeenCalledWith('p1', 'image/png')
     expect(repo.addAttachments).not.toHaveBeenCalled()
   })
@@ -482,7 +598,7 @@ describe('ChatService.uploadAttachments', () => {
     const { repo, cloudinary, service } = setup()
     repo.findMessageById.mockResolvedValueOnce(live).mockResolvedValueOnce(deleted)
     cloudinary.destroyChatAttachment.mockRejectedValue(new Error('cloudinary down'))
-    await expectNotFound(service.uploadAttachments('m1', 't1', [file('a.png')]))
+    await expectNotFound(service.uploadAttachments('m1', 't1', AUTHOR, [file('a.png')]))
     expect(log.warn).toHaveBeenCalledWith(
       expect.objectContaining({ event: 'chat.attachment_cleanup_failed', publicId: 'p1' }),
     )
@@ -490,7 +606,7 @@ describe('ChatService.uploadAttachments', () => {
 
   it('uploads to a live message as before: rows added, event emitted, no cleanup', async () => {
     const { repo, eventEmitter, cloudinary, service } = setup()
-    await service.uploadAttachments('m1', 't1', [file('a.png')])
+    await service.uploadAttachments('m1', 't1', AUTHOR, [file('a.png')])
     expect(repo.addAttachments).toHaveBeenCalledWith('m1', [
       { url: 'u1', publicId: 'p1', fileName: 'a.png', mimeType: 'image/png' },
     ])

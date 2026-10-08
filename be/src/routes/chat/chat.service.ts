@@ -431,6 +431,7 @@ export class ChatService {
   async uploadAttachments(
     messageId: string,
     tenantId: string,
+    userId: string,
     files: Express.Multer.File[] | undefined,
   ): Promise<MessageBaseType> {
     const message = await this.chatRepo.findMessageById(messageId)
@@ -441,6 +442,17 @@ export class ChatService {
     if (!message || message.tenantId !== tenantId || message.deletedAt) {
       throw AppException.notFound(ChatErrorCode.MESSAGE_NOT_FOUND, 'Message not found')
     }
+    // Same rules as editing: the caller can access the message's channel
+    // (private: members only), is its author, and is within the edit window.
+    // All checked before any file is validated or sent to Cloudinary.
+    await this.getChannelForTenant(tenantId, message.channelId, userId, {
+      notFound: ChatErrorCode.MESSAGE_NOT_FOUND,
+      forbidden: ChatErrorCode.FORBIDDEN_PRIVATE_CHANNEL_ACCESS,
+    })
+    if (message.senderId !== userId) {
+      throw AppException.forbidden(ChatErrorCode.MESSAGE_FORBIDDEN, 'Only the author can change this message')
+    }
+    this.assertWithinEditWindow(message)
 
     if (!files || files.length === 0) {
       throw AppException.badRequest(ChatErrorCode.ATTACHMENT_FILE_MISSING, 'No attachment files were uploaded')
