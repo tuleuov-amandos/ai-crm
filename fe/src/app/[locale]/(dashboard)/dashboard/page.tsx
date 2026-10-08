@@ -62,7 +62,7 @@ export default function DashboardPage() {
   if (isForbidden) {
     return (
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <header className="h-14 shrink-0 border-b bg-background flex items-center justify-between px-6 gap-3">
+        <header className="h-14 shrink-0 border-b bg-background flex items-center justify-between px-6 gap-3 max-md:h-auto max-md:min-h-14 max-md:flex-wrap max-md:px-3 max-md:py-2">
           <h1
             className="text-foreground tracking-tight"
             style={{ fontSize: 15, fontWeight: 600, lineHeight: 1 }}
@@ -89,7 +89,7 @@ export default function DashboardPage() {
     <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 
       {/* ── Top bar ────────────────────────────────────────────────────────── */}
-      <header className="h-14 shrink-0 border-b bg-background flex items-center justify-between px-6 gap-3">
+      <header className="h-14 shrink-0 border-b bg-background flex items-center justify-between px-6 gap-3 max-md:h-auto max-md:min-h-14 max-md:flex-wrap max-md:px-3 max-md:py-2">
         <h1
           className="text-foreground tracking-tight"
           style={{ fontSize: 15, fontWeight: 600, lineHeight: 1 }}
@@ -97,7 +97,7 @@ export default function DashboardPage() {
           {t("title")}
         </h1>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 max-md:flex-wrap">
           {/* Period tabs */}
           <Tabs value={period} onValueChange={(val) => setPeriod(val as DashboardPeriod)}>
             <TabsList className="h-8 gap-0 p-0.5">
@@ -107,7 +107,7 @@ export default function DashboardPage() {
             </TabsList>
           </Tabs>
 
-          {canCreateDeal && <Separator orientation="vertical" className="h-5 mx-0.5" />}
+          {canCreateDeal && <Separator orientation="vertical" className="h-5 mx-0.5 max-md:hidden" />}
 
           {canCreateDeal && (
             <Button
