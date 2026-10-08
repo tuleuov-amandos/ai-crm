@@ -4,6 +4,7 @@ import { chatService } from "@/services/chat.service";
 import { ApiError } from "@/types/error.type";
 import { useApiError } from "@/hooks/useApiError";
 import {
+  InfiniteData,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -11,7 +12,11 @@ import {
 } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { GetChannelsResType } from "@/lib/validations/chat.scheme";
+import {
+  GetChannelsResType,
+  GetMessagesPaginatedResType,
+} from "@/lib/validations/chat.scheme";
+import { applyMessageDeleted, applyMessageUpdate } from "@/lib/chatMessages";
 
 // ─────────────────────────────────────────
 // QUERY KEYS
@@ -173,6 +178,70 @@ export const useSendMessage = (channelId: string) => {
       chatService.sendMessage(channelId, content),
     onError: (error: ApiError) => {
       toast.error(getApiError(error, t("sendMessageError")));
+    },
+  });
+};
+
+// The message can no longer be changed from this screen: the 24h window
+// closed, or it was deleted meanwhile (e.g. from another tab). The list is
+// refetched and the edit form closes instead of staying open with an error.
+export const isStaleMessageError = (error: ApiError): boolean => {
+  const code = error.response?.data?.code;
+  return code === "CHAT_MESSAGE_EDIT_EXPIRED" || code === "CHAT_MESSAGE_NOT_FOUND";
+};
+
+// PATCH /chat/channels/:id/messages/:messageId — the response replaces the
+// cached message right away; the socket's `messageUpdated` event repeats the
+// same replacement (idempotent) and reaches the other members.
+export const useUpdateMessage = (channelId: string) => {
+  const queryClient = useQueryClient();
+  const t = useTranslations("chat.toasts");
+  const getApiError = useApiError();
+
+  return useMutation({
+    mutationFn: ({ messageId, content }: { messageId: string; content: string }) =>
+      chatService.updateMessage(channelId, messageId, content),
+    onSuccess: (message) => {
+      queryClient.setQueryData<InfiniteData<GetMessagesPaginatedResType>>(
+        chatKeys.messages(channelId),
+        (old) => applyMessageUpdate(old, message),
+      );
+    },
+    onError: (error: ApiError) => {
+      toast.error(getApiError(error, t("editMessageError")));
+      if (isStaleMessageError(error)) {
+        queryClient.invalidateQueries({ queryKey: chatKeys.messages(channelId) });
+      }
+    },
+  });
+};
+
+// DELETE /chat/channels/:id/messages/:messageId — soft delete. The channel
+// list is refetched too: a deleted message no longer counts as unread.
+export const useDeleteMessage = (channelId: string) => {
+  const queryClient = useQueryClient();
+  const t = useTranslations("chat.toasts");
+  const getApiError = useApiError();
+
+  return useMutation({
+    mutationFn: (messageId: string) =>
+      chatService.deleteMessage(channelId, messageId),
+    onSuccess: (message, messageId) => {
+      queryClient.setQueryData<InfiniteData<GetMessagesPaginatedResType>>(
+        chatKeys.messages(channelId),
+        (old) =>
+          applyMessageDeleted(old, {
+            messageId,
+            deletedAt: message.deletedAt ?? new Date().toISOString(),
+          }),
+      );
+      queryClient.invalidateQueries({ queryKey: chatKeys.channels() });
+    },
+    onError: (error: ApiError) => {
+      toast.error(getApiError(error, t("deleteMessageError")));
+      if (isStaleMessageError(error)) {
+        queryClient.invalidateQueries({ queryKey: chatKeys.messages(channelId) });
+      }
     },
   });
 };
