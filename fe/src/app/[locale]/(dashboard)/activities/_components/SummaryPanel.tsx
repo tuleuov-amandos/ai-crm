@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { FileText, Mail, Phone, Users } from "lucide-react";
 import type { ReactNode } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,7 +21,7 @@ interface SummaryPanelProps {
 }
 
 // ─────────────────────────────────────────
-// Static config cho type rows
+// Static config for type rows
 // ─────────────────────────────────────────
 
 const TYPE_ROWS: {
@@ -120,6 +120,7 @@ function UserSkeletonRows() {
 
 export function SummaryPanel({ activities, isLoading }: SummaryPanelProps) {
   const t = useTranslations("activities");
+  const locale = useLocale();
   const tType = useTranslations("activities.types");
   // ── Count by type — useMemo to avoid recalculation on each render (req 10.1) ──
   const counts = useMemo(() => {
@@ -142,9 +143,9 @@ export function SummaryPanel({ activities, isLoading }: SummaryPanelProps) {
       userMap[a.user.id].count++;
     }
     return Object.values(userMap)
-      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "vi"))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, locale))
       .slice(0, 3);
-  }, [activities]);
+  }, [activities, locale]);
 
   // ── Render ──────────────────────────────────────────────────────────────
   return (

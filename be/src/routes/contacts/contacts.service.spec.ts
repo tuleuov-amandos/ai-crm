@@ -95,18 +95,13 @@ describe('ContactsService.bulkImport deal stage matching', () => {
     ])
   })
 
-  it('keeps the old English and Vietnamese words, resolved through the stage with that legacyKey', async () => {
-    expect(
-      await importStages(['Deal won', 'lost', 'qualified lead', 'Mới', 'Tiềm năng', 'Đề xuất', 'Thắng', 'Thất bại']),
-    ).toEqual([
+  it('keeps the old English words, resolved through the stage with that legacyKey', async () => {
+    expect(await importStages(['Deal won', 'lost', 'qualified lead', 'new prospect', 'proposal sent'])).toEqual([
       { stageId: 's-won', stage: 'CLOSED_WON' },
       { stageId: 's-lost', stage: 'CLOSED_LOST' },
       { stageId: 's-qualified', stage: 'QUALIFIED' },
       { stageId: 's-prospect', stage: 'PROSPECT' },
-      { stageId: 's-qualified', stage: 'QUALIFIED' },
       { stageId: 's-proposal', stage: 'PROPOSAL' },
-      { stageId: 's-won', stage: 'CLOSED_WON' },
-      { stageId: 's-lost', stage: 'CLOSED_LOST' },
     ])
   })
 

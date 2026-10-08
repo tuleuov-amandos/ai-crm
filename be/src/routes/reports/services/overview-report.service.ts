@@ -118,7 +118,7 @@ export class OverviewReportService {
     const daysDeltaVal = currentAvgDays - prevAvgDays
     const avgDaysToClose = {
       value: Math.round(currentAvgDays),
-      delta: `${daysDeltaVal <= 0 ? '' : '+'}${Math.round(daysDeltaVal)} ngày`,
+      delta: `${daysDeltaVal <= 0 ? '' : '+'}${Math.round(daysDeltaVal)}`,
       up: daysDeltaVal <= 0,
     }
 

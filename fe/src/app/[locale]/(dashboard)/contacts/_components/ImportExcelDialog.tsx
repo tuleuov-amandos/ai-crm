@@ -135,18 +135,18 @@ export default function ImportExcelDialog({ isOpen, onOpenChange }: ImportExcelD
   const autoMatchSynonyms = (headers: string[]) => {
     const mapped: Record<string, string | null> = {};
     const systemFields = [
-      { key: "name", synonyms: ["Họ và tên", "Tên liên hệ", "Name", "Tên", "Họ tên", "Имя и фамилия", "Имя", "ФИО", "Контакт"] },
-      { key: "email", synonyms: ["Email", "Địa chỉ email", "Hòm thư", "Эл. почта", "Почта"] },
-      { key: "phone", synonyms: ["Số điện thoại", "Điện thoại", "Phone", "SĐT", "Телефон", "Номер телефона", "Тел"] },
-      { key: "company", synonyms: ["Công ty", "Company", "Doanh nghiệp", "Компания", "Организация"] },
-      { key: "position", synonyms: ["Chức vụ", "Position", "Vai trò", "Должность"] },
-      { key: "tags", synonyms: ["Tags", "Nhãn", "Tag", "Теги", "Метки"] },
+      { key: "name", synonyms: ["Name", "Имя и фамилия", "Имя", "ФИО", "Контакт"] },
+      { key: "email", synonyms: ["Email", "Эл. почта", "Почта"] },
+      { key: "phone", synonyms: ["Phone", "Телефон", "Номер телефона", "Тел"] },
+      { key: "company", synonyms: ["Company", "Компания", "Организация"] },
+      { key: "position", synonyms: ["Position", "Должность"] },
+      { key: "tags", synonyms: ["Tags", "Tag", "Теги", "Метки"] },
       { key: "channel", synonyms: ["Channel", "Канал", "Категория", "Category"] },
-      { key: "ownerEmail", synonyms: ["Email người sở hữu", "Owner Email", "Chủ sở hữu", "Email ответственного", "Ответственный"] },
-      { key: "dealTitle", synonyms: ["Tên Deal đi kèm", "Tên Deal", "Deal Title", "Cơ hội", "Название связанной сделки", "Название сделки", "Сделка"] },
-      { key: "dealValue", synonyms: ["Giá trị Deal (VND)", "Giá trị Deal", "Giá trị", "Value", "Giá trị cơ hội", "Сумма сделки (KZT)", "Сумма сделки (VND)", "Сумма сделки", "Сумма", "Стоимость"] },
-      { key: "dealStage", synonyms: ["Trạng thái Deal", "Trạng thái", "Stage", "Trạng thái cơ hội", "Этап сделки", "Этап", "Статус сделки"] },
-      { key: "dealNote", synonyms: ["Ghi chú Deal", "Ghi chú", "Note", "Заметка по сделке", "Заметка", "Комментарий"] }
+      { key: "ownerEmail", synonyms: ["Owner Email", "Email ответственного", "Ответственный"] },
+      { key: "dealTitle", synonyms: ["Deal Title", "Название связанной сделки", "Название сделки", "Сделка"] },
+      { key: "dealValue", synonyms: ["Value", "Сумма сделки (KZT)", "Сумма сделки", "Сумма", "Стоимость"] },
+      { key: "dealStage", synonyms: ["Stage", "Этап сделки", "Этап", "Статус сделки"] },
+      { key: "dealNote", synonyms: ["Note", "Заметка по сделке", "Заметка", "Комментарий"] }
     ];
 
     let allMatched = true;

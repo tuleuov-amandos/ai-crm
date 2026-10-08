@@ -460,7 +460,7 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
                 {tAi("emailTitle")}
               </p>
               <p className="text-muted-foreground" style={{ fontSize: 10, marginTop: 1 }}>
-                {tAi("emailTo", { email: "quang.pham@jklbank.vn" })}
+                {tAi("emailTo", { email: "example@example.com" })}
               </p>
             </div>
             <span

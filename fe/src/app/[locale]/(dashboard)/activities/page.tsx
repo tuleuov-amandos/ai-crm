@@ -69,7 +69,7 @@ function groupActivitiesByDate(
 }
 
 // ─────────────────────────────────────────
-// Skeleton loading cho timeline
+// Skeleton loading for the timeline
 // ─────────────────────────────────────────
 function TimelineSkeleton() {
   return (

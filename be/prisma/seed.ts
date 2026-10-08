@@ -31,17 +31,53 @@ function getRandomInt(min: number, max: number): number {
 }
 
 function getRandomPhone(): string {
-  const prefixes = ['090', '091', '098', '093', '097', '086', '038']
+  const prefixes = ['701', '702', '705', '707', '747', '775', '777']
   const randomDigits = Math.floor(1000000 + Math.random() * 9000000).toString()
-  return getRandomElement(prefixes) + randomDigits
+  return '+7' + getRandomElement(prefixes) + randomDigits
 }
 
-function removeDiacritics(str: string): string {
+const CYRILLIC_TO_LATIN: Record<string, string> = {
+  а: 'a',
+  б: 'b',
+  в: 'v',
+  г: 'g',
+  д: 'd',
+  е: 'e',
+  ё: 'e',
+  ж: 'zh',
+  з: 'z',
+  и: 'i',
+  й: 'y',
+  к: 'k',
+  л: 'l',
+  м: 'm',
+  н: 'n',
+  о: 'o',
+  п: 'p',
+  р: 'r',
+  с: 's',
+  т: 't',
+  у: 'u',
+  ф: 'f',
+  х: 'h',
+  ц: 'ts',
+  ч: 'ch',
+  ш: 'sh',
+  щ: 'sch',
+  ъ: '',
+  ы: 'y',
+  ь: '',
+  э: 'e',
+  ю: 'yu',
+  я: 'ya',
+}
+
+function transliterate(str: string): string {
   return str
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D')
+    .toLowerCase()
+    .split('')
+    .map((ch) => CYRILLIC_TO_LATIN[ch] ?? ch)
+    .join('')
 }
 
 // Helper to generate weighted month: mostly concentrated in May, June, July and less in Jan - Apr
@@ -59,7 +95,7 @@ function getRandomWeightedMonth(): number {
 }
 
 async function main() {
-  console.log('🌱 Bắt đầu dọn dẹp dữ liệu cũ...')
+  console.log('🌱 Очистка старых данных...')
   await prisma.aiSuggestion.deleteMany({})
   await prisma.task.deleteMany({})
   await prisma.activity.deleteMany({})
@@ -75,13 +111,13 @@ async function main() {
   await prisma.role.deleteMany({})
   await prisma.tenant.deleteMany({})
 
-  console.log('🌱 Bắt đầu khởi tạo dữ liệu mẫu...')
+  console.log('🌱 Создание тестовых данных...')
 
   // 1. Create Tenant
   const tenant = await prisma.tenant.create({
     data: {
-      name: 'Công ty ABC',
-      slug: 'cong-ty-abc',
+      name: 'Компания АВС',
+      slug: 'kompaniya-abc',
       plan: 'pro',
     },
   })
@@ -89,31 +125,31 @@ async function main() {
 
   // 2. Create system Permissions list
   const permissionsList = [
-    { action: 'manage', subject: 'all', description: 'Quản trị hệ thống toàn quyền' },
+    { action: 'manage', subject: 'all', description: 'Полный доступ к системе' },
     
-    { action: 'create', subject: 'Contact', description: 'Tạo liên hệ mới' },
-    { action: 'read', subject: 'Contact', description: 'Xem thông tin liên hệ' },
-    { action: 'update', subject: 'Contact', description: 'Sửa thông tin liên hệ' },
-    { action: 'delete', subject: 'Contact', description: 'Xóa liên hệ' },
+    { action: 'create', subject: 'Contact', description: 'Создание контактов' },
+    { action: 'read', subject: 'Contact', description: 'Просмотр контактов' },
+    { action: 'update', subject: 'Contact', description: 'Редактирование контактов' },
+    { action: 'delete', subject: 'Contact', description: 'Удаление контактов' },
 
-    { action: 'create', subject: 'Deal', description: 'Tạo Deal mới' },
-    { action: 'read', subject: 'Deal', description: 'Xem Deal' },
-    { action: 'update', subject: 'Deal', description: 'Cập nhật Deal' },
-    { action: 'delete', subject: 'Deal', description: 'Xóa Deal' },
+    { action: 'create', subject: 'Deal', description: 'Создание сделок' },
+    { action: 'read', subject: 'Deal', description: 'Просмотр сделок' },
+    { action: 'update', subject: 'Deal', description: 'Редактирование сделок' },
+    { action: 'delete', subject: 'Deal', description: 'Удаление сделок' },
 
-    { action: 'create', subject: 'Task', description: 'Tạo Task mới' },
-    { action: 'read', subject: 'Task', description: 'Xem Task' },
-    { action: 'update', subject: 'Task', description: 'Cập nhật Task' },
-    { action: 'delete', subject: 'Task', description: 'Xóa Task' },
+    { action: 'create', subject: 'Task', description: 'Создание задач' },
+    { action: 'read', subject: 'Task', description: 'Просмотр задач' },
+    { action: 'update', subject: 'Task', description: 'Редактирование задач' },
+    { action: 'delete', subject: 'Task', description: 'Удаление задач' },
 
-    { action: 'create', subject: 'Activity', description: 'Tạo Hoạt động mới' },
-    { action: 'read', subject: 'Activity', description: 'Xem Hoạt động' },
-    { action: 'update', subject: 'Activity', description: 'Sửa Hoạt động' },
-    { action: 'delete', subject: 'Activity', description: 'Xóa Hoạt động' },
+    { action: 'create', subject: 'Activity', description: 'Создание активностей' },
+    { action: 'read', subject: 'Activity', description: 'Просмотр активностей' },
+    { action: 'update', subject: 'Activity', description: 'Редактирование активностей' },
+    { action: 'delete', subject: 'Activity', description: 'Удаление активностей' },
 
-    { action: 'read', subject: 'Report', description: 'Xem phân tích & báo cáo chuyên sâu' },
-    { action: 'read', subject: 'KpiTarget', description: 'Xem chỉ tiêu doanh số' },
-    { action: 'update', subject: 'KpiTarget', description: 'Cập nhật chỉ tiêu doanh số' },
+    { action: 'read', subject: 'Report', description: 'Просмотр аналитики и отчётов' },
+    { action: 'read', subject: 'KpiTarget', description: 'Просмотр KPI по продажам' },
+    { action: 'update', subject: 'KpiTarget', description: 'Редактирование KPI по продажам' },
   ]
 
   for (const perm of permissionsList) {
@@ -222,7 +258,7 @@ async function main() {
       tenantId: tenant.id,
       email: 'admin@abc.com',
       password: hashedPassword,
-      name: 'Nguyễn Admin',
+      name: 'Алексей Админов',
       roleId: adminRole.id,
     },
   })
@@ -232,18 +268,18 @@ async function main() {
       tenantId: tenant.id,
       email: 'manager@abc.com',
       password: hashedPassword,
-      name: 'Trần Manager',
+      name: 'Мария Менеджерова',
       roleId: managerRole.id,
     },
   })
 
   const salesRepsData = [
-    { email: 'sales@abc.com', name: 'Lê Sales Rep' },
-    { email: 'huong@abc.com', name: 'Trần Thị Hương' },
-    { email: 'quang@abc.com', name: 'Nguyễn Quang' },
-    { email: 'lan@abc.com', name: 'Phạm Thị Lan' },
-    { email: 'minh@abc.com', name: 'Vũ Đức Minh' },
-    { email: 'thu@abc.com', name: 'Lê Thị Thu' },
+    { email: 'sales@abc.com', name: 'Сергей Продавцов' },
+    { email: 'anna@abc.com', name: 'Анна Петрова' },
+    { email: 'dmitry@abc.com', name: 'Дмитрий Козлов' },
+    { email: 'elena@abc.com', name: 'Елена Смирнова' },
+    { email: 'igor@abc.com', name: 'Игорь Волков' },
+    { email: 'olga@abc.com', name: 'Ольга Новикова' },
   ]
 
   const salesReps: any[] = []
@@ -264,12 +300,12 @@ async function main() {
 
   // 8. Create Contacts (30 Contacts) with tag data
   const companyNames = [
-    'Vingroup', 'Viettel', 'FPT Software', 'Masan Group', 'Techcombank',
-    'Vietcombank', 'Vinamilk', 'Thế Giới Di Động', 'VNG Corporation', 'Tập đoàn Hòa Phát'
+    'Альфа Технологии', 'Северный Банк', 'Прогресс Софт', 'Группа Горизонт', 'Мегаполис Телеком',
+    'Восток Капитал', 'Сибирский Молочный Дом', 'Центр Электроники', 'Рассвет Корпорация', 'Холдинг Атлант'
   ]
-  const contactFirstNames = ['Nam', 'Lan', 'Hương', 'Quang', 'Minh', 'Thu', 'Tuấn', 'Hùng']
-  const contactLastNames = ['Nguyễn', 'Trần', 'Lê', 'Phạm', 'Vũ']
-  const positions = ['CEO', 'CTO', 'Giám đốc IT', 'Trưởng phòng Mua hàng']
+  const contactFirstNames = ['Алексей', 'Елена', 'Анна', 'Дмитрий', 'Игорь', 'Ольга', 'Андрей', 'Максим']
+  const contactLastNames = ['Иванов', 'Петров', 'Сидоров', 'Кузнецов', 'Попов']
+  const positions = ['CEO', 'CTO', 'ИТ-директор', 'Руководитель отдела закупок']
   const contactTagsList = ['Enterprise', 'Vip', 'Potential']
 
   const contacts: any[] = []
@@ -280,8 +316,8 @@ async function main() {
     const lastName = getRandomElement(contactLastNames)
     const fullName = `${lastName} ${firstName}`
     
-    const cleanFirstName = removeDiacritics(firstName).toLowerCase().replace(/\s+/g, '')
-    const cleanCompany = removeDiacritics(company).toLowerCase().replace(/[^a-z0-9]/g, '')
+    const cleanFirstName = transliterate(firstName).replace(/\s+/g, '')
+    const cleanCompany = transliterate(company).replace(/[^a-z0-9]/g, '')
     const email = `${cleanFirstName}.${getRandomInt(10, 99)}@${cleanCompany}.com`
 
     // Select 1-3 random tags
@@ -312,7 +348,7 @@ async function main() {
   const dealStages = [
     DealStage.PROSPECT, DealStage.QUALIFIED, DealStage.PROPOSAL, DealStage.CLOSED_WON, DealStage.CLOSED_LOST
   ]
-  const dealTitles = ['Triển khai ERP', 'Tích hợp thanh toán API', 'Nâng cấp Cloud Server', 'Hợp đồng bảo trì', 'Phát triển Mobile App']
+  const dealTitles = ['Внедрение ERP', 'Интеграция платёжного API', 'Обновление облачного сервера', 'Договор на обслуживание', 'Разработка мобильного приложения']
   const deals: any[] = []
   const currentYear = 2026
 
@@ -372,7 +408,7 @@ async function main() {
         stageId: await resolveStageIdByLegacyKey(prisma, tenant.id, stage),
         closeDate,
         createdAt,
-        note: `Cơ hội kinh doanh tiềm năng với ${contact.name}`,
+        note: `Потенциальная сделка с контактом ${contact.name}`,
       },
     })
     deals.push(deal)
@@ -381,10 +417,10 @@ async function main() {
   // 10. Create Activities (60 Activities)
   const activityTypes = [ActivityType.CALL, ActivityType.EMAIL, ActivityType.MEETING, ActivityType.NOTE]
   const activityNotes = {
-    [ActivityType.CALL]: ['Gọi điện giới thiệu dịch vụ và báo giá sơ bộ.', 'Gọi điện thảo luận chi tiết các yêu cầu tùy chỉnh.', 'Follow up sau khi gửi proposal.'],
-    [ActivityType.EMAIL]: ['Gửi brochure sản phẩm và báo giá chi tiết.', 'Gửi email làm rõ một số điểm hợp đồng.', 'Gửi email tóm tắt cuộc họp.'],
-    [ActivityType.MEETING]: ['Họp demo sản phẩm trực tuyến qua Zoom/Meet.', 'Gặp trực tiếp thương thảo điều khoản.', 'Họp khảo sát hiện trạng hạ tầng.'],
-    [ActivityType.NOTE]: ['Khách hàng có vẻ ưu tiên giải pháp triển khai nhanh.', 'Đối thủ đang chào giá thấp hơn nhưng support kém.', 'Ghi chú kỹ thuật cần tích hợp thêm cổng thanh toán.']
+    [ActivityType.CALL]: ['Звонок: презентация услуг и предварительная оценка стоимости.', 'Звонок: подробное обсуждение индивидуальных требований.', 'Звонок после отправки коммерческого предложения.'],
+    [ActivityType.EMAIL]: ['Отправлена брошюра с продуктом и подробный расчёт стоимости.', 'Письмо с уточнением отдельных пунктов договора.', 'Письмо с итогами встречи.'],
+    [ActivityType.MEETING]: ['Онлайн-демонстрация продукта в Zoom/Meet.', 'Личная встреча по согласованию условий.', 'Встреча по обследованию текущей инфраструктуры.'],
+    [ActivityType.NOTE]: ['Клиент, судя по всему, приоритетно рассматривает быстрое внедрение.', 'Конкурент предлагает цену ниже, но поддержка у него слабее.', 'Техническая заметка: нужно дополнительно интегрировать платёжный шлюз.']
   }
 
   for (let i = 1; i <= 60; i++) {
@@ -410,7 +446,7 @@ async function main() {
         contactId: deal.contactId,
         dealId: deal.id,
         userId: deal.ownerId,
-        title: type === ActivityType.CALL ? 'Cuộc gọi trao đổi' : type === ActivityType.EMAIL ? 'Gửi email' : type === ActivityType.MEETING ? 'Họp mặt' : 'Ghi chú deal',
+        title: type === ActivityType.CALL ? 'Звонок клиенту' : type === ActivityType.EMAIL ? 'Отправка письма' : type === ActivityType.MEETING ? 'Встреча' : 'Заметка по сделке',
         type,
         note,
         date: activityDate,
@@ -419,7 +455,7 @@ async function main() {
   }
 
   // 11. Create Tasks (60 Tasks)
-  const taskTitles = ['Gửi báo giá chính thức', 'Chuẩn bị slide demo', 'Gọi điện follow up', 'Trình duyệt hợp đồng', 'Setup môi trường test']
+  const taskTitles = ['Отправить коммерческое предложение', 'Подготовить слайды для демо', 'Позвонить клиенту', 'Согласовать договор', 'Настроить тестовое окружение']
 
   for (let i = 1; i <= 60; i++) {
     const deal = getRandomElement(deals)
@@ -462,8 +498,8 @@ async function main() {
         jobId: `job-ai-${deal.id}`,
         dealId: deal.id,
         type: AiSuggestionType.EMAIL_DRAFT,
-        content: `Kính gửi đối tác, cảm ơn quý khách hàng đã thảo luận với chúng tôi về cơ hội "${deal.title}". Dưới đây là dự thảo đề xuất giải pháp...`,
-        sourceNote: 'Khách hàng có phản hồi tích cực sau demo.',
+        content: `Уважаемый партнёр, благодарим вас за обсуждение сделки «${deal.title}». Ниже — проект предложения по решению...`,
+        sourceNote: 'Клиент положительно отреагировал на демонстрацию.',
       },
     })
   }
@@ -497,41 +533,41 @@ async function main() {
 
   console.log(`
 ========================================================================
-📊 BẢN TIN THỐNG KÊ DỮ LIỆU ĐƯỢC SEED (TENANT: ${tenant.name})
+📊 СВОДКА ПО ТЕСТОВЫМ ДАННЫМ (TENANT: ${tenant.name})
 ========================================================================
 🏢 Tenant ID:        ${tenant.id}
 💼 Plan:             ${tenant.plan.toUpperCase()}
-🔑 Vai trò & Quyền Hạn:
-   - Tổng số Roles:  ${rolesCount} (ADMIN, MANAGER, SALES_REP)
-   - Tổng số Quyền:  ${permissionsCount} (Được map thông qua RolePermission)
-👥 Danh sách tài khoản (Mật khẩu mặc định: Password123!):
-   - [ADMIN] Nguyễn Admin      | Email: admin@abc.com   | Quyền: manage -> all
-   - [MANAGER] Trần Manager    | Email: manager@abc.com | Quyền: CRUD toàn công ty
-   - [SALES_REP] Lê Sales Rep  | Email: sales@abc.com   | Quyền ABAC (Chỉ xem dữ liệu sở hữu)
-   - [SALES_REP] Trần T. Hương | Email: huong@abc.com   | Quyền ABAC (Chỉ xem dữ liệu sở hữu)
-   - [SALES_REP] Nguyễn Quang  | Email: quang@abc.com   | Quyền ABAC (Chỉ xem dữ liệu sở hữu)
-   - [SALES_REP] Phạm T. Lan   | Email: lan@abc.com     | Quyền ABAC (Chỉ xem dữ liệu sở hữu)
-   - [SALES_REP] Vũ Đức Minh   | Email: minh@abc.com    | Quyền ABAC (Chỉ xem dữ liệu sở hữu)
-   - [SALES_REP] Lê Thị Thu    | Email: thu@abc.com     | Quyền ABAC (Chỉ xem dữ liệu sở hữu)
-📈 Thống kê thực thể nghiệp vụ đã tạo:
-   - 📞 Contacts (Liên hệ):    ${contactsCount} liên hệ (Có gắn tags ngẫu nhiên)
-   - 🤝 Deals (Cơ hội):        ${dealsCount} cơ hội (Trọng số phân bổ tháng 5, 6, 7/2026)
-   - 📅 Activities (Hoạt động): ${activitiesCount} hoạt động
-   - 📝 Tasks (Nhiệm vụ):      ${tasksCount} nhiệm vụ
-   - 🧠 AI Suggestions:       ${aiSuggestionsCount} gợi ý từ AI
-   - 🎯 KPI Target Records:    ${kpiTargetsCount} mục tiêu doanh số
+🔑 Роли и права:
+   - Ролей:          ${rolesCount} (ADMIN, MANAGER, SALES_REP)
+   - Прав:           ${permissionsCount} (связаны через RolePermission)
+👥 Учётные записи (пароль по умолчанию: Password123!):
+   - [ADMIN] Алексей Админов      | Email: admin@abc.com   | Права: manage -> all
+   - [MANAGER] Мария Менеджерова  | Email: manager@abc.com | Права: CRUD по всей компании
+   - [SALES_REP] Сергей Продавцов | Email: sales@abc.com   | ABAC (только свои данные)
+   - [SALES_REP] Анна Петрова     | Email: anna@abc.com    | ABAC (только свои данные)
+   - [SALES_REP] Дмитрий Козлов   | Email: dmitry@abc.com  | ABAC (только свои данные)
+   - [SALES_REP] Елена Смирнова   | Email: elena@abc.com   | ABAC (только свои данные)
+   - [SALES_REP] Игорь Волков     | Email: igor@abc.com    | ABAC (только свои данные)
+   - [SALES_REP] Ольга Новикова   | Email: olga@abc.com    | ABAC (только свои данные)
+📈 Созданные бизнес-сущности:
+   - 📞 Contacts (контакты):    ${contactsCount} (со случайными тегами)
+   - 🤝 Deals (сделки):         ${dealsCount} (распределены по месяцам 5, 6, 7/2026)
+   - 📅 Activities (активности): ${activitiesCount}
+   - 📝 Tasks (задачи):         ${tasksCount}
+   - 🧠 AI Suggestions:        ${aiSuggestionsCount}
+   - 🎯 KPI Target Records:     ${kpiTargetsCount}
 ========================================================================
   `);
 
-  console.log('✅ Seed dữ liệu thành công!');
+  console.log('✅ Seed успешно выполнен!');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Seed thất bại:', e)
+    console.error('❌ Ошибка seed:', e)
     process.exit(1)
   })
   .finally(async () => {
     await prisma.$disconnect()
-    console.log('✅ Seed hoàn tất!')
+    console.log('✅ Seed завершён!')
   })

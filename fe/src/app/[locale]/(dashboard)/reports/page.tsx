@@ -321,7 +321,7 @@ export default function ReportsPage() {
                       <KpiCard
                         label={t("overview.kpi.avgDaysToClose")}
                         value={`${overviewData.kpis.avgDaysToClose.value} ${t("units.days")}`}
-                        delta={overviewData.kpis.avgDaysToClose.delta}
+                        delta={`${overviewData.kpis.avgDaysToClose.delta} ${t("units.days")}`}
                         up={overviewData.kpis.avgDaysToClose.up}
                       />
                     </div>

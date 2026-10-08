@@ -94,7 +94,7 @@ export function ActivityCard({
   const initials = getInitials(activity.user.name);
   const avatarColor = getAvatarColor(activity.user.id);
 
-  // Format date cho display
+  // Format date for display
   const formattedDate = new Date(activity.date).toLocaleString(locale, {
     hour: "2-digit",
     minute: "2-digit",
