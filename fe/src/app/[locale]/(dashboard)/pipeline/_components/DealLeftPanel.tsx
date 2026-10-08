@@ -45,16 +45,18 @@ import { fromDateOnly, toDateOnly } from "@/lib/dateOnly";
 import { useMe } from "@/hooks/useAuth";
 import { useGetUsers } from "@/hooks/useUsers";
 import { usePipelineStages, useStageLabel } from "@/hooks/usePipelineStages";
+import { DealQuickActions } from "./DealQuickActions";
 
 const UNASSIGNED = "__unassigned__";
 
 type DealLeftPanelProps = {
   deal: DealDetail;
   onEdit: () => void;
+  className?: string;
 };
 
 // ── Component ───────────────────────────────────────────────────────────────
-export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
+export function DealLeftPanel({ deal, onEdit, className }: DealLeftPanelProps) {
   const t = useTranslations("pipeline.leftPanel");
   const tCommon = useTranslations("common");
   const stageLabel = useStageLabel();
@@ -80,6 +82,10 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
   const usersQuery = useGetUsers();
   const users = usersQuery.data ?? [];
   const updatePaymentStatus = useUpdateDealPaymentStatus(deal.id);
+  // Payment badge and the phone quick action: only ADMIN and MANAGER
+  const togglePaid = canAssign
+    ? () => updatePaymentStatus.mutate({ isPaid: !deal.isPaid })
+    : undefined;
 
   // Adjust local task state during render when the deal's tasks change
   // (official React "adjusting state during render" pattern — no effect needed).
@@ -206,7 +212,13 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
   const doneCount    = tasks.filter((t) =>  t.done).length;
 
   return (
-    <div className="w-[40%] min-w-[320px] shrink-0 flex flex-col border-r border-border bg-background overflow-y-auto">
+    <div className={cn("w-[40%] min-w-[320px] shrink-0 flex flex-col border-r border-border bg-background overflow-y-auto max-md:w-full max-md:min-w-0 max-md:border-r-0", className)}>
+
+      <DealQuickActions
+        deal={deal}
+        onTogglePaid={togglePaid}
+        paidPending={updatePaymentStatus.isPending}
+      />
 
       {/* ── Deal header ──────────────────────────────────────────────── */}
       <div className="px-5 pt-5 pb-5 border-b border-border">
@@ -218,19 +230,14 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
             <PaymentStatusBadge
               isPaid={deal.isPaid}
               disabled={updatePaymentStatus.isPending}
-              onToggle={
-                canAssign
-                  ? () =>
-                      updatePaymentStatus.mutate({ isPaid: !deal.isPaid })
-                  : undefined
-              }
+              onToggle={togglePaid}
             />
             {isDealArchived(deal) && <ArchivedBadge />}
           </div>
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 gap-1 px-2 text-muted-foreground hover:text-foreground -mr-1"
+            className="h-6 gap-1 px-2 text-muted-foreground hover:text-foreground -mr-1 max-md:h-10"
             style={{ fontSize: 12 }}
             onClick={onEdit}
           >
@@ -249,13 +256,13 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
 
         {/* 2 × 2 metric grid */}
         <div className="grid grid-cols-2 gap-2.5 mb-4">
-          {/* Value */}
-          <div className="bg-[#F8F8F7] dark:bg-card rounded-[10px] border border-border px-3 py-2.5">
+          {/* Value (full row on phones so the amount is not cut) */}
+          <div className="bg-[#F8F8F7] dark:bg-card rounded-[10px] border border-border px-3 py-2.5 max-md:col-span-2">
             <p className="flex items-center gap-1 text-muted-foreground mb-1" style={{ fontSize: 11 }}>
               <TrendingUp size={10} strokeWidth={1.8} />
               {t("dealValue")}
             </p>
-            <p className="text-foreground" style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1 }}>
+            <p className="text-foreground max-md:break-words" style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1 }}>
               {formatCurrency(deal.value)}
             </p>
           </div>
@@ -340,7 +347,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
               );
             })}
           </div>
-          <div className="flex">
+          <div className="flex max-md:hidden">
             {progressStages.map((s, i) => {
               const isActive = i === currentStageIdx;
               const isPast   = i < currentStageIdx;
@@ -358,6 +365,17 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
               );
             })}
           </div>
+          {/* Phones: the current stage and its position only */}
+          {currentStageIdx >= 0 && (
+            <div className="md:hidden flex items-center justify-between gap-2" style={{ fontSize: 11 }}>
+              <span className="text-primary truncate" style={{ fontWeight: 600 }}>
+                {stageLabel(progressStages[currentStageIdx])}
+              </span>
+              <span className="text-muted-foreground shrink-0">
+                {t("stageProgress", { current: currentStageIdx + 1, total: progressStages.length })}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -372,7 +390,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
           </p>
           <Link
             href={`/contacts/${deal.contact.id}`}
-            className="flex items-center gap-0.5 text-primary hover:underline"
+            className="flex items-center gap-0.5 text-primary hover:underline max-md:min-h-10 max-md:px-2 max-md:-mr-2"
             style={{ fontSize: 11 }}
           >
             {t("viewProfile")}
@@ -410,7 +428,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
         <div className="space-y-1.5">
           <a
             href={`mailto:${deal.contact.email}`}
-            className="flex items-center gap-2.5 group"
+            className="flex items-center gap-2.5 group max-md:min-h-10"
             style={{ textDecoration: "none" }}
           >
             <div className="size-[26px] rounded-[7px] bg-secondary/60 flex items-center justify-center shrink-0">
@@ -425,7 +443,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
           </a>
           <a
             href={`tel:${deal.contact.phone}`}
-            className="flex items-center gap-2.5 group"
+            className="flex items-center gap-2.5 group max-md:min-h-10"
             style={{ textDecoration: "none" }}
           >
             <div className="size-[26px] rounded-[7px] bg-secondary/60 flex items-center justify-center shrink-0">
@@ -478,7 +496,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
               setAddingTask(true);
               setTimeout(() => inputRef.current?.focus(), 50);
             }}
-            className="h-6 gap-1 px-2 text-primary hover:text-primary hover:bg-secondary/60 -mr-1"
+            className="h-6 gap-1 px-2 text-primary hover:text-primary hover:bg-secondary/60 -mr-1 max-md:h-10"
             style={{ fontSize: 12 }}
           >
             <Plus size={11} />
@@ -502,7 +520,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                     value={editingTitle}
                     onChange={(e) => setEditingTitle(e.target.value)}
                     placeholder={t("taskNamePlaceholder")}
-                    className="w-full bg-background border border-border rounded px-2 py-1 outline-none text-foreground text-xs"
+                    className="w-full bg-background border border-border rounded px-2 py-1 outline-none text-foreground text-xs max-md:text-base max-md:py-2"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") commitEdit(task.id);
                       if (e.key === "Escape") setEditingTaskId(null);
@@ -513,7 +531,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
-                          className="h-7 px-2 text-xs flex items-center gap-1.5 bg-background border-border text-muted-foreground hover:text-foreground"
+                          className="h-7 px-2 text-xs flex items-center gap-1.5 bg-background border-border text-muted-foreground hover:text-foreground max-md:h-10"
                         >
                           <Calendar size={12} />
                           {editingDueDate ? format(fromDateOnly(editingDueDate)!, "dd/MM/yyyy") : t("pickDueDate")}
@@ -534,14 +552,14 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-7 px-2 text-xs text-muted-foreground"
+                        className="h-7 px-2 text-xs text-muted-foreground max-md:h-10"
                         onClick={() => setEditingTaskId(null)}
                       >
                         {tCommon("cancel")}
                       </Button>
                       <Button
                         size="sm"
-                        className="h-7 px-2 text-xs bg-primary text-white"
+                        className="h-7 px-2 text-xs bg-primary text-white max-md:h-10"
                         onClick={() => commitEdit(task.id)}
                       >
                         {tCommon("save")}
@@ -555,7 +573,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                         setEditingAssigneeId(value === UNASSIGNED ? null : value)
                       }
                     >
-                      <SelectTrigger size="sm" className="h-7 text-xs bg-background border-border text-foreground">
+                      <SelectTrigger size="sm" className="h-7 text-xs bg-background border-border text-foreground max-md:data-[size=sm]:h-10">
                         <SelectValue placeholder={t("selectAssignee")} />
                       </SelectTrigger>
                       <SelectContent className="bg-background border-border">
@@ -579,7 +597,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                 key={task.id}
                 onClick={() => toggle(task.id)}
                 className={cn(
-                  "flex items-start gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition-all select-none group",
+                  "flex items-start gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition-all select-none group max-md:min-h-11",
                   task.done
                     ? "border-green-100 dark:border-green-950/60 bg-green-50/60 dark:bg-green-950/20"
                     : "border-border bg-background hover:bg-muted/20"
@@ -617,7 +635,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity max-md:opacity-100 max-md:-my-1.5">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -626,7 +644,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                       setEditingDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : null);
                       setEditingAssigneeId(task.assigneeId);
                     }}
-                    className="p-1 text-muted-foreground hover:text-primary rounded hover:bg-muted shrink-0 mt-0.5 bg-transparent border-0 cursor-pointer"
+                    className="p-1 text-muted-foreground hover:text-primary rounded hover:bg-muted shrink-0 mt-0.5 bg-transparent border-0 cursor-pointer max-md:size-10 max-md:flex max-md:items-center max-md:justify-center max-md:mt-0"
                   >
                     <Edit2 size={12} />
                   </button>
@@ -635,7 +653,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                       e.stopPropagation();
                       handleDeleteTask(task.id);
                     }}
-                    className="p-1 text-muted-foreground hover:text-red-500 rounded hover:bg-muted shrink-0 mt-0.5 bg-transparent border-0 cursor-pointer"
+                    className="p-1 text-muted-foreground hover:text-red-500 rounded hover:bg-muted shrink-0 mt-0.5 bg-transparent border-0 cursor-pointer max-md:size-10 max-md:flex max-md:items-center max-md:justify-center max-md:mt-0"
                   >
                     <Trash2 size={12} />
                   </button>
@@ -652,7 +670,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder={t("newTaskNamePlaceholder")}
-                className="w-full bg-background border border-border rounded px-2 py-1 outline-none text-foreground text-xs"
+                className="w-full bg-background border border-border rounded px-2 py-1 outline-none text-foreground text-xs max-md:text-base max-md:py-2"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") commitAdd();
                   if (e.key === "Escape") {
@@ -667,7 +685,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="h-7 px-2 text-xs flex items-center gap-1.5 bg-background border-border text-muted-foreground hover:text-foreground"
+                      className="h-7 px-2 text-xs flex items-center gap-1.5 bg-background border-border text-muted-foreground hover:text-foreground max-md:h-10"
                     >
                       <Calendar size={12} />
                       {newDueDate ? format(fromDateOnly(newDueDate)!, "dd/MM/yyyy") : t("pickDueDate")}
@@ -688,7 +706,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="h-7 px-2 text-xs text-muted-foreground"
+                    className="h-7 px-2 text-xs text-muted-foreground max-md:h-10"
                     onClick={() => {
                       setAddingTask(false);
                       setNewTitle("");
@@ -700,7 +718,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                   </Button>
                   <Button
                     size="sm"
-                    className="h-7 px-2 text-xs bg-primary text-white"
+                    className="h-7 px-2 text-xs bg-primary text-white max-md:h-10"
                     onClick={commitAdd}
                   >
                     {tCommon("add")}
@@ -714,7 +732,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
                     setNewAssigneeId(value === UNASSIGNED ? null : value)
                   }
                 >
-                  <SelectTrigger size="sm" className="h-7 text-xs bg-background border-border text-foreground">
+                  <SelectTrigger size="sm" className="h-7 text-xs bg-background border-border text-foreground max-md:data-[size=sm]:h-10">
                     <SelectValue placeholder={t("selectAssignee")} />
                   </SelectTrigger>
                   <SelectContent className="bg-background border-border">

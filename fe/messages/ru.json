@@ -24,6 +24,8 @@
     "today": "Сегодня",
     "yesterday": "Вчера",
     "tomorrow": "Завтра",
+    "tabInfo": "Информация",
+    "tabActivity": "Активность",
     "systemRoleDescription": {
       "ADMIN": "Administrator",
       "MANAGER": "Manager",
@@ -302,6 +304,12 @@
       "share": "Поделиться",
       "addActivity": "Добавить активность",
       "editDeal": "Редактировать сделку",
+      "quickActions": "Быстрые действия",
+      "call": "Позвонить",
+      "whatsapp": "WhatsApp",
+      "closeConfirmTitle": "Закрыть сделку как «{stage}»?",
+      "closeConfirmDescription": "Сделка перейдёт на этап «{stage}» и будет считаться закрытой.",
+      "closeConfirm": "Подтвердить",
       "deleteDeal": "Удалить сделку"
     },
     "leftPanel": {
@@ -321,6 +329,7 @@
       "unassigned": "Без исполнителя",
       "tasksCompleted": "{done}/{total} задач выполнено",
       "probability": "Вероятность закрытия",
+      "stageProgress": "{current} из {total}",
       "toasts": {
         "taskStatusError": "Не удалось обновить статус задачи.",
         "taskAdded": "Новая задача добавлена!",

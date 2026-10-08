@@ -14,6 +14,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import {
+  MobileDetailTabs,
+  mobileTabPanelClass,
+  type MobileDetailTab,
+} from "@/components/mobile-detail-tabs";
 import { useGetContact, useUpdateContact } from "@/hooks/useContacts";
 import { useGetUsers } from "@/hooks/useUsers";
 import { useParams } from "next/navigation";
@@ -55,10 +60,11 @@ function AssignOwnerPopover({
         <Button
           variant="outline"
           size="sm"
-          className="h-8 gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs"
+          className="h-8 gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs max-md:size-10 max-md:px-0"
+          aria-label={t("detail.assign")}
         >
           <UserPlus size={13} />
-          {t("detail.assign")}
+          <span className="max-md:hidden">{t("detail.assign")}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-56 p-1.5">
@@ -114,6 +120,7 @@ function AssignOwnerPopover({
 export default function ContactDetailPage() {
   const t = useTranslations("contacts");
   const [isCreateDealOpen, setIsCreateDealOpen] = useState(false);
+  const [mobileTab, setMobileTab] = useState<MobileDetailTab>("info");
   // Get contact ID from URL params
   const params = useParams();
   const id = params.id as string;
@@ -155,13 +162,13 @@ export default function ContactDetailPage() {
   return (
     <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
       {/* Top bar */}
-      <header className="h-14 shrink-0 border-b bg-background flex items-center justify-between px-6 gap-3">
-        {/* Left: back + breadcrumb */}
-        <div className="flex items-center gap-2.5">
+      <header className="h-14 shrink-0 border-b bg-background flex items-center justify-between px-6 gap-3 max-md:h-auto max-md:min-h-14 max-md:px-3 max-md:py-2">
+        {/* Left: back + breadcrumb (on phones: back and name) */}
+        <div className="flex items-center gap-2.5 max-md:min-w-0">
           <Button
             variant="outline"
             size="icon"
-            className="size-7 border-border text-muted-foreground hover:text-foreground"
+            className="size-7 border-border text-muted-foreground hover:text-foreground max-md:size-10 max-md:shrink-0"
             asChild
           >
             <Link href="/contacts">
@@ -170,21 +177,21 @@ export default function ContactDetailPage() {
           </Button>
 
           <div
-            className="flex items-center gap-1.5 text-muted-foreground"
+            className="flex items-center gap-1.5 text-muted-foreground max-md:min-w-0"
             style={{ fontSize: 13 }}
           >
             <Link
               href="/contacts"
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors max-md:hidden"
               style={{ textDecoration: "none", fontSize: 13 }}
             >
               {t("title")}
             </Link>
-            <span className="text-muted-foreground/50" style={{ fontSize: 11 }}>
+            <span className="text-muted-foreground/50 max-md:hidden" style={{ fontSize: 11 }}>
               /
             </span>
             <span
-              className="text-foreground"
+              className="text-foreground max-md:truncate"
               style={{ fontSize: 13, fontWeight: 500 }}
             >
               {contact.name}
@@ -192,8 +199,8 @@ export default function ContactDetailPage() {
           </div>
         </div>
 
-        {/* Right: action buttons */}
-        <div className="flex items-center gap-2">
+        {/* Right: action buttons (icons only on phones) */}
+        <div className="flex items-center gap-2 max-md:shrink-0">
           <AssignOwnerPopover
             contactId={contact.id}
             currentOwnerId={contact.ownerId}
@@ -201,23 +208,30 @@ export default function ContactDetailPage() {
 
           <Button
             size="sm"
-            className="h-8 gap-1.5 text-xs"
+            className="h-8 gap-1.5 text-xs max-md:size-10 max-md:px-0"
             onClick={() => setIsCreateDealOpen(true)}
+            aria-label={t("detail.addDeal")}
           >
             <Plus size={13} />
-            {t("detail.addDeal")}
+            <span className="max-md:hidden">{t("detail.addDeal")}</span>
           </Button>
         </div>
       </header>
 
-      {/* Split content area */}
+      <MobileDetailTabs value={mobileTab} onChange={setMobileTab} />
+
+      {/* Split content area (on phones one tab at a time) */}
       <div className="flex flex-1 overflow-hidden">
-        <ContactInfoPanel contact={contact} />
+        <ContactInfoPanel
+          contact={contact}
+          className={mobileTabPanelClass(mobileTab, "info")}
+        />
         <ActivityTimeline
           activities={activities}
           onSubmitActivity={handleSubmitActivity}
           isPendingSubmit={createActivity.isPending}
           entityType="contact"
+          className={mobileTabPanelClass(mobileTab, "activity")}
         />
       </div>
 

@@ -11,6 +11,7 @@ import LogActivityForm from "./LogActivityForm";
 import { formatDate } from "@/lib/helper";
 import { useRelativeTime } from "@/lib/format";
 import { useDeleteActivityAttachment } from "@/hooks/useActivities";
+import { cn } from "@/lib/utils";
 
 export type ActivityTab = ActivityType;
 
@@ -23,6 +24,7 @@ interface ActivityTimelineProps {
   ) => void;
   isPendingSubmit?: boolean;
   entityType?: "contact" | "deal";
+  className?: string;
 }
 
 const TYPE_CONFIG: Record<
@@ -56,6 +58,7 @@ export default function ActivityTimeline({
   onSubmitActivity,
   isPendingSubmit,
   entityType = "contact",
+  className,
 }: ActivityTimelineProps) {
   const t = useTranslations("activities.timeline");
   const tType = useTranslations("activities.types");
@@ -69,7 +72,7 @@ export default function ActivityTimeline({
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 
   return (
-    <div className="flex-1 flex flex-col overflow-y-auto bg-[#F8F8F7] dark:bg-background">
+    <div className={cn("flex-1 flex flex-col overflow-y-auto bg-[#F8F8F7] dark:bg-background max-md:min-w-0", className)}>
       {/* ── Log activity form ── */}
       <LogActivityForm
         onSubmit={onSubmitActivity}
@@ -79,14 +82,14 @@ export default function ActivityTimeline({
 
       {/* Timeline label */}
       <p
-        className="px-6 pt-5 pb-2 text-muted-foreground uppercase"
+        className="px-6 pt-5 pb-2 text-muted-foreground uppercase max-md:px-3"
         style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em" }}
       >
         {t("history")}
       </p>
 
       {/* Timeline items */}
-      <div className="px-6 pb-6 flex flex-col gap-0 relative">
+      <div className="px-6 pb-6 flex flex-col gap-0 relative max-md:px-3">
         {activities.map((item, index) => {
           const config = TYPE_CONFIG[item.type];
           const Icon = config.icon;
@@ -114,7 +117,7 @@ export default function ActivityTimeline({
               </div>
 
               {/* Content card */}
-              <div className="flex-1 bg-background rounded-[10px] border border-border px-3.5 py-3 mb-3">
+              <div className="flex-1 bg-background rounded-[10px] border border-border px-3.5 py-3 mb-3 max-md:min-w-0">
                 {/* Card header */}
                 <div className="flex items-start justify-between mb-1.5">
                   <div>
@@ -175,7 +178,7 @@ export default function ActivityTimeline({
                 {item.note.length > 100 && (
                   <button
                     onClick={() => toggleExpand(item.id)}
-                    className="text-primary bg-transparent border-0 cursor-pointer p-0"
+                    className="text-primary bg-transparent border-0 cursor-pointer p-0 max-md:min-h-10"
                     style={{ fontSize: 11, marginBottom: 0 }}
                   >
                     {isExpanded ? t("collapse") : t("expand")}
@@ -189,7 +192,7 @@ export default function ActivityTimeline({
                       href={item.attachmentUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-primary hover:underline"
+                      className="flex items-center gap-1 text-primary hover:underline max-md:min-h-10"
                       style={{ fontSize: 11, textDecoration: "none" }}
                     >
                       <Paperclip size={11} />
@@ -199,7 +202,7 @@ export default function ActivityTimeline({
                       type="button"
                       onClick={() => deleteAttachment.mutate(item.id)}
                       disabled={deleteAttachment.isPending}
-                      className="text-muted-foreground hover:text-destructive bg-transparent border-0 cursor-pointer p-0"
+                      className="text-muted-foreground hover:text-destructive bg-transparent border-0 cursor-pointer p-0 max-md:size-10 max-md:flex max-md:items-center max-md:justify-center"
                       aria-label={tAttachment("remove")}
                     >
                       <X size={11} />

@@ -136,7 +136,7 @@ function LogActivityForm({ onSubmit, isPending, entityType = "contact" }: LogAct
   };
 
   return (
-    <div className="mx-6 mt-5 mb-0 bg-background rounded-xl border border-border overflow-hidden shrink-0">
+    <div className="mx-6 mt-5 mb-0 bg-background rounded-xl border border-border overflow-hidden shrink-0 max-md:mx-3">
       <form onSubmit={form.handleSubmit(handleSubmit)}>
         {/* Tab selector */}
         <div className="flex border-b border-border">
@@ -149,7 +149,7 @@ function LogActivityForm({ onSubmit, isPending, entityType = "contact" }: LogAct
                 key={tab.key}
                 onClick={() => handleTabChange(tab.key)}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-1 py-2.5 border-0 cursor-pointer transition-all",
+                  "flex-1 flex items-center justify-center gap-1 py-2.5 border-0 cursor-pointer transition-all max-md:min-h-11",
                   "-mb-px border-b-2",
                   isActive
                     ? "bg-secondary/40 text-primary border-b-primary"
@@ -170,7 +170,7 @@ function LogActivityForm({ onSubmit, isPending, entityType = "contact" }: LogAct
             {...form.register("title")}
             value={form.watch("title") || ""}
             placeholder={t("titlePlaceholder")}
-            className="bg-[#F8F8F7] dark:bg-card border-[#E8E7E2] dark:border-border text-foreground text-sm"
+            className="bg-[#F8F8F7] dark:bg-card border-[#E8E7E2] dark:border-border text-foreground text-sm max-md:h-10 max-md:text-base!"
             style={{ fontSize: 13 }}
           />
         </div>
@@ -182,7 +182,7 @@ function LogActivityForm({ onSubmit, isPending, entityType = "contact" }: LogAct
             value={form.watch("note") || ""}
             placeholder={PLACEHOLDER[activeTab]}
             rows={3}
-            className="bg-[#F8F8F7] dark:bg-card border-[#E8E7E2] dark:border-border text-foreground text-sm resize-none"
+            className="bg-[#F8F8F7] dark:bg-card border-[#E8E7E2] dark:border-border text-foreground text-sm resize-none max-md:text-base!"
             style={{ fontSize: 13, lineHeight: 1.6 }}
           />
         </div>
@@ -199,7 +199,7 @@ function LogActivityForm({ onSubmit, isPending, entityType = "contact" }: LogAct
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1 px-2.5 py-1 text-[11px] rounded-md border border-border bg-background text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1 text-[11px] rounded-md border border-border bg-background text-muted-foreground hover:text-foreground transition-colors cursor-pointer max-md:min-h-10"
           >
             <Paperclip size={11} />
             {attachment ? tAttachment("change") : tAttachment("add")}
@@ -210,7 +210,7 @@ function LogActivityForm({ onSubmit, isPending, entityType = "contact" }: LogAct
               <button
                 type="button"
                 onClick={() => setAttachment(null)}
-                className="text-muted-foreground hover:text-foreground bg-transparent border-0 cursor-pointer p-0"
+                className="text-muted-foreground hover:text-foreground bg-transparent border-0 cursor-pointer p-0 max-md:size-10 max-md:flex max-md:items-center max-md:justify-center"
                 aria-label={tAttachment("remove")}
               >
                 <X size={11} />
@@ -225,7 +225,7 @@ function LogActivityForm({ onSubmit, isPending, entityType = "contact" }: LogAct
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="flex items-center gap-1 px-2.5 py-1 text-[11px] rounded-md border border-border bg-background text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                className="flex items-center gap-1 px-2.5 py-1 text-[11px] rounded-md border border-border bg-background text-muted-foreground hover:text-foreground transition-colors cursor-pointer max-md:min-h-10"
               >
                 <Clock size={11} />
                 {toDateOnly(selectedDate)}
@@ -258,7 +258,7 @@ function LogActivityForm({ onSubmit, isPending, entityType = "contact" }: LogAct
                       newDate.setHours(parseInt(e.target.value, 10));
                       form.setValue("date", newDate);
                     }}
-                    className="text-xs bg-[#F8F8F7] dark:bg-muted border border-border dark:border-border text-foreground rounded px-1.5 py-1 outline-none font-mono"
+                    className="text-xs bg-[#F8F8F7] dark:bg-muted border border-border dark:border-border text-foreground rounded px-1.5 py-1 outline-none font-mono max-md:text-base"
                   >
                     {Array.from({ length: 24 }).map((_, i) => {
                       const val = i.toString().padStart(2, "0");
@@ -274,7 +274,7 @@ function LogActivityForm({ onSubmit, isPending, entityType = "contact" }: LogAct
                       newDate.setMinutes(parseInt(e.target.value, 10));
                       form.setValue("date", newDate);
                     }}
-                    className="text-xs bg-[#F8F8F7] dark:bg-muted border border-border dark:border-border text-foreground rounded px-1.5 py-1 outline-none font-mono"
+                    className="text-xs bg-[#F8F8F7] dark:bg-muted border border-border dark:border-border text-foreground rounded px-1.5 py-1 outline-none font-mono max-md:text-base"
                   >
                     {Array.from({ length: 60 }).map((_, i) => {
                       const val = i.toString().padStart(2, "0");
@@ -289,7 +289,7 @@ function LogActivityForm({ onSubmit, isPending, entityType = "contact" }: LogAct
           <Button
             type="submit"
             size="sm"
-            className="h-7 gap-1.5 text-xs"
+            className="h-7 gap-1.5 text-xs max-md:h-10"
             disabled={!note?.trim() || isPending}
           >
             <Send size={11} />

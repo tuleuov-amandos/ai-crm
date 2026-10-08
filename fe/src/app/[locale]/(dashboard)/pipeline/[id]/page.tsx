@@ -48,6 +48,11 @@ import { usePipelineStages } from "@/hooks/usePipelineStages";
 import { isDealArchived, needsArchiveConfirm } from "@/lib/dealArchive";
 import { EditDealSheet } from "../_components/EditDealSheet";
 import { ArchiveDealDialog } from "../_components/ArchiveDealDialog";
+import {
+  MobileDetailTabs,
+  mobileTabPanelClass,
+  type MobileDetailTab,
+} from "@/components/mobile-detail-tabs";
 
 export default function DealDetail() {
   const t = useTranslations("pipeline");
@@ -65,6 +70,7 @@ export default function DealDetail() {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [mobileTab, setMobileTab] = useState<MobileDetailTab>("info");
   const archiveDeals = useArchiveDeals();
   const unarchiveDeals = useUnarchiveDeals();
   const { getDealStage } = usePipelineStages();
@@ -74,7 +80,10 @@ export default function DealDetail() {
     router.push("/pipeline");
   };
 
-  // Open stage (or stages not loaded yet): confirm first; won/lost: at once.
+  const archivePending = archiveDeals.isPending || unarchiveDeals.isPending;
+
+  // Header button and the phone menu item. Open stage (or stages not loaded
+  // yet): confirm first; won/lost: at once.
   const handleArchiveClick = () => {
     if (!deal) return;
     if (isDealArchived(deal)) unarchiveDeals.mutate([id]);
@@ -96,14 +105,14 @@ export default function DealDetail() {
     <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 
       {/* ── Top bar ─────────────────────────────────────────────────────── */}
-      <header className="h-14 shrink-0 border-b bg-background flex items-center justify-between px-6 gap-3">
+      <header className="h-14 shrink-0 border-b bg-background flex items-center justify-between px-6 gap-3 max-md:h-auto max-md:min-h-14 max-md:px-3 max-md:py-2">
 
-        {/* Left: back + breadcrumb */}
-        <div className="flex items-center gap-2.5">
+        {/* Left: back + breadcrumb (on phones: back, title, stage) */}
+        <div className="flex items-center gap-2.5 max-md:min-w-0">
           <Button
             variant="outline"
             size="icon"
-            className="size-7 border-border text-muted-foreground hover:text-foreground shrink-0"
+            className="size-7 border-border text-muted-foreground hover:text-foreground shrink-0 max-md:size-10"
             asChild
           >
             <Link href="/pipeline">
@@ -111,36 +120,36 @@ export default function DealDetail() {
             </Link>
           </Button>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 max-md:min-w-0">
             <Link
               href="/pipeline"
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors max-md:hidden"
               style={{ textDecoration: "none", fontSize: 13 }}
             >
               {t("title")}
             </Link>
-            <span className="text-muted-foreground/40" style={{ fontSize: 12 }}>/</span>
+            <span className="text-muted-foreground/40 max-md:hidden" style={{ fontSize: 12 }}>/</span>
             <Link
               href={`/contacts/${deal?.contact.id ?? ""}`}
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground hover:text-foreground transition-colors max-md:hidden"
               style={{ textDecoration: "none", fontSize: 13 }}
             >
               {deal?.contact.name ?? ""}
             </Link>
-            <span className="text-muted-foreground/40" style={{ fontSize: 12 }}>/</span>
-            <span className="text-foreground" style={{ fontSize: 13, fontWeight: 500 }}>
+            <span className="text-muted-foreground/40 max-md:hidden" style={{ fontSize: 12 }}>/</span>
+            <span className="text-foreground max-md:truncate" style={{ fontSize: 13, fontWeight: 500 }}>
               {deal?.title ?? ""}
             </span>
-            <StageBadge stageId={deal.stageId} legacyStage={deal.stage} className="ml-0.5" />
+            <StageBadge stageId={deal.stageId} legacyStage={deal.stage} className="ml-0.5 max-md:shrink-0" />
           </div>
         </div>
 
-        {/* Right: action buttons */}
-        <div className="flex items-center gap-2">
+        {/* Right: action buttons (on phones only the menu) */}
+        <div className="flex items-center gap-2 max-md:shrink-0">
           <Button
             variant="outline"
             size="sm"
-            className="h-8 gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs"
+            className="h-8 gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs max-md:hidden"
           >
             <Bell size={12} />
             {t("detail.follow")}
@@ -149,7 +158,7 @@ export default function DealDetail() {
           <Button
             variant="outline"
             size="sm"
-            className="h-8 gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs"
+            className="h-8 gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs max-md:hidden"
           >
             <Share2 size={12} />
             {t("detail.share")}
@@ -158,15 +167,15 @@ export default function DealDetail() {
           <Button
             variant="outline"
             size="sm"
-            className="h-8 gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs"
-            disabled={archiveDeals.isPending || unarchiveDeals.isPending}
+            className="h-8 gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs max-md:hidden"
+            disabled={archivePending}
             onClick={handleArchiveClick}
           >
             {isDealArchived(deal) ? <ArchiveRestore size={12} /> : <Archive size={12} />}
             {isDealArchived(deal) ? t("archive.unarchive") : t("archive.archive")}
           </Button>
 
-          <Button size="sm" className="h-8 gap-1.5 text-xs">
+          <Button size="sm" className="h-8 gap-1.5 text-xs max-md:hidden">
             <Plus size={13} />
             {t("detail.addActivity")}
           </Button>
@@ -176,7 +185,7 @@ export default function DealDetail() {
               <Button
                 variant="outline"
                 size="icon"
-                className="size-8 border-border text-muted-foreground hover:text-foreground"
+                className="size-8 border-border text-muted-foreground hover:text-foreground max-md:size-10"
               >
                 <MoreHorizontal size={14} />
               </Button>
@@ -188,6 +197,20 @@ export default function DealDetail() {
               >
                 <Pencil size={12} className="mr-2" />
                 {t("detail.editDeal")}
+              </DropdownMenuItem>
+              {/* Phones: the archive button of the header lives here */}
+              <DropdownMenuItem
+                style={{ fontSize: 13 }}
+                className="md:hidden"
+                disabled={archivePending}
+                onClick={handleArchiveClick}
+              >
+                {isDealArchived(deal) ? (
+                  <ArchiveRestore size={12} className="mr-2" />
+                ) : (
+                  <Archive size={12} className="mr-2" />
+                )}
+                {isDealArchived(deal) ? t("archive.unarchive") : t("archive.archive")}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -203,10 +226,20 @@ export default function DealDetail() {
         </div>
       </header>
 
-      {/* ── Split content ────────────────────────────────────────────────── */}
+      <MobileDetailTabs value={mobileTab} onChange={setMobileTab} />
+
+      {/* ── Split content (on phones one tab at a time) ──────────────────── */}
       <div className="flex flex-1 overflow-hidden">
-        <DealLeftPanel deal={deal} onEdit={() => setEditOpen(true)}/>
-        <DealRightPanel dealId={id} activities={activities} />
+        <DealLeftPanel
+          deal={deal}
+          onEdit={() => setEditOpen(true)}
+          className={mobileTabPanelClass(mobileTab, "info")}
+        />
+        <DealRightPanel
+          dealId={id}
+          activities={activities}
+          className={mobileTabPanelClass(mobileTab, "activity")}
+        />
       </div>
 
       {/* Edit sheet */}

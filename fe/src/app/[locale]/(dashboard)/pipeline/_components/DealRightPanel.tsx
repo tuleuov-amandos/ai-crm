@@ -2,13 +2,15 @@ import { DealAiAnalyzer } from "./DealAiAnalyzer";
 import ActivityTimeline from "@/components/activities/ActivityTimeline";
 import { ActivityItem, CreateActivityForContactBodyType } from "@/lib/validations/activities.scheme";
 import { useCreateDealActivity, useUploadActivityAttachment } from "@/hooks/useActivities";
+import { cn } from "@/lib/utils";
 
 interface DealRightPanelProps {
   dealId: string;
   activities: ActivityItem[];
+  className?: string;
 }
 
-export function DealRightPanel({ dealId, activities }: DealRightPanelProps) {
+export function DealRightPanel({ dealId, activities, className }: DealRightPanelProps) {
   const createActivity = useCreateDealActivity(dealId);
   const uploadAttachment = useUploadActivityAttachment();
 
@@ -28,7 +30,7 @@ export function DealRightPanel({ dealId, activities }: DealRightPanelProps) {
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-y-auto bg-[#F8F8F7] dark:bg-background">
+    <div className={cn("flex-1 flex flex-col overflow-y-auto bg-[#F8F8F7] dark:bg-background max-md:min-w-0", className)}>
       {/* AI Analyzer */}
       <DealAiAnalyzer dealId={dealId} />
 
