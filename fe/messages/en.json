@@ -320,6 +320,7 @@
       "selectAssignee": "Select assignee",
       "unassigned": "Unassigned",
       "tasksCompleted": "{done}/{total} tasks completed",
+      "probability": "Win probability",
       "toasts": {
         "taskStatusError": "Failed to update task status.",
         "taskAdded": "New task added!",

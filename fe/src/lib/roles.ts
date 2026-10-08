@@ -2,7 +2,7 @@
 // The backend forbids creating / renaming / deleting a role with one of these
 // names, so their description is never user-editable and lives on the client
 // only — translated via `common.systemRoleDescription.<name>`, never read from
-// `Role.description` in the DB (which historically held Vietnamese seed text).
+// `Role.description` in the DB (which historically held seed text in another language).
 export const SYSTEM_ROLE_NAMES = ["ADMIN", "MANAGER", "SALES_REP"] as const;
 
 export type SystemRoleName = (typeof SYSTEM_ROLE_NAMES)[number];

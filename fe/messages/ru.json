@@ -320,6 +320,7 @@
       "selectAssignee": "Выберите исполнителя",
       "unassigned": "Без исполнителя",
       "tasksCompleted": "{done}/{total} задач выполнено",
+      "probability": "Вероятность закрытия",
       "toasts": {
         "taskStatusError": "Не удалось обновить статус задачи.",
         "taskAdded": "Новая задача добавлена!",

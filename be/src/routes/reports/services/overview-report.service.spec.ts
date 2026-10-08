@@ -46,7 +46,7 @@ const DEFAULT_KPIS = {
   closedDeals: { value: 7, delta: '+5', up: true },
   winRate: { value: 42.9, delta: '-7.1%', up: false },
   avgDealSize: { value: 2333, delta: '+17%', up: true },
-  avgDaysToClose: { value: 43, delta: '-20 ngày', up: true },
+  avgDaysToClose: { value: 43, delta: '-20', up: true },
 }
 const DEFAULT_FORECAST = [
   { month: 'T1', cumActual: 0, cumForecast: 0 },

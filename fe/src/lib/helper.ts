@@ -12,10 +12,10 @@ export function formatDate(dateStr: string | Date, locale: string = "ru-RU"): st
 export function getInitials(name: string): string {
   // Split name into parts by whitespace
   const parts = name.trim().split(/\s+/);
-  // If only 1 word, take first 2 characters: "NGUYỄN" -> "NG"
+  // If only 1 word, take first 2 characters: "ИВАНОВ" -> "ИВ"
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   
-  // Take first character of last 2 words: "NGUYỄN MINH THUẬN" -> "M" + "T" = "MT"
+  // Take first character of last 2 words: "ИВАНОВ ПЁТР СЕРГЕЕВИЧ" -> "П" + "С" = "ПС"
   const second = parts[parts.length - 2];
   const last   = parts[parts.length - 1];
   return (second[0] + last[0]).toUpperCase();

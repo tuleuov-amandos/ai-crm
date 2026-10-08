@@ -51,7 +51,7 @@ async function bootstrap() {
   if (envConfig.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
       .setTitle('CRM SaaS API')
-      .setDescription('API documentation cho hệ thống CRM SaaS')
+      .setDescription('API documentation for the CRM SaaS system')
       .setVersion('1.0')
       .addCookieAuth('accessToken')
       .addBearerAuth()

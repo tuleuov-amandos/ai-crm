@@ -25,14 +25,14 @@ import { legacyDealStageFor } from 'src/common/pipeline-stages/default-pipeline-
 
 type ImportStage = { id: string; name: string; kind: string; legacyKey: string | null }
 
-// Old import words (Vietnamese and English), kept so earlier client files still
-// land in the same stages.
+// Old English import words, kept so earlier client files still land in the same
+// stages.
 function legacyStageFromImportWords(rawStage: string): DealStageType | null {
-  if (rawStage.includes('mới') || rawStage.includes('prospect')) return 'PROSPECT'
-  if (rawStage.includes('tiềm') || rawStage.includes('qualified')) return 'QUALIFIED'
-  if (rawStage.includes('thương') || rawStage.includes('đề') || rawStage.includes('proposal')) return 'PROPOSAL'
-  if (rawStage.includes('thắng') || rawStage.includes('won') || rawStage.includes('thành công')) return 'CLOSED_WON'
-  if (rawStage.includes('bại') || rawStage.includes('lost') || rawStage.includes('thất bại')) return 'CLOSED_LOST'
+  if (rawStage.includes('prospect')) return 'PROSPECT'
+  if (rawStage.includes('qualified')) return 'QUALIFIED'
+  if (rawStage.includes('proposal')) return 'PROPOSAL'
+  if (rawStage.includes('won')) return 'CLOSED_WON'
+  if (rawStage.includes('lost')) return 'CLOSED_LOST'
   return null
 }
 
@@ -371,18 +371,18 @@ export class ContactsService {
   async aiMapColumns(headers: string[]) {
     const prompt = `You are an expert data mapping assistant for a CRM system.
     We have 12 system fields:
-    - name (Họ và tên - Required)
+    - name (Full name - Required)
     - email (Email)
-    - phone (Số điện thoại)
-    - company (Công ty)
-    - position (Chức vụ)
+    - phone (Phone number)
+    - company (Company)
+    - position (Job title)
     - tags (Tags)
-    - ownerEmail (Email người sở hữu)
-    - dealTitle (Tên Deal)
-    - dealValue (Giá trị Deal)
-    - dealStage (Trạng thái Deal)
-    - dealNote (Ghi chú Deal)
-    - channel (Kênh/Phân loại khách hàng)
+    - ownerEmail (Owner email)
+    - dealTitle (Deal title)
+    - dealValue (Deal value)
+    - dealStage (Deal stage)
+    - dealNote (Deal note)
+    - channel (Channel / customer category)
 
     Given this list of headers from an uploaded spreadsheet:
     ${JSON.stringify(headers)}
@@ -391,9 +391,9 @@ export class ContactsService {
     Return ONLY a single valid JSON object (no explanations, no markdown formatting blocks, no triple backticks, no markdown json block) where keys are system fields, and values are the exact matching header from the spreadsheet list, or null if no matching header is found.
     Example Output Format:
     {
-      "name": "Họ và tên",
-      "email": "Email liên lạc",
-      "phone": "SĐT",
+      "name": "Full name",
+      "email": "Contact email",
+      "phone": "Phone",
       "company": null,
       ...
     }`

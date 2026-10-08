@@ -77,9 +77,9 @@ export class ActivityReportService {
 
     const totalTasks = doneTasksCount + overdueTasksCount + pendingTasksCount
     const statusDistribution = [
-      { name: 'Đã xong', value: totalTasks > 0 ? Math.round((doneTasksCount / totalTasks) * 100) : 0 },
-      { name: 'Quá hạn', value: totalTasks > 0 ? Math.round((overdueTasksCount / totalTasks) * 100) : 0 },
-      { name: 'Đang chờ', value: totalTasks > 0 ? Math.round((pendingTasksCount / totalTasks) * 100) : 0 },
+      { name: 'done', value: totalTasks > 0 ? Math.round((doneTasksCount / totalTasks) * 100) : 0 },
+      { name: 'overdue', value: totalTasks > 0 ? Math.round((overdueTasksCount / totalTasks) * 100) : 0 },
+      { name: 'pending', value: totalTasks > 0 ? Math.round((pendingTasksCount / totalTasks) * 100) : 0 },
     ]
 
     return {

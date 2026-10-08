@@ -15,11 +15,11 @@ import { reportsService } from "@/services/reports.service";
 
 import { CustomTooltipProps } from "@/lib/types/chart";
 
-// Backend returns Vietnamese status names; map them to localized labels for display.
+// Backend returns stable status keys; map them to localized labels for display.
 const RAW_STATUS = {
-  done: "Đã xong",
-  overdue: "Quá hạn",
-  pending: "Đang chờ",
+  done: "done",
+  overdue: "overdue",
+  pending: "pending",
 } as const;
 
 const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
@@ -106,7 +106,7 @@ export function ActivityReportTab({ startDate, endDate }: ActivityReportTabProps
 
   function handleDownloadStatus() {
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(data!.statusDistribution), "Task Status");
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(data!.statusDistribution.map((d) => ({ name: statusLabel(d.name), value: d.value }))), "Task Status");
     XLSX.writeFile(workbook, "task-status.xlsx");
   }
 

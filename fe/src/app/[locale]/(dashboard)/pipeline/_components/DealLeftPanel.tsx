@@ -275,7 +275,7 @@ export function DealLeftPanel({ deal, onEdit }: DealLeftPanelProps) {
           {/* <div className="bg-[#F8F8F7] rounded-[10px] border border-border px-3 py-2.5">
             <p className="flex items-center gap-1 text-muted-foreground mb-1.5" style={{ fontSize: 11 }}>
               <Target size={10} strokeWidth={1.8} />
-              Xác suất chốt
+              {t("probability")}
             </p>
             <div className="flex items-center gap-2">
               <p className="text-foreground shrink-0" style={{ fontSize: 14, fontWeight: 600, lineHeight: 1 }}>
