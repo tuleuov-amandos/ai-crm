@@ -4,6 +4,7 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import Link from "next/link";
@@ -23,7 +24,7 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
@@ -104,6 +105,13 @@ export function AppSidebar() {
   const { soundEnabled, toggleSound } = useChatSocketContext();
   const pathName = usePathname();
   const t = useTranslations("sidebar");
+  const { setOpenMobile } = useSidebar();
+
+  // Закрываем мобильную панель после перехода. Клик по текущему пункту pathname
+  // не меняет, его закрывает onClick у ссылок.
+  useEffect(() => {
+    setOpenMobile(false);
+  }, [pathName, setOpenMobile]);
 
   const brandName = workspace?.name?.trim() || "NSTORE";
   const showLogo = !!workspace?.logoUrl && workspace.logoUrl !== failedLogoUrl;
@@ -201,6 +209,7 @@ export function AppSidebar() {
                 <div key={gIdx} className="px-1 relative">
                   <Link
                     href={group.path}
+                    onClick={() => setOpenMobile(false)}
                     className={cn(
                       "flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm transition-all no-underline font-medium",
                       group.key === "chat" && "pr-9",
@@ -253,6 +262,7 @@ export function AppSidebar() {
                       <Link
                         key={item.path}
                         href={item.path}
+                        onClick={() => setOpenMobile(false)}
                         className={cn(
                           "flex items-center gap-3 w-full px-3 py-1.5 rounded-lg text-sm transition-all no-underline font-normal",
                           active

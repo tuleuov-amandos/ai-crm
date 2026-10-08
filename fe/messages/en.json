@@ -1437,6 +1437,7 @@
     "logout": "Log out",
     "soundOn": "Turn on notification sound",
     "soundOff": "Turn off notification sound",
+    "openMenu": "Open menu",
     "nav": {
       "dashboard": "Dashboard",
       "sales": "Sales",
