@@ -1,7 +1,8 @@
 "use client";
 
-import { useFormatter, useTranslations } from "next-intl";
+import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { formatShortValue } from "@/lib/helper";
+import { formatMonthLabel, type MonthLabelStyle } from "@/lib/monthLabel";
 
 /**
  * Locale-aware compact value formatter (e.g. "2.3 B" / "2,3 млрд").
@@ -27,4 +28,14 @@ export function useRelativeTime() {
     if (!date) return "";
     return format.relativeTime(new Date(date), new Date());
   };
+}
+
+/**
+ * Locale-aware month label for report charts (see {@link formatMonthLabel}):
+ * "short" for axes ("сент." / "Sep"), "long" for tooltips ("Сентябрь 2026").
+ */
+export function useMonthLabel() {
+  const locale = useLocale();
+  return (raw: unknown, style: MonthLabelStyle = "short", fallbackYear?: number) =>
+    formatMonthLabel(raw, locale, style, fallbackYear);
 }

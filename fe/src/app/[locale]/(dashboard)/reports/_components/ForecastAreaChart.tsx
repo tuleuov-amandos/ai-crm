@@ -7,16 +7,17 @@ import {
 import { useTranslations } from "next-intl";
 import * as XLSX from "xlsx";
 import { ChartCard } from "./ChartCard";
-import { useShortValue } from "@/lib/format";
+import { useMonthLabel, useShortValue } from "@/lib/format";
 
 import { CustomTooltipProps } from "@/lib/types/chart";
 
 const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   const shortValue = useShortValue();
+  const monthLabel = useMonthLabel();
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-white dark:bg-card border border-[#E8E7E2] dark:border-border rounded-lg shadow-md px-3 py-2.5 text-xs">
-      <p className="text-[#1A1A18] dark:text-foreground mb-1.5" style={{ fontWeight: 600 }}>{label}</p>
+      <p className="text-[#1A1A18] dark:text-foreground mb-1.5" style={{ fontWeight: 600 }}>{monthLabel(label, "long")}</p>
       {payload.map((p) => (
         <div key={p.dataKey} className="flex items-center gap-2 mb-0.5">
           <span className="size-2 rounded-full shrink-0" style={{ background: p.color ?? p.stroke }} />
@@ -42,6 +43,7 @@ import { EmptyState } from "./EmptyState";
 export function ForecastAreaChart({ data = [] }: ForecastAreaChartProps) {
   const t = useTranslations("reports.forecast");
   const shortValue = useShortValue();
+  const monthLabel = useMonthLabel();
   const isDataEmpty = !data || data.length === 0 || data.every(d => d.cumActual === 0 && d.cumForecast === 0);
 
   const lastItem = data[data.length - 1];
@@ -103,7 +105,7 @@ export function ForecastAreaChart({ data = [] }: ForecastAreaChartProps) {
             </linearGradient>
           </defs>
           <CartesianGrid key="fva-grid"  strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-          <XAxis         key="fva-xaxis" dataKey="month" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+          <XAxis         key="fva-xaxis" dataKey="month" tickFormatter={(v) => monthLabel(v)} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
           <YAxis         key="fva-yaxis" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={shortValue} width={48} domain={[0, yDomainMax]} />
           <Tooltip       key="fva-tt"    content={<CustomTooltip />} />
           <Area
