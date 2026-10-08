@@ -12,14 +12,16 @@ import * as XLSX from "xlsx";
 import { ChartCard } from "./ChartCard";
 import { EmptyState } from "./EmptyState";
 import { reportsService } from "@/services/reports.service";
+import { useMonthLabel } from "@/lib/format";
 
 import { CustomTooltipProps } from "@/lib/types/chart";
 
 const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+  const monthLabel = useMonthLabel();
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-white dark:bg-card border border-[#E8E7E2] dark:border-border rounded-lg shadow-md px-3 py-2.5 text-xs text-left">
-      <p className="text-[#1A1A18] dark:text-foreground mb-1.5" style={{ fontWeight: 600 }}>{label}</p>
+      <p className="text-[#1A1A18] dark:text-foreground mb-1.5" style={{ fontWeight: 600 }}>{monthLabel(label, "long")}</p>
       {payload.map((p) => (
         <div key={p.name} className="flex justify-between items-center gap-6 mb-1 last:mb-0">
           <div className="flex items-center gap-1.5">
@@ -46,6 +48,7 @@ interface ActivityReportTabProps {
 
 export function ActivityReportTab({ startDate, endDate }: ActivityReportTabProps) {
   const t = useTranslations("reports.activityTab");
+  const monthLabel = useMonthLabel();
 
   const LEGEND = [
     { color: "#534AB7", key: "Calls", name: t("seriesCalls") },
@@ -162,7 +165,7 @@ export function ActivityReportTab({ startDate, endDate }: ActivityReportTabProps
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={data.trend} margin={{ top: 10, right: 16, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="name" tickFormatter={(v) => monthLabel(v)} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} width={30} />
                   <Tooltip content={<CustomTooltip />} />
                   <Bar dataKey="Calls" stackId="activities" name={t("seriesCalls")} fill="#534AB7" />
