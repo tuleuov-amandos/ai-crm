@@ -12,7 +12,7 @@ import * as XLSX from "xlsx";
 import { ChartCard } from "./ChartCard";
 import { EmptyState } from "./EmptyState";
 import { getFunnelColor } from "@/lib/pipelineColors";
-import { useShortValue } from "@/lib/format";
+import { useMonthLabel, useShortValue } from "@/lib/format";
 import { useStageLabel } from "@/hooks/usePipelineStages";
 import { reportsService, type FunnelStage } from "@/services/reports.service";
 
@@ -54,13 +54,12 @@ const FunnelTooltip = ({ active, payload }: CustomTooltipProps) => {
 };
 
 const ForecastTooltip = ({ active, payload, label }: CustomTooltipProps) => {
-  const t = useTranslations("reports.pipelineTab");
   const shortValue = useShortValue();
+  const monthLabel = useMonthLabel();
   if (!active || !payload?.length || label === undefined) return null;
-  const labelStr = String(label);
   return (
     <div className="bg-white dark:bg-card border border-[#E8E7E2] dark:border-border rounded-lg shadow-md px-3 py-2.5 text-xs text-left">
-      <p className="text-[#1A1A18] dark:text-foreground mb-1.5" style={{ fontWeight: 600 }}>{t("forecastTooltipMonth", { month: labelStr.replace("T", "") })}</p>
+      <p className="text-[#1A1A18] dark:text-foreground mb-1.5" style={{ fontWeight: 600 }}>{monthLabel(label, "long", new Date().getFullYear())}</p>
       {payload.map((p) => (
         <div key={p.dataKey} className="flex justify-between items-center gap-6 mb-1 last:mb-0">
           <div className="flex items-center gap-1.5">
@@ -77,6 +76,7 @@ const ForecastTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 export function PipelineAnalysisTab() {
   const t = useTranslations("reports.pipelineTab");
   const shortValue = useShortValue();
+  const monthLabel = useMonthLabel();
   const stageLabel = useStageLabel();
   const { data, isLoading } = useQuery({
     queryKey: ["reports", "pipeline-analysis"],
@@ -254,7 +254,7 @@ export function PipelineAnalysisTab() {
           <ResponsiveContainer width="100%" height={260}>
             <ComposedChart data={data.weightedForecast} margin={{ top: 10, right: 16, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-              <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="month" tickFormatter={(v) => monthLabel(v)} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={shortValue} width={50} />
               <Tooltip content={<ForecastTooltip />} />
               
