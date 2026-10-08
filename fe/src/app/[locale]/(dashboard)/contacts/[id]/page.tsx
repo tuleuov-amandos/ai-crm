@@ -1,9 +1,10 @@
 "use client";
 import { useState } from "react";
-import { ArrowLeft, Plus, MoreHorizontal, UserPlus, Check } from "lucide-react";
+import { ArrowLeft, Plus, UserPlus, Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { ContactInfoPanel } from "../_components/ContactInfoPanel";
+import { CreateDealSheet } from "@/app/[locale]/(dashboard)/pipeline/_components/CreateDealSheet";
 import ActivityTimeline from "@/components/activities/ActivityTimeline";
 import { ContactDetailSkeleton } from "../_components/ContactDetailSkeleton";
 import { Button } from "@/components/ui/button";
@@ -112,6 +113,7 @@ function AssignOwnerPopover({
 
 export default function ContactDetailPage() {
   const t = useTranslations("contacts");
+  const [isCreateDealOpen, setIsCreateDealOpen] = useState(false);
   // Get contact ID from URL params
   const params = useParams();
   const id = params.id as string;
@@ -197,17 +199,13 @@ export default function ContactDetailPage() {
             currentOwnerId={contact.ownerId}
           />
 
-          <Button size="sm" className="h-8 gap-1.5 text-xs">
+          <Button
+            size="sm"
+            className="h-8 gap-1.5 text-xs"
+            onClick={() => setIsCreateDealOpen(true)}
+          >
             <Plus size={13} />
             {t("detail.addDeal")}
-          </Button>
-
-          <Button
-            variant="outline"
-            size="icon"
-            className="size-8 border-border text-muted-foreground hover:text-foreground"
-          >
-            <MoreHorizontal size={14} />
           </Button>
         </div>
       </header>
@@ -222,6 +220,12 @@ export default function ContactDetailPage() {
           entityType="contact"
         />
       </div>
+
+      <CreateDealSheet
+        open={isCreateDealOpen}
+        onOpenChange={setIsCreateDealOpen}
+        defaultContact={contact}
+      />
     </div>
   );
 }

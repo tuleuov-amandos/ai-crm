@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 
 import { useTranslations } from "next-intl";
 import { useDebounceValue } from "usehooks-ts";
-import { ChevronDown, Filter, Plus, Search, FileSpreadsheet } from "lucide-react";
+import { ChevronDown, Plus, Search, FileSpreadsheet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useGetContacts } from "@/hooks/useContacts";
@@ -69,15 +69,6 @@ const ContactsPage = () => {
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 gap-1.5 border-border text-muted-foreground hover:text-foreground text-xs"
-              >
-                <Filter size={13} />
-                {t("filter")}
-              </Button>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
