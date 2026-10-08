@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ComponentProps, type ReactNode } from "react";
 
 import {
-  ExternalLink,
   FileText,
   Mail,
   Phone,
@@ -56,30 +55,19 @@ function FilterPill({
 const dropdownBtnClass =
   "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-background transition-colors cursor-pointer";
 
-function DropdownBtn({ label }: { label: string }) {
-  return (
-    <button
-      className={cn(
-        dropdownBtnClass,
-        "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground",
-      )}
-      style={{ fontSize: 12 }}
-    >
-      {label}
-      <ChevronDown size={11} />
-    </button>
-  );
-}
-
 function DropdownTrigger({
   label,
   active,
+  ref,
+  ...props
 }: {
   label: string;
   active: boolean;
-}) {
+} & ComponentProps<"button">) {
   return (
     <button
+      {...props}
+      ref={ref}
       type="button"
       className={cn(
         dropdownBtnClass,
@@ -285,8 +273,6 @@ function ContactFilter({
 export function ActivitiesFilters({
   activeFilter,
   onFilterChange,
-  showEmpty,
-  onToggleEmpty,
   selectedUserId,
   onUserChange,
   selectedContactId,
@@ -295,8 +281,6 @@ export function ActivitiesFilters({
 }: {
   activeFilter: "all" | ActivityType;
   onFilterChange: (filter: "all" | ActivityType) => void;
-  showEmpty: boolean;
-  onToggleEmpty: () => void;
   selectedUserId: string | undefined;
   onUserChange: (userId: string | undefined) => void;
   selectedContactId: string | undefined;
@@ -331,16 +315,6 @@ export function ActivitiesFilters({
             onClick={() => onFilterChange(pill.key)}
           />
         ))}
-
-        <button
-          onClick={onToggleEmpty}
-          className="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-dashed border-border text-muted-foreground hover:text-foreground transition-colors cursor-pointer bg-transparent"
-          style={{ fontSize: 11 }}
-          title="Toggle empty state (dev)"
-        >
-          <ExternalLink size={10} />
-          {showEmpty ? t("filters.showData") : t("filters.emptyState")}
-        </button>
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
@@ -353,7 +327,6 @@ export function ActivitiesFilters({
           selectedContactName={selectedContactName}
           onContactChange={onContactChange}
         />
-        <DropdownBtn label={t("filters.last7Days")} />
       </div>
     </div>
   );

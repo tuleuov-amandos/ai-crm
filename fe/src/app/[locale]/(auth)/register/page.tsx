@@ -289,17 +289,6 @@ export default function RegisterPage() {
             </p>
           </div>
         </div>
-
-        {/* SSO hint */}
-        <p className="mt-4 text-center text-muted-foreground" style={{ fontSize: 12 }}>
-          {tc("ssoOrgQuestion")}{" "}
-          <button
-            type="button"
-            className="text-primary hover:underline underline-offset-2 transition-colors bg-transparent border-0 cursor-pointer"
-          >
-            {t("signUpWithSso")}
-          </button>
-        </p>
       </div>
 
       <p className="mt-12 text-muted-foreground" style={{ fontSize: 12 }}>

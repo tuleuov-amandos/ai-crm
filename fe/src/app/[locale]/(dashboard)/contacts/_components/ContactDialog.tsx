@@ -31,9 +31,6 @@ function ContactDialog({
   const isPending = isCreating || isUpdating;
 
   async function handleSubmit(data: CreateContactBodyType) {
-    console.log("isEditing:", isEditing);
-    console.log("contact id:", contact?.id);
-    console.log("data payload:", data);
     try {
       if (isEditing && contact?.id) {
         await updateContact({ id: contact.id, data });

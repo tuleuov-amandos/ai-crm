@@ -123,10 +123,6 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
 
       eventSourceRef.current = eventSource;
 
-      eventSource.addEventListener("ai-connected", () => {
-        console.log("SSE connected successfully");
-      });
-
       eventSource.addEventListener("ai-complete", (e) => {
         try {
           const data = JSON.parse(e.data);

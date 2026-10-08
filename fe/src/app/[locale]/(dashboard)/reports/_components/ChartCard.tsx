@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Info, Download } from "lucide-react";
+import { Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -24,12 +24,6 @@ export function ChartCard({ title, subtitle, children, className, action, noPad,
         </div>
         <div className="flex items-center gap-1.5">
           {action}
-          <button className="size-6 flex items-center justify-center rounded transition-colors" style={{ color: "var(--muted-foreground)", opacity: 0.4 }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
-            onMouseLeave={e => (e.currentTarget.style.opacity = "0.4")}
-          >
-            <Info size={12} />
-          </button>
           {onDownload ? (
             <button
               className="size-6 flex items-center justify-center rounded transition-colors cursor-pointer"
