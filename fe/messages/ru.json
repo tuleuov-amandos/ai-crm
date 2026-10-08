@@ -1725,6 +1725,7 @@
     "CHAT_MESSAGE_FORBIDDEN": "Изменять и удалять можно только свои сообщения.",
     "CHAT_MESSAGE_EDIT_EXPIRED": "Прошло больше 24 часов, сообщение уже нельзя изменить.",
     "CHAT_MESSAGE_NOT_EDITABLE": "У этого сообщения нет текста, его нельзя изменить.",
+    "CHAT_FORBIDDEN_PRIVATE_CHANNEL_ACCESS": "У вас нет доступа к этому приватному каналу.",
     "ACTIVITY_NOT_FOUND": "Активность не найдена.",
     "ACTIVITY_FORBIDDEN_LIST": "У вас нет прав на просмотр активностей.",
     "ACTIVITY_FORBIDDEN_UPDATE": "У вас нет прав на изменение этой активности.",

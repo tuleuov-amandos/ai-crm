@@ -61,7 +61,7 @@ export function RecentDeals({ deals = [], isLoading = false }: RecentDealsProps)
     if (daysAgo <= 0) return tCommon("today");
     const d = new Date();
     d.setDate(d.getDate() - daysAgo);
-    return format.relativeTime(d);
+    return format.relativeTime(d, new Date());
   };
 
   return (

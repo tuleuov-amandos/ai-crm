@@ -15,13 +15,6 @@ import { reportsService } from "@/services/reports.service";
 
 import { CustomTooltipProps } from "@/lib/types/chart";
 
-// Backend returns stable status keys; map them to localized labels for display.
-const RAW_STATUS = {
-  done: "done",
-  overdue: "overdue",
-  pending: "pending",
-} as const;
-
 const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   if (!active || !payload?.length) return null;
   return (
@@ -41,9 +34,9 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  [RAW_STATUS.done]: "#1D9E75",
-  [RAW_STATUS.overdue]: "#D85A30",
-  [RAW_STATUS.pending]: "#FBBF24",
+  done: "#1D9E75",
+  overdue: "#D85A30",
+  pending: "#FBBF24",
 };
 
 interface ActivityReportTabProps {
@@ -61,10 +54,11 @@ export function ActivityReportTab({ startDate, endDate }: ActivityReportTabProps
     { color: "#1D9E75", key: "Tasks", name: t("seriesTasks") },
   ];
 
+  // Backend returns stable status keys; map them to localized labels for display.
   const statusLabel = (name: string) =>
-    name === RAW_STATUS.done ? t("statusDone")
-      : name === RAW_STATUS.overdue ? t("statusOverdue")
-        : name === RAW_STATUS.pending ? t("statusPending")
+    name === "done" ? t("statusDone")
+      : name === "overdue" ? t("statusOverdue")
+        : name === "pending" ? t("statusPending")
           : name;
 
   // Query backend activities statistics
@@ -92,7 +86,7 @@ export function ActivityReportTab({ startDate, endDate }: ActivityReportTabProps
   const callMeetingRatio = totalMeetings > 0 ? (totalCalls / totalMeetings).toFixed(1) : totalCalls.toString();
 
   // Find overdue task percentage from status distribution
-  const overduePercentItem = data.statusDistribution.find(d => d.name === RAW_STATUS.overdue);
+  const overduePercentItem = data.statusDistribution.find(d => d.name === "overdue");
   const overduePercent = overduePercentItem ? overduePercentItem.value : 0;
 
   const isTrendEmpty = !data.trend || data.trend.length === 0 || (totalCalls === 0 && totalMeetings === 0 && totalTasks === 0);
