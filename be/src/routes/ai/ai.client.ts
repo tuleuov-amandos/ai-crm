@@ -63,16 +63,6 @@ function createAnthropicClient(options: ConstructorParameters<typeof Anthropic>[
   }
 }
 
-export const aiClient: AiClient =
-  envConfig.AI_PROVIDER === 'anthropic'
-    ? createAnthropicClient({ apiKey: envConfig.ANTHROPIC_API_KEY }, envConfig.ANTHROPIC_MODEL)
-    : envConfig.AI_PROVIDER === 'groq'
-      ? createOpenAiClient(
-          { apiKey: envConfig.GROQ_API_KEY, baseURL: GROQ_BASE_URL },
-          envConfig.GROQ_MODEL || 'llama-3.3-70b-versatile',
-        )
-      : createOpenAiClient({ apiKey: envConfig.OPENAI_API_KEY }, envConfig.OPENAI_MODEL || 'gpt-4o-mini')
-
 // ─── Clients on a company's own key ─────────────────────────────────────────
 
 export interface AiCredential {
@@ -120,7 +110,7 @@ export const AI_KEY_VALIDATION_TIMEOUT_MS = 10_000
 
 // HTTP status of a provider SDK error; both SDKs set `status` on APIError and
 // leave it undefined for connection errors and timeouts.
-const statusOf = (error: unknown) => {
+export const statusOf = (error: unknown) => {
   const status = (error as { status?: unknown } | null)?.status
   return typeof status === 'number' ? status : undefined
 }

@@ -2,7 +2,9 @@ import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common'
 import { aiQueue } from './ai.queue'
 import { randomUUID } from 'crypto'
 import { PrismaService } from '../../common/services/prisma.service'
-import { aiClient } from './ai.client'
+import { AiErrorCode, AppException } from '../../common/errors'
+import { AiSettingsService } from '../ai-settings/ai-settings.service'
+import { createTenantAiClient } from './tenant-ai-client'
 
 export interface EnqueueOpts {
   dealId: string
@@ -15,13 +17,26 @@ export interface EnqueueOpts {
 export class AiService {
   private readonly logger = new Logger(AiService.name)
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly aiSettings: AiSettingsService,
+  ) {}
 
-  async callModel(prompt: string, options?: { temperature?: number }) {
-    return aiClient.complete(prompt, { temperature: options?.temperature ?? 0.1 })
+  // One call on the company's own key: 400 AI_KEY_NOT_CONFIGURED without one,
+  // AI_KEY_INVALID / AI_PROVIDER_UNREACHABLE when the provider refuses it.
+  async callModel(tenantId: string, prompt: string, options?: { temperature?: number }) {
+    const client = await createTenantAiClient(this.aiSettings, tenantId)
+    return client.complete(prompt, { temperature: options?.temperature ?? 0.1 })
   }
 
   async enqueueAnalysis(opts: EnqueueOpts) {
+    // Fail fast instead of queueing a job that cannot run. Only whether a key
+    // exists is checked here: the key itself is decrypted by the worker at the
+    // moment of the call and never goes into the job data.
+    if (!(await this.aiSettings.isConfigured(opts.tenantId))) {
+      throw AppException.badRequest(AiErrorCode.KEY_NOT_CONFIGURED, 'AI is not configured: the company has no API key')
+    }
+
     const jobId = randomUUID()
 
     const tenant = await this.prisma.tenant.findUnique({

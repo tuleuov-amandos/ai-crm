@@ -73,13 +73,19 @@ export class AiSettingsService {
   /**
    * The tenant's provider and plain key for an AI call, or null when the
    * company has no key (AI is off for it; no fallback to the platform key).
-   * Not used yet: the AI analysis switches to it in PR 3. Throws
-   * AiKeyCipherError when the stored value cannot be decrypted.
+   * Called by the AI client at the moment of the provider call (API and
+   * worker alike). Throws AiKeyCipherError when the stored value cannot be
+   * decrypted.
    */
   async getDecryptedCredential(tenantId: string): Promise<{ provider: AiProviderApi; apiKey: string } | null> {
     const credential = await this.aiSettingsRepo.find(tenantId)
     if (!credential) return null
     return { provider: credential.provider, apiKey: decrypt(credential.encryptedKey, tenantId) }
+  }
+
+  /** Whether the company has a key, without decrypting it (for checks before queueing). */
+  async isConfigured(tenantId: string): Promise<boolean> {
+    return (await this.aiSettingsRepo.find(tenantId)) !== null
   }
 
   private audit(

@@ -22,6 +22,10 @@ import { API_BASE_URL } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { dealKeys, useGetDealDetail } from "@/hooks/useDeals";
 import { toast } from "sonner";
+import { Link } from "@/i18n/navigation";
+import { useMe } from "@/hooks/useAuth";
+import { useAiSettings } from "@/hooks/useAiSettings";
+import { AI_SETTINGS_HREF, getAiAnalyzeState } from "@/lib/aiAnalyzeState";
 
 interface AITask {
   id: string;
@@ -54,6 +58,15 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
   const [tasksAccepted, setTasksAccepted] = useState(false);
 
   const queryClient = useQueryClient();
+  // The company's AI key status (GET /ai/settings, every role): without a key
+  // the button is off for everyone. The backend enforces it too.
+  const { data: me } = useMe();
+  const aiSettings = useAiSettings();
+  const aiState = getAiAnalyzeState({
+    role: me?.role,
+    configured: aiSettings.data?.configured,
+    isLoading: aiSettings.isLoading,
+  });
   const contactEmail = useGetDealDetail(dealId).data?.contact.email?.trim() ?? "";
   const realTasksRef = useRef<AITask[]>([]);
   const rawTasksRef = useRef<Array<{ title: string; dueDate?: string | null }>>([]);
@@ -273,7 +286,12 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
 
           <Button
             onClick={phase === "done" ? reset : startAnalyze}
-            disabled={isStreaming || phase === "analyzing" || !note.trim()}
+            disabled={
+              isStreaming ||
+              phase === "analyzing" ||
+              !note.trim() ||
+              (phase !== "done" && aiState.disabled)
+            }
             className="w-full mt-3 gap-2 h-9 max-md:h-10"
           >
             {phase === "analyzing" ? (
@@ -293,6 +311,24 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
               </>
             )}
           </Button>
+          {phase !== "done" && aiState.hint === "adminAddKey" && (
+            <>
+              <p className="mt-2 text-xs text-muted-foreground max-md:hidden">
+                {tAi.rich("noKey.adminAddKey", {
+                  link: (chunks) => (
+                    <Link href={AI_SETTINGS_HREF} className="text-primary underline underline-offset-2">
+                      {chunks}
+                    </Link>
+                  ),
+                })}
+              </p>
+              {/* The Integrations tab is desktop-only (mobileAccess.ts): no link on a phone. */}
+              <p className="mt-2 text-xs text-muted-foreground md:hidden">{tAi("noKey.adminAddKeyMobile")}</p>
+            </>
+          )}
+          {phase !== "done" && aiState.hint === "askAdmin" && (
+            <p className="mt-2 text-xs text-muted-foreground">{tAi("noKey.askAdmin")}</p>
+          )}
           {errorMsg && (
             <div className="mt-2 text-xs text-red-500 bg-red-50/50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/50 rounded-lg p-2.5 animate-in fade-in duration-300">
               {errorMsg}

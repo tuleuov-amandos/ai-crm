@@ -5,11 +5,17 @@ import { createRedis } from '../../common/providers/redis.provider'
 import { AI_QUEUE_NAME } from './ai.queue'
 import { PrismaService } from '../../common/services/prisma.service'
 import { saveAiResultAtomic } from './ai.service'
+import { AiErrorCode } from '../../common/errors'
+import { AiSettingsRepository } from '../ai-settings/ai-settings.repo'
+import { AiSettingsService } from '../ai-settings/ai-settings.service'
+import type { AuditLogsService } from '../audit-logs/audit-logs.service'
 // Runs in the standalone worker process, which has no local SSE subscribers,
 // so events are pushed to the HTTP process over Redis Pub/Sub.
 import { publishAiEventRemote as publishAiEvent } from './ai.sse'
 import { z } from 'zod'
-import { aiClient } from './ai.client'
+import type { AiClient } from './ai.client'
+import { AiProviderRequestError, createTenantAiClient, toJobFailure } from './tenant-ai-client'
+import { HttpException } from '@nestjs/common'
 
 const log = rootLogger.child({ context: 'AiProcessor' })
 const OPENAI_TIMEOUT_MS = 30_000
@@ -17,6 +23,13 @@ const OPENAI_TIMEOUT_MS = 30_000
 // Log every one (useful locally) but only forward one to Sentry per 5 min per
 // error code, so a blip doesn't burn the monthly quota on identical events.
 const WORKER_CONN_ERROR_SENTRY_WINDOW_MS = 300_000
+
+// English fallbacks for the `ai-error` event; the frontend shows errors.<reason>.
+const KEY_FAILURE_MESSAGES: Partial<Record<AiErrorCode, string>> = {
+  [AiErrorCode.KEY_NOT_CONFIGURED]: 'AI is not configured. Ask an administrator to add the API key.',
+  [AiErrorCode.KEY_INVALID]: 'The AI provider rejected the company API key. Ask an administrator to check it.',
+  [AiErrorCode.PROVIDER_UNREACHABLE]: 'The AI provider is not responding. Please try again later.',
+}
 
 const AiResponseSchema = z.object({
   tasks: z
@@ -45,7 +58,7 @@ function withTimeout<T>(promise: Promise<T>, ms = OPENAI_TIMEOUT_MS) {
   return Promise.race([promise, new Promise<T>((_, rej) => setTimeout(() => rej(new Error('OpenAI timeout')), ms))])
 }
 
-async function callOpenAiAndParse(meetingNote: string, locale?: string): Promise<AiResponseType> {
+async function callOpenAiAndParse(aiClient: AiClient, meetingNote: string, locale?: string): Promise<AiResponseType> {
   const LANGUAGE_NAMES: Record<string, string> = { ru: 'Russian', en: 'English' }
   const language = LANGUAGE_NAMES[locale ?? 'ru'] ?? 'Russian'
 
@@ -70,6 +83,8 @@ async function callOpenAiAndParse(meetingNote: string, locale?: string): Promise
   try {
     text = await withTimeout(doCall())
   } catch (err) {
+    // Key / provider errors of the tenant-key client keep their own handling.
+    if (err instanceof HttpException || err instanceof AiProviderRequestError) throw err
     const e = new CustomAiError('OpenAI timeout or network error')
     e.code = 'OPENAI_TIMEOUT'
     e.raw = err
@@ -105,6 +120,7 @@ async function callOpenAiAndParse(meetingNote: string, locale?: string): Promise
       const validated2 = AiResponseSchema.parse(parsed2)
       return validated2
     } catch (secondErr) {
+      if (secondErr instanceof HttpException || secondErr instanceof AiProviderRequestError) throw secondErr
       const e = new CustomAiError('OpenAI returned invalid JSON after retry')
       e.details = { first: (firstErr as Error).message, retry: (secondErr as Error).message }
       throw e
@@ -123,6 +139,9 @@ async function callOpenAiAndParse(meetingNote: string, locale?: string): Promise
 export function startAiWorker(): Worker {
   const connection = createRedis()
   const prisma = new PrismaService()
+  // The worker has no Nest context and no CLS: the credential is looked up by
+  // the tenantId from the job. It only reads, so the audit service is not needed.
+  const aiSettings = new AiSettingsService(new AiSettingsRepository(prisma), {} as AuditLogsService)
 
   const worker = new Worker(
     AI_QUEUE_NAME,
@@ -142,12 +161,36 @@ export function startAiWorker(): Worker {
 
       let aiResult: AiResponseType | null = null
       try {
-        aiResult = await callOpenAiAndParse(meetingNote, locale)
+        // The key is decrypted here, at the moment of the call; it is never in
+        // the job data, Redis or the logs.
+        const aiClient = await createTenantAiClient(aiSettings, tenantId)
+        aiResult = await callOpenAiAndParse(aiClient, meetingNote, locale)
       } catch (err) {
+        const keyFailure = toJobFailure(err)
+        if (keyFailure) {
+          // No key (or a rejected one) cannot be fixed by retrying: the
+          // UnrecoverableError ends the job at once. An unreachable provider is
+          // transient and is retried by the queue (attempts / backoff).
+          jobLog.warn({ reason: keyFailure.reason }, 'AI call failed on the company key')
+          // AI_PROVIDER_UNREACHABLE is worded for the key check in Settings
+          // ("the key was not saved"); the generic error text fits an analysis.
+          const reason =
+            keyFailure.reason === AiErrorCode.PROVIDER_UNREACHABLE ? AiErrorCode.OPENAI_ERROR : keyFailure.reason
+          publishAiEvent(tenantId, dealId, 'ai-error', {
+            message: KEY_FAILURE_MESSAGES[keyFailure.reason] ?? 'The AI service is temporarily unavailable.',
+            jobId,
+            reason,
+          }).catch((e) => {
+            jobLog.error({ err: e }, 'Failed to publish SSE ai-error for company key failure')
+          })
+          throw keyFailure.error
+        }
+
         const error = err as CustomAiError
         const rawErrorObj = error.raw as Record<string, any> | undefined
         const status = rawErrorObj?.status || error.status
-        let reason = error.code || status || 'OPENAI_ERROR'
+        let reason =
+          error.code || (err instanceof AiProviderRequestError ? AiErrorCode.OPENAI_ERROR : status) || 'OPENAI_ERROR'
 
         if (error.code === 'OPENAI_TIMEOUT') {
           jobLog.error({ reason: 'OPENAI_TIMEOUT', err: error.raw }, 'OpenAI timeout')
@@ -162,33 +205,6 @@ export function startAiWorker(): Worker {
             reason,
           }).catch((e) => {
             jobLog.error({ err: e }, 'Failed to publish SSE ai-error for timeout')
-          })
-          throw new Error(reason)
-        }
-
-        if (status === 401 || status === 403) {
-          jobLog.error({ status, reason: 'OPENAI_AUTH_ERROR', message: error.message }, 'OpenAI auth error')
-          Sentry.captureException(err, { tags: { area: 'ai-processor', jobId, dealId, reason: 'OPENAI_AUTH_ERROR' } })
-          reason = 'OPENAI_AUTH_ERROR'
-          publishAiEvent(tenantId, dealId, 'ai-error', {
-            message: 'The AI service is temporarily unavailable. Please contact an admin.',
-            jobId,
-            reason,
-          }).catch((e) => {
-            jobLog.error({ err: e }, 'Failed to publish SSE ai-error for auth')
-          })
-          throw new Error(reason)
-        }
-
-        if (status === 429) {
-          jobLog.warn({ status, reason: 'OPENAI_RATE_LIMIT' }, 'OpenAI rate limit')
-          reason = 'OPENAI_RATE_LIMIT'
-          publishAiEvent(tenantId, dealId, 'ai-error', {
-            message: 'The AI service is temporarily unavailable. Please try again in a few minutes.',
-            jobId,
-            reason,
-          }).catch((e) => {
-            jobLog.error({ err: e }, 'Failed to publish SSE ai-error for rate limit')
           })
           throw new Error(reason)
         }

@@ -12,98 +12,74 @@ if (fs.existsSync(envFilePath)) {
   config({ path: envFilePath })
 }
 
-const ConfigSchema = z
-  .object({
-    DATABASE_URL: z.string(),
-    ACCESS_TOKEN_SECRET: z.string(),
-    ACCESS_TOKEN_EXPIRES_IN: z.string(),
-    REFRESH_TOKEN_SECRET: z.string(),
-    REFRESH_TOKEN_EXPIRES_IN: z.string(),
+const ConfigSchema = z.object({
+  DATABASE_URL: z.string(),
+  ACCESS_TOKEN_SECRET: z.string(),
+  ACCESS_TOKEN_EXPIRES_IN: z.string(),
+  REFRESH_TOKEN_SECRET: z.string(),
+  REFRESH_TOKEN_EXPIRES_IN: z.string(),
 
-    // Separate JWT secret for the platform-admin login (see routes/platform-admin).
-    // Deliberately distinct from ACCESS_TOKEN_SECRET — a leak of one must not
-    // grant access to the other, since a PlatformAdmin token bypasses tenant
-    // scoping entirely.
-    PLATFORM_ADMIN_JWT_SECRET: z.string(),
-    PLATFORM_ADMIN_JWT_EXPIRES_IN: z.string().default('8h'),
+  // Separate JWT secret for the platform-admin login (see routes/platform-admin).
+  // Deliberately distinct from ACCESS_TOKEN_SECRET — a leak of one must not
+  // grant access to the other, since a PlatformAdmin token bypasses tenant
+  // scoping entirely.
+  PLATFORM_ADMIN_JWT_SECRET: z.string(),
+  PLATFORM_ADMIN_JWT_EXPIRES_IN: z.string().default('8h'),
 
-    FRONTEND_URL: z.string(),
-    VERCEL_PREVIEW_PREFIX: z.string().optional(),
-    COOKIE_DOMAIN: z.string().optional(),
-    NODE_ENV: z.string(),
-    PORT: z.string(),
+  FRONTEND_URL: z.string(),
+  VERCEL_PREVIEW_PREFIX: z.string().optional(),
+  COOKIE_DOMAIN: z.string().optional(),
+  NODE_ENV: z.string(),
+  PORT: z.string(),
 
-    // Observability. Both optional: when SENTRY_DSN is unset Sentry never
-    // initializes (see src/instrument.ts) and the app runs unchanged.
-    // LOG_LEVEL lets prod be bumped to "debug" via a Railway variable without
-    // a rebuild; when unset the level is derived from NODE_ENV.
-    SENTRY_DSN: z.string().optional(),
-    LOG_LEVEL: z.string().optional(),
+  // Observability. Both optional: when SENTRY_DSN is unset Sentry never
+  // initializes (see src/instrument.ts) and the app runs unchanged.
+  // LOG_LEVEL lets prod be bumped to "debug" via a Railway variable without
+  // a rebuild; when unset the level is derived from NODE_ENV.
+  SENTRY_DSN: z.string().optional(),
+  LOG_LEVEL: z.string().optional(),
 
-    OPENAI_API_KEY: z.string().optional(),
-    OPENAI_MODEL: z.string().default('gpt-4o-mini'),
-    GROQ_API_KEY: z.string().optional(),
-    GROQ_MODEL: z.string().default('llama-3.3-70b-versatile'),
-    ANTHROPIC_API_KEY: z.string().optional(),
-    ANTHROPIC_MODEL: z.string().default('claude-haiku-4-5'),
-    AI_PROVIDER: z.enum(['openai', 'groq', 'anthropic']).default('openai'),
+  // Fixed model per provider for the companies' own keys (createAiClient).
+  // There are no platform AI keys: OPENAI_API_KEY / GROQ_API_KEY /
+  // ANTHROPIC_API_KEY / AI_PROVIDER are not read any more (a leftover value
+  // in the environment is ignored).
+  OPENAI_MODEL: z.string().default('gpt-4o-mini'),
+  GROQ_MODEL: z.string().default('llama-3.3-70b-versatile'),
+  ANTHROPIC_MODEL: z.string().default('claude-haiku-4-5'),
 
-    // Master key for the tenants' AI provider keys at rest (see
-    // common/crypto/ai-key-cipher.ts). Base64 of exactly 32 bytes:
-    // `openssl rand -base64 32`. Required in both the API and the worker.
-    // Changing it makes every stored tenant key undecryptable.
-    AI_KEY_ENCRYPTION_SECRET: z.string().refine((value) => decodeAiKeyEncryptionSecret(value) !== null, {
-      message: 'AI_KEY_ENCRYPTION_SECRET must be base64 of exactly 32 bytes (openssl rand -base64 32)',
-    }),
+  // Master key for the tenants' AI provider keys at rest (see
+  // common/crypto/ai-key-cipher.ts). Base64 of exactly 32 bytes:
+  // `openssl rand -base64 32`. Required in both the API and the worker.
+  // Changing it makes every stored tenant key undecryptable.
+  AI_KEY_ENCRYPTION_SECRET: z.string().refine((value) => decodeAiKeyEncryptionSecret(value) !== null, {
+    message: 'AI_KEY_ENCRYPTION_SECRET must be base64 of exactly 32 bytes (openssl rand -base64 32)',
+  }),
 
-    REDIS_HOST: z.string().min(1),
-    REDIS_PORT: z.coerce.number().int().positive(),
-    REDIS_PASSWORD: z.string().optional(),
-    REDIS_TLS: z.string().optional(),
-    RESEND_API_KEY: z.string().optional(),
-    RESEND_FROM_EMAIL: z.string().optional(),
+  REDIS_HOST: z.string().min(1),
+  REDIS_PORT: z.coerce.number().int().positive(),
+  REDIS_PASSWORD: z.string().optional(),
+  REDIS_TLS: z.string().optional(),
+  RESEND_API_KEY: z.string().optional(),
+  RESEND_FROM_EMAIL: z.string().optional(),
 
-    // Cloudinary — avatar (and future asset) storage. Format:
-    // cloudinary://<api_key>:<api_secret>@<cloud_name>
-    // Optional: when unset the avatar upload endpoints return 503 and the rest
-    // of the app runs unchanged (users just keep their initials).
-    CLOUDINARY_URL: z.string().optional(),
+  // Cloudinary — avatar (and future asset) storage. Format:
+  // cloudinary://<api_key>:<api_secret>@<cloud_name>
+  // Optional: when unset the avatar upload endpoints return 503 and the rest
+  // of the app runs unchanged (users just keep their initials).
+  CLOUDINARY_URL: z.string().optional(),
 
-    GOOGLE_CLIENT_ID: z.string(),
-    GOOGLE_CLIENT_SECRET: z.string(),
-    GOOGLE_CALLBACK_URL: z.string(),
+  GOOGLE_CLIENT_ID: z.string(),
+  GOOGLE_CLIENT_SECRET: z.string(),
+  GOOGLE_CALLBACK_URL: z.string(),
 
-    // TODO: replace with a proper admin panel + PLATFORM_ADMIN role.
-    // Temporary shared secret for the manual tenant-approval endpoint
-    // (PATCH /internal/tenants/:id/status), checked by InternalAdminGuard
-    // against the X-Internal-Admin-Token header.
-    INTERNAL_ADMIN_TOKEN: z.string(),
+  // TODO: replace with a proper admin panel + PLATFORM_ADMIN role.
+  // Temporary shared secret for the manual tenant-approval endpoint
+  // (PATCH /internal/tenants/:id/status), checked by InternalAdminGuard
+  // against the X-Internal-Admin-Token header.
+  INTERNAL_ADMIN_TOKEN: z.string(),
 
-    DATABASE_SSL_CA_PATH: z.string().optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.AI_PROVIDER === 'openai' && !data.OPENAI_API_KEY) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'OPENAI_API_KEY is required when AI_PROVIDER is openai',
-        path: ['OPENAI_API_KEY'],
-      })
-    }
-    if (data.AI_PROVIDER === 'groq' && !data.GROQ_API_KEY) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'GROQ_API_KEY is required when AI_PROVIDER is groq',
-        path: ['GROQ_API_KEY'],
-      })
-    }
-    if (data.AI_PROVIDER === 'anthropic' && !data.ANTHROPIC_API_KEY) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'ANTHROPIC_API_KEY is required when AI_PROVIDER is anthropic',
-        path: ['ANTHROPIC_API_KEY'],
-      })
-    }
-  })
+  DATABASE_SSL_CA_PATH: z.string().optional(),
+})
 
 // const configServer = plainToInstance(ConfigSchema, process.env);
 const configServer = ConfigSchema.safeParse(process.env)
