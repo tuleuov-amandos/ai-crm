@@ -43,7 +43,7 @@ export class DealRepository {
         }),
       },
       include: {
-        contact: { select: { id: true, name: true, company: true } },
+        contact: { select: { id: true, name: true, company: true, phone: true, address: true, city: true } },
         owner: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: 'desc' },

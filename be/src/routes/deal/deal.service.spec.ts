@@ -74,7 +74,7 @@ const deal = (stage: string, ownerId: string, stageId: string | null = stageIdBy
     updatedAt: new Date(Date.UTC(2026, 0, seq)),
     deletedAt: null,
     archivedAt: null as Date | null,
-    contact: { id: 'c1', name: 'Contact', company: null },
+    contact: { id: 'c1', name: 'Contact', company: null, phone: null, address: null, city: null },
     owner: { id: ownerId, name: ownerId },
   }
 }
@@ -145,6 +145,28 @@ describe('DealService board vs pipeline', () => {
       probability: 100,
     })
     expect(board[3].deals[0]).toMatchObject({ id: 'd5', stageId: 's-won', stage: 'CLOSED_WON' })
+  })
+
+  it('board card carries phone, address and city of the contact (nullable), the pipeline card does not', async () => {
+    caslAbilityFactory.createForUser.mockResolvedValue(adminAbility())
+    const withContact = {
+      ...deal('PROSPECT', 'admin-1'),
+      contact: { id: 'c1', name: 'Contact', company: null, phone: '+77001112233', address: 'Абая 1', city: null },
+    }
+    dealRepo.findAllByTenant.mockResolvedValueOnce([withContact]).mockResolvedValueOnce([withContact])
+
+    const board = await service.getBoard(TENANT, ADMIN, {})
+    const pipeline = await service.getPipleline(TENANT, ADMIN, {})
+
+    expect(board.flatMap((c) => c.deals)[0].contact).toEqual({
+      id: 'c1',
+      name: 'Contact',
+      company: null,
+      phone: '+77001112233',
+      address: 'Абая 1',
+      city: null,
+    })
+    expect(pipeline.PROSPECT[0].contact).toEqual({ id: 'c1', name: 'Contact', company: null })
   })
 
   it('SALES_REP sees only own deals on the board, query.ownerId is ignored', async () => {
