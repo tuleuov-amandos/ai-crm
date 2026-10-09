@@ -3,6 +3,7 @@ import z from 'zod'
 import fs from 'fs'
 import path from 'path'
 import { config } from 'dotenv'
+import { decodeAiKeyEncryptionSecret } from './crypto/ai-key-encryption-secret'
 
 const envFilePath = path.resolve('.env')
 
@@ -46,6 +47,14 @@ const ConfigSchema = z
     ANTHROPIC_API_KEY: z.string().optional(),
     ANTHROPIC_MODEL: z.string().default('claude-haiku-4-5'),
     AI_PROVIDER: z.enum(['openai', 'groq', 'anthropic']).default('openai'),
+
+    // Master key for the tenants' AI provider keys at rest (see
+    // common/crypto/ai-key-cipher.ts). Base64 of exactly 32 bytes:
+    // `openssl rand -base64 32`. Required in both the API and the worker.
+    // Changing it makes every stored tenant key undecryptable.
+    AI_KEY_ENCRYPTION_SECRET: z.string().refine((value) => decodeAiKeyEncryptionSecret(value) !== null, {
+      message: 'AI_KEY_ENCRYPTION_SECRET must be base64 of exactly 32 bytes (openssl rand -base64 32)',
+    }),
 
     REDIS_HOST: z.string().min(1),
     REDIS_PORT: z.coerce.number().int().positive(),

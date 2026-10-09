@@ -39,6 +39,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
               'Channel',
               'Message',
               'PipelineStage',
+              'TenantAiCredential',
             ]
 
             if (tenantModels.includes(model)) {

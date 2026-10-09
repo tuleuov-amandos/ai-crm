@@ -192,6 +192,12 @@ export enum AiErrorCode {
   OPENAI_RATE_LIMIT = 'OPENAI_RATE_LIMIT',
   OPENAI_ERROR = 'OPENAI_ERROR',
   PERSIST_FAILED = 'AI_PERSIST_FAILED',
+  /** The provider rejected the company's AI key on the test call (401/403 or another non-retryable 4xx). */
+  KEY_INVALID = 'AI_KEY_INVALID',
+  /** The provider could not check the key: network error, timeout, 429 or 5xx. Nothing was saved. */
+  PROVIDER_UNREACHABLE = 'AI_PROVIDER_UNREACHABLE',
+  /** The company has no AI key configured, so AI features are off for it. */
+  KEY_NOT_CONFIGURED = 'AI_KEY_NOT_CONFIGURED',
 }
 
 /**
