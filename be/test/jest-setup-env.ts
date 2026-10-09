@@ -31,6 +31,8 @@ const testEnv: Record<string, string> = {
 
   AI_PROVIDER: 'openai',
   OPENAI_API_KEY: 'test-openai-key',
+  // base64 of the 32 ASCII bytes "test-ai-key-encryption-secret-00".
+  AI_KEY_ENCRYPTION_SECRET: 'dGVzdC1haS1rZXktZW5jcnlwdGlvbi1zZWNyZXQtMDA=',
 
   INTERNAL_ADMIN_TOKEN: 'test-internal-admin-token',
 }

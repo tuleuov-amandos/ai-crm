@@ -22,6 +22,7 @@ import { InvitationsModule } from './routes/invitations/invitations.module'
 import { DashboardModule } from './routes/dashboard/dashboard.module'
 import { ReportsModule } from './routes/reports/reports.module'
 import { AiModule } from './routes/ai/ai.module'
+import { AiSettingsModule } from './routes/ai-settings/ai-settings.module'
 import { TenantInterceptor } from './common/interceptors/tenant.interceptor'
 import { AuditLogsModule } from './routes/audit-logs/audit-logs.module'
 import { HealthModule } from './routes/health/health.module'
@@ -49,6 +50,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter'
     DashboardModule,
     ReportsModule,
     AiModule,
+    AiSettingsModule,
     AuditLogsModule,
     HealthModule,
     InternalModule,

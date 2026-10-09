@@ -40,6 +40,7 @@ model Tenant {
   channels    Channel[]
   messages    Message[]
   pipelineStages PipelineStage[]
+  aiCredential   TenantAiCredential?
 }
 
 model User {
@@ -70,6 +71,8 @@ model User {
   createdChannels    Channel[]       @relation("ChannelCreator")
   channelMemberships ChannelMember[]
   sentMessages       Message[]
+
+  updatedAiCredentials TenantAiCredential[] @relation("TenantAiCredentialUpdatedBy")
 
   @@index([tenantId])
   @@index([roleId])
@@ -408,6 +411,23 @@ model AuditLog {
   @@index([tenantId, userId])
 }
 
+// The company's own AI provider key (Settings → AI), one per tenant. The key
+// is stored only encrypted (AES-256-GCM, see common/crypto/ai-key-cipher.ts);
+// keyLast4 is the only plain part, shown to ADMIN to recognize the key.
+// The model is not chosen here: it is fixed per provider in config.ts.
+model TenantAiCredential {
+  id           String     @id @default(cuid())
+  tenantId     String     @unique
+  provider     AiProvider
+  encryptedKey String
+  keyLast4     String
+  updatedById  String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  updatedBy    User       @relation("TenantAiCredentialUpdatedBy", fields: [updatedById], references: [id])
+}
+
 // Platform-level operator account. Deliberately NOT part of the tenant/User/Role
 // system (no tenantId, no relation to Role — that model is namespaced per-tenant
 // via @@unique([tenantId, name])). A PlatformAdmin authenticates through a
@@ -461,4 +481,10 @@ enum TenantStatus {
   PENDING
   ACTIVE
   SUSPENDED
+}
+
+enum AiProvider {
+  OPENAI
+  GROQ
+  ANTHROPIC
 }

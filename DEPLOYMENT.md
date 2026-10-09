@@ -103,6 +103,10 @@ GitHub → Settings → Secrets and variables → Actions:
 - [ ] `GOOGLE_CALLBACK_URL` — `https://<backend>/auth/google/callback`,
       и этот же URL добавить в Authorized redirect URIs в Google Cloud Console.
 - [ ] `AI_PROVIDER` (`openai` | `groq`) + соответствующий ключ (`OPENAI_API_KEY` / `GROQ_API_KEY`).
+- [ ] `AI_KEY_ENCRYPTION_SECRET` — мастер-ключ шифрования AI-ключей компаний, обязателен:
+      без него API и воркер не стартуют. Сгенерировать `openssl rand -base64 32`
+      (ровно 32 байта в base64) и задать **одно и то же** значение в API и в воркере.
+      Не менять после запуска: сохранённые ключи компаний перестанут расшифровываться.
 - [ ] `CLOUDINARY_URL` (опционально) — `cloudinary://<key>:<secret>@<cloud>` из дашборда
       Cloudinary. Нужен для загрузки аватаров (Settings → Мой профиль). Без него
       `PATCH/DELETE /users/me/avatar` отвечают 503, остальное работает.

@@ -46,6 +46,11 @@ export const REDACT_PATHS = [
   '*.token',
   'inviteLink',
   '*.inviteLink',
+  // a company's AI provider key (PUT /ai/settings body) and its stored form
+  'apiKey',
+  '*.apiKey',
+  'encryptedKey',
+  '*.encryptedKey',
   // full-value secrets that live on the env / config object
   'DATABASE_URL',
   '*.DATABASE_URL',
@@ -57,6 +62,10 @@ export const REDACT_PATHS = [
   '*.OPENAI_API_KEY',
   'GROQ_API_KEY',
   '*.GROQ_API_KEY',
+  'ANTHROPIC_API_KEY',
+  '*.ANTHROPIC_API_KEY',
+  'AI_KEY_ENCRYPTION_SECRET',
+  '*.AI_KEY_ENCRYPTION_SECRET',
   'GOOGLE_CLIENT_SECRET',
   '*.GOOGLE_CLIENT_SECRET',
   'REDIS_PASSWORD',
