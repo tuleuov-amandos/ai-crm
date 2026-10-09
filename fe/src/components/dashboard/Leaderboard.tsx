@@ -164,7 +164,7 @@ export function Leaderboard({ reps = [], isLoading = false }: LeaderboardProps) 
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 gap-1 text-primary hover:text-primary hover:bg-secondary/60 text-xs"
+          className="h-7 gap-1 text-primary hover:text-primary hover:bg-secondary/60 text-xs max-md:h-10 max-md:px-3"
           asChild
         >
           <Link href="/reports">

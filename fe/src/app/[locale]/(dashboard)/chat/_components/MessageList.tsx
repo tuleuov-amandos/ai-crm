@@ -474,7 +474,7 @@ function ReadReceipt({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="text-muted-foreground hover:text-foreground hover:underline"
+          className="text-muted-foreground hover:text-foreground hover:underline max-md:-mx-2 max-md:-my-3 max-md:px-2 max-md:py-3"
           style={{ fontSize: 11 }}
         >
           {t("readStatus", { count: readByIds.size, total: otherMembers.length })}
