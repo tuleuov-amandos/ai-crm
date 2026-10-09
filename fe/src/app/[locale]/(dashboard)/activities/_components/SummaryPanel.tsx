@@ -159,7 +159,7 @@ export function SummaryPanel({ activities, isLoading }: SummaryPanelProps) {
           {t("summary.totalActivities")}
         </p>
 
-        <div className="space-y-2.5">
+        <div className="space-y-2.5 max-md:grid max-md:grid-cols-2 max-md:gap-x-4 max-md:gap-y-2.5 max-md:space-y-0">
           {isLoading ? (
             <TypeSkeletonRows />
           ) : (
@@ -259,7 +259,7 @@ export function SummaryPanel({ activities, isLoading }: SummaryPanelProps) {
                     </AvatarFallback>
                   </Avatar>
                   <span
-                    className="flex-1 text-foreground"
+                    className="flex-1 text-foreground max-md:min-w-0 max-md:truncate"
                     style={{ fontSize: 12, fontWeight: 500 }}
                   >
                     {user.name}

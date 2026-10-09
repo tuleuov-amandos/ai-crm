@@ -277,7 +277,7 @@ export function ActivityForm({
                     disabled={isPending}
                   >
                     <FormControl>
-                      <SelectTrigger className="w-full h-9">
+                      <SelectTrigger className="w-full h-9 max-md:data-[size=default]:h-10">
                         <SelectValue placeholder={t("typePlaceholder")} />
                       </SelectTrigger>
                     </FormControl>
@@ -304,7 +304,7 @@ export function ActivityForm({
                   <FormControl>
                     <Input
                       placeholder={t("titlePlaceholder")}
-                      className="h-9"
+                      className="h-9 max-md:h-10 max-md:text-base!"
                       style={{ fontSize: 13 }}
                       disabled={isPending}
                       {...field}
@@ -328,7 +328,7 @@ export function ActivityForm({
                   <FormControl>
                     <Textarea
                       placeholder={t("notePlaceholder")}
-                      className="min-h-[96px] resize-none"
+                      className="min-h-[96px] resize-none max-md:text-base!"
                       style={{ fontSize: 13 }}
                       disabled={isPending}
                       {...field}
@@ -350,7 +350,7 @@ export function ActivityForm({
                   <FormControl>
                     <Input
                       type="datetime-local"
-                      className="h-9"
+                      className="h-9 max-md:h-10 max-md:text-base!"
                       style={{ fontSize: 13 }}
                       disabled={isPending}
                       value={
@@ -414,7 +414,7 @@ export function ActivityForm({
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-7 gap-1.5 text-xs"
+                    className="h-7 gap-1.5 text-xs max-md:h-10"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isPending}
                   >
@@ -448,6 +448,7 @@ export function ActivityForm({
                 size="sm"
                 onClick={() => onOpenChange(false)}
                 disabled={isPending}
+                className="max-md:h-10"
                 style={{ fontSize: 12 }}
               >
                 {tCommon("cancel")}
@@ -456,6 +457,7 @@ export function ActivityForm({
                 type="submit"
                 size="sm"
                 disabled={isPending}
+                className="max-md:h-10"
                 style={{ fontSize: 12 }}
               >
                 {isPending && <Loader2 size={13} className="animate-spin" />}

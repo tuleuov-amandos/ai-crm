@@ -56,7 +56,7 @@ export function ActivitiesHeader({
   }
 
   return (
-    <header className="h-14 shrink-0 border-b bg-background flex items-center justify-between px-6 gap-4">
+    <header className="h-14 shrink-0 border-b bg-background flex items-center justify-between px-6 gap-4 max-md:h-auto max-md:min-h-14 max-md:flex-wrap max-md:px-3 max-md:py-2">
       <h2
         className="text-foreground"
         style={{ fontSize: 15, fontWeight: 600, margin: 0 }}
@@ -64,12 +64,12 @@ export function ActivitiesHeader({
         {t("title")}
       </h2>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 max-md:flex-wrap">
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <button
               className={cn(
-                "inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border bg-background transition-colors cursor-pointer",
+                "inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border bg-background transition-colors cursor-pointer max-md:h-10",
                 dateRange?.from
                   ? "border-primary/50 text-foreground"
                   : "border-border text-muted-foreground hover:text-foreground hover:border-primary/40",
@@ -87,7 +87,7 @@ export function ActivitiesHeader({
                 <button
                   key={preset.label}
                   onClick={() => applyPreset(preset.range)}
-                  className="inline-flex items-center px-2 py-1 rounded-md border border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground transition-colors cursor-pointer"
+                  className="inline-flex items-center px-2 py-1 rounded-md border border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground transition-colors cursor-pointer max-md:min-h-10 max-md:px-3"
                   style={{ fontSize: 11 }}
                 >
                   {preset.label}
@@ -100,13 +100,14 @@ export function ActivitiesHeader({
               onSelect={onDateRangeChange}
               numberOfMonths={2}
               defaultMonth={dateRange?.from}
+              className="max-md:[--cell-size:--spacing(10)] max-md:[&_.rdp-months>.rdp-month:nth-child(n+2)]:hidden"
             />
           </PopoverContent>
         </Popover>
 
         <Button
           size="sm"
-          className="h-8 gap-1.5"
+          className="h-8 gap-1.5 max-md:h-10"
           style={{ fontSize: 12 }}
           onClick={onNewActivity}
         >

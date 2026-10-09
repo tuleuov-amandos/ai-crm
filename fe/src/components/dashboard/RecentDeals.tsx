@@ -66,7 +66,7 @@ export function RecentDeals({ deals = [], isLoading = false }: RecentDealsProps)
 
   return (
     <Card className="shadow-none border-border/70 gap-0 py-0">
-      <CardHeader className="border-b px-5 py-4">
+      <CardHeader className="border-b px-5 py-4 max-md:flex max-md:flex-wrap max-md:items-center max-md:justify-between max-md:gap-x-3">
         <div>
           <CardTitle className="text-sm tracking-tight">{t("title")}</CardTitle>
           <CardDescription className="text-xs mt-0.5">
@@ -77,7 +77,7 @@ export function RecentDeals({ deals = [], isLoading = false }: RecentDealsProps)
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 gap-1 text-primary hover:text-primary hover:bg-secondary/60 text-xs px-2"
+            className="h-7 gap-1 text-primary hover:text-primary hover:bg-secondary/60 text-xs px-2 max-md:h-10 max-md:px-3"
             asChild
           >
             <Link href="/pipeline">

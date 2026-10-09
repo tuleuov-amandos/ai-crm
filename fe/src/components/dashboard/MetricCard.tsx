@@ -41,7 +41,7 @@ export function MetricCard({
 
   return (
     <Card className="gap-0 shadow-none border-border/70 py-0">
-      <CardHeader className="px-5 pt-5 pb-3">
+      <CardHeader className="px-5 pt-5 pb-3 max-md:px-3 max-md:pt-3 max-md:pb-2">
         <CardDescription className="text-xs">{label}</CardDescription>
         {Icon && (
           <CardAction>
@@ -55,10 +55,10 @@ export function MetricCard({
         )}
       </CardHeader>
 
-      <CardContent className="px-5 pb-5 space-y-2">
-        <div className="flex items-end gap-2">
+      <CardContent className="px-5 pb-5 space-y-2 max-md:px-3 max-md:pb-3">
+        <div className="flex items-end gap-2 max-md:flex-wrap max-md:gap-y-1">
           <span
-            className="text-foreground tracking-tight"
+            className="text-foreground tracking-tight max-md:min-w-0 max-md:text-[20px]!"
             style={{ fontSize: 26, fontWeight: 600, lineHeight: 1 }}
           >
             {value}
