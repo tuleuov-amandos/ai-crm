@@ -11,7 +11,8 @@
 #
 # pg_dump запускаем из official-образа Postgres, а не из клиента раннера —
 # так версия pg_dump гарантированно не старше версии сервера Railway.
-# Переопределить образ: PG_IMAGE=postgres:16-alpine backup-db.sh ...
+# Образ берём из зеркала AWS Public ECR (Docker Hub режет анонимные pull с раннеров).
+# Переопределить образ: PG_IMAGE=public.ecr.aws/docker/library/postgres:16-alpine backup-db.sh ...
 #
 # Exit 0 — валидный дамп записан; exit 1 — ошибка подключения/дампа или
 # битый файл (нет заголовка PGDMP).
@@ -20,7 +21,7 @@ set -euo pipefail
 
 OUT_FILE="${1:?usage: backup-db.sh <out-file>}"
 : "${DATABASE_URL:?DATABASE_URL is required}"
-PG_IMAGE="${PG_IMAGE:-postgres:18-alpine}"
+PG_IMAGE="${PG_IMAGE:-public.ecr.aws/docker/library/postgres:18-alpine}"
 
 mkdir -p "$(dirname "$OUT_FILE")"
 
