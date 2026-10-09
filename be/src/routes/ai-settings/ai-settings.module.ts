@@ -6,7 +6,7 @@ import { AiSettingsRepository } from './ai-settings.repo'
 @Module({
   controllers: [AiSettingsController],
   providers: [AiSettingsService, AiSettingsRepository],
-  // The AI analysis reads the tenant key through getDecryptedCredential (PR 3).
+  // The AI client reads the tenant key through getDecryptedCredential.
   exports: [AiSettingsService],
 })
 export class AiSettingsModule {}

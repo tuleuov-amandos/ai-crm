@@ -102,7 +102,11 @@ GitHub → Settings → Secrets and variables → Actions:
 - [ ] `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`.
 - [ ] `GOOGLE_CALLBACK_URL` — `https://<backend>/auth/google/callback`,
       и этот же URL добавить в Authorized redirect URIs в Google Cloud Console.
-- [ ] `AI_PROVIDER` (`openai` | `groq`) + соответствующий ключ (`OPENAI_API_KEY` / `GROQ_API_KEY`).
+- [ ] Платформенные AI-ключи (`AI_PROVIDER`, `OPENAI_API_KEY`, `GROQ_API_KEY`, `ANTHROPIC_API_KEY`)
+      **не нужны**: приложение их не читает и стартует без них. У каждой компании свой ключ
+      (Настройки → Интеграции, только ADMIN), без ключа AI у компании выключен. Уже заданные
+      в Railway значения можно оставить, на работу они не влияют. Модель провайдера при
+      необходимости переопределяют `OPENAI_MODEL` / `GROQ_MODEL` / `ANTHROPIC_MODEL`.
 - [ ] `AI_KEY_ENCRYPTION_SECRET` — мастер-ключ шифрования AI-ключей компаний, обязателен:
       без него API и воркер не стартуют. Сгенерировать `openssl rand -base64 32`
       (ровно 32 байта в base64) и задать **одно и то же** значение в API и в воркере.

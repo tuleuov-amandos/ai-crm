@@ -35,8 +35,8 @@ export class ContactsController {
   }
 
   @Post('import/map-columns')
-  mapColumns(@Body() body: { headers: string[] }) {
-    return this.contactService.aiMapColumns(body.headers)
+  mapColumns(@CurrentUser() user: AccessTokenPayload, @Body() body: { headers: string[] }) {
+    return this.contactService.aiMapColumns(user.tenantId, body.headers)
   }
 
   @Get(':id')

@@ -29,8 +29,6 @@ const testEnv: Record<string, string> = {
   GOOGLE_CLIENT_SECRET: 'test-google-client-secret',
   GOOGLE_CALLBACK_URL: 'http://localhost:3001/auth/google/callback',
 
-  AI_PROVIDER: 'openai',
-  OPENAI_API_KEY: 'test-openai-key',
   // base64 of the 32 ASCII bytes "test-ai-key-encryption-secret-00".
   AI_KEY_ENCRYPTION_SECRET: 'dGVzdC1haS1rZXktZW5jcnlwdGlvbi1zZWNyZXQtMDA=',
 

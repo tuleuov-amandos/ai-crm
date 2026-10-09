@@ -10,6 +10,7 @@ import { useMe } from "@/hooks/useAuth";
 import { MOBILE_BREAKPOINT } from "@/hooks/use-mobile";
 import { DesktopOnlyStub } from "@/components/desktop-only";
 import { isDesktopOnlySettingsTab } from "@/lib/mobileAccess";
+import { parseSettingsTabParam } from "@/lib/aiAnalyzeState";
 
 import { WorkspaceInfo } from "./_components/WorkspaceInfo";
 import { MembersRoles }  from "./_components/MembersRoles";
@@ -84,13 +85,22 @@ export default function SettingsPage() {
   const { data: me } = useMe();
   const isAdmin = me?.role === "ADMIN";
 
-  // На телефоне стартовая вкладка (workspace-info) недоступна: один раз после
-  // монтирования открываем profile. Заглушка ниже остаётся страховкой для
-  // случая, когда ширина изменилась уже после выбора вкладки.
+  // Вкладка из ссылки (?tab=integrations, например из подсказки у кнопки AI) и,
+  // на телефоне, замена недоступной стартовой вкладки (workspace-info) на profile:
+  // один раз после монтирования. Заглушка ниже остаётся страховкой для случая,
+  // когда ширина изменилась уже после выбора вкладки.
   useEffect(() => {
-    if (window.innerWidth < MOBILE_BREAKPOINT) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time post-mount read of the viewport width (SSR-safe hydration)
-      setActiveTab((tab) => (isDesktopOnlySettingsTab(tab) ? "profile" : tab));
+    const requested = parseSettingsTabParam(
+      window.location.search,
+      NAV_GROUPS.flatMap((g) => g.items.map((i) => i.id)),
+    );
+    const isPhone = window.innerWidth < MOBILE_BREAKPOINT;
+    if (requested || isPhone) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time post-mount read of the URL and the viewport width (SSR-safe hydration)
+      setActiveTab((tab) => {
+        const next = requested ?? tab;
+        return isPhone && isDesktopOnlySettingsTab(next) ? "profile" : next;
+      });
     }
   }, []);
 
