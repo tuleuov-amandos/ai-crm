@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { UpdateMessageBodySchema } from "@/lib/validations/chat.scheme";
+import { isPhoneViewport } from "@/lib/viewport";
 
 const MESSAGE_MAX_LENGTH = 5000;
 
@@ -18,8 +19,8 @@ interface EditMessageFormProps {
 }
 
 // Inline edit of an own message's text, in place of the bubble text. Same
-// keys as the composer: Enter saves, Shift+Enter adds a line break; Esc
-// cancels. The parent closes the form on success (or when the message can't
+// keys as the composer: Enter saves, Shift+Enter adds a line break (on a
+// phone Enter is a line break and the button saves); Esc cancels. The parent closes the form on success (or when the message can't
 // be changed anymore); on any other error the text stays here.
 export default function EditMessageForm({
   initialContent,
@@ -59,7 +60,8 @@ export default function EditMessageForm({
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.nativeEvent.isComposing) return;
-    if (e.key === "Enter" && !e.shiftKey) {
+    // On a phone Enter is a line break; saving is the button only.
+    if (e.key === "Enter" && !e.shiftKey && !isPhoneViewport()) {
       e.preventDefault();
       handleSave();
     } else if (e.key === "Escape") {

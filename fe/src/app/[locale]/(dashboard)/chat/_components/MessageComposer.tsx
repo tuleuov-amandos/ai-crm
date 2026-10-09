@@ -11,6 +11,7 @@ import {
   ACTIVITY_ATTACHMENT_ACCEPT,
   validateActivityAttachmentFile,
 } from "@/lib/activity-attachment";
+import { isPhoneViewport } from "@/lib/viewport";
 
 // Not confirmed with the backend team beyond what chat.service enforces
 // server-side (CHAT_ATTACHMENTS_MAX_COUNT) — kept in sync manually.
@@ -94,7 +95,8 @@ export default function MessageComposer({ channelId }: MessageComposerProps) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    // On a phone Enter is a line break; sending is the button only.
+    if (e.key === "Enter" && !e.shiftKey && !isPhoneViewport()) {
       e.preventDefault();
       handleSubmit();
     }
