@@ -120,6 +120,17 @@ describe('DealRepository archive', () => {
     expect(prisma.deal.findMany.mock.calls[2][0].where).toEqual({ deletedAt: null })
   })
 
+  it('findAllByTenant() selects phone, address and city of the contact for the board cards', async () => {
+    const prisma = buildPrisma()
+    const repo = new DealRepository(prisma as unknown as PrismaService)
+
+    await repo.findAllByTenant()
+
+    expect(prisma.deal.findMany.mock.calls[0][0].include.contact).toEqual({
+      select: { id: true, name: true, company: true, phone: true, address: true, city: true },
+    })
+  })
+
   it('archiveMany() updates only live, not yet archived deals of the tenant', async () => {
     const prisma = buildPrisma()
     const repo = new DealRepository(prisma as unknown as PrismaService)

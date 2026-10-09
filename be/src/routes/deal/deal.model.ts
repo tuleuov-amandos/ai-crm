@@ -222,6 +222,12 @@ export const GetBoardQuerySchema = GetPipelineQuerySchema.extend({
 export type GetBoardQueryType = z.infer<typeof GetBoardQuerySchema>
 
 export const BoardDealCardSchema = DealCardSchema.extend({
+  // Delivery address lives in the contact's "address" field; the mobile card shows it and a call button.
+  contact: DealCardSchema.shape.contact.extend({
+    phone: z.string().nullable(),
+    address: z.string().nullable(),
+    city: z.string().nullable(),
+  }),
   stageId: z.string().nullable(),
   archivedAt: zDate.nullable(),
 })
