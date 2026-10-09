@@ -17,6 +17,7 @@ import { InvitationsList } from "./_components/InvitationsList";
 import { ProfileSettings } from "./_components/ProfileSettings";
 import { PasswordSettings } from "./_components/PasswordSettings";
 import { PipelineStagesSettings } from "./_components/PipelineStagesSettings";
+import { AiIntegrationSettings } from "./_components/AiIntegrationSettings";
 
 // ── Nav structure ─────────────────────────────────────────────────────────────
 export type SettingsTab =
@@ -57,7 +58,7 @@ const NAV_GROUPS: {
     labelKey: "groupSystem",
     items: [
       { id: "notifications", labelKey: "notifications", Icon: Bell   },
-      { id: "integrations",  labelKey: "integrations",  Icon: Puzzle },
+      { id: "integrations",  labelKey: "integrations",  Icon: Puzzle, adminOnly: true },
     ],
   },
 ];
@@ -176,7 +177,8 @@ export default function SettingsPage() {
             {activeTab === "profile"        && <ProfileSettings />}
             {activeTab === "password"       && <PasswordSettings />}
             {activeTab === "pipeline-stages" && isAdmin && <PipelineStagesSettings />}
-            {!["workspace-info", "members", "invitations", "pipeline-stages", "profile", "password"].includes(activeTab) && (
+            {activeTab === "integrations"   && isAdmin && <AiIntegrationSettings />}
+            {!["workspace-info", "members", "invitations", "pipeline-stages", "profile", "password", "integrations"].includes(activeTab) && (
               <ComingSoonContent label={activeLabel} />
             )}
           </div>

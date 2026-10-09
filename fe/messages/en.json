@@ -1292,6 +1292,41 @@
         }
       }
     },
+    "integrations": {
+      "heading": "AI deal analysis",
+      "subtitle": "The key is used for AI analysis of your company's deals. It is stored encrypted and is not shown after saving.",
+      "loadError": "Couldn't load the AI settings",
+      "retry": "Retry",
+      "connected": "Connected: {provider} · key ends in {mask}",
+      "replaceKey": "Replace key",
+      "removeKey": "Remove key",
+      "form": {
+        "providerLabel": "Provider",
+        "providerPlaceholder": "Select a provider",
+        "keyLabel": "API key",
+        "keyHint": "The key is checked with the provider before it is saved, which can take up to 10 seconds.",
+        "submit": "Save key",
+        "submitting": "Checking key…"
+      },
+      "validation": {
+        "providerRequired": "Select a provider",
+        "keyRequired": "Enter the key",
+        "keyMin": "The key is too short: at least {min} characters",
+        "keyMax": "The key is too long: at most {max} characters"
+      },
+      "deleteDialog": {
+        "title": "Remove the key?",
+        "body": "AI deal analysis will stop working for the whole company until a new key is added.",
+        "confirm": "Remove key"
+      },
+      "toasts": {
+        "saveSuccess": "Key saved",
+        "saveError": "Couldn't save the key",
+        "tooManyAttempts": "Too many attempts. Wait a minute and try again.",
+        "deleteSuccess": "Key removed",
+        "deleteError": "Couldn't remove the key"
+      }
+    },
     "pipelineStages": {
       "heading": "Sales pipeline",
       "subtitle": "Deal stages used on the board, in reports and on the dashboard. Drag a stage by its handle to change the order.",
@@ -1809,6 +1844,9 @@
     "PIPELINE_STAGE_TARGET_INVALID": "The stage to move deals to was not found.",
     "PIPELINE_STAGE_REORDER_MISMATCH": "The stage list has changed. Refresh the page and try again.",
     "PIPELINE_STAGE_INVALID_PROBABILITY": "Probability is out of range for this stage.",
+    "AI_KEY_INVALID": "The provider didn't accept the key. Check the key and your balance with the provider.",
+    "AI_PROVIDER_UNREACHABLE": "Couldn't check the key: the provider isn't responding. The key was not saved, please try again later.",
+    "AI_KEY_NOT_CONFIGURED": "AI isn't set up: an administrator needs to add a key in Settings → Integrations.",
     "PIPELINE_STAGE_CONFLICT": "The pipeline was changed at the same time. Try again."
   }
 }
