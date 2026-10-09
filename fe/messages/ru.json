@@ -493,6 +493,8 @@
       "allLoaded": "Все контакты загружены ({count})",
       "footerCount": "{count, plural, one {# контакт} few {# контакта} many {# контактов} other {# контакта}}",
       "viewDetails": "Открыть",
+      "call": "Позвонить",
+      "whatsapp": "Написать в WhatsApp",
       "emptyTitle": "Пока нет контактов",
       "emptyDescription": "Добавьте первый контакт, чтобы начать вести клиентов"
     },

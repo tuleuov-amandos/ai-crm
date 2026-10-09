@@ -48,6 +48,7 @@ import { EditDealSheet } from "./EditDealSheet";
 import { useDealSelectionStore } from "@/stores/dealSelection-store";
 import { selectAllState } from "@/lib/dealBulk";
 import { SelectionCheckbox, selectAllChecked } from "./SelectionCheckbox";
+import { DealMobileCard } from "./DealMobileCard";
 
 type SortKey = "title" | "value" | "closeDate";
 type SortState = { key: SortKey; direction: "asc" | "desc" } | null;
@@ -210,7 +211,18 @@ export function ListView({
 
   return (
     <div className="h-full overflow-y-auto rounded-lg border border-border/60 bg-background">
-      <Table>
+      {/* Phone (< md): cards below; the table stays for >= md */}
+      <ul className="md:hidden divide-y divide-border/40">
+        {sortedDeals.map((deal) => (
+          <DealMobileCard
+            key={deal.id}
+            deal={deal}
+            closeDateLabel={relativeTime(deal.closeDate)}
+          />
+        ))}
+      </ul>
+
+      <Table className="max-md:hidden">
         <TableHeader>
           <TableRow className="hover:bg-transparent border-b border-border/60">
             {selectionMode && (
