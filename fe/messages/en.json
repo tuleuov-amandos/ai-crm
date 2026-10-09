@@ -493,6 +493,8 @@
       "allLoaded": "All contacts loaded ({count})",
       "footerCount": "{count, plural, one {# contact} other {# contacts}}",
       "viewDetails": "View details",
+      "call": "Call",
+      "whatsapp": "Message on WhatsApp",
       "emptyTitle": "No contacts yet",
       "emptyDescription": "Add your first contact to start managing customers"
     },

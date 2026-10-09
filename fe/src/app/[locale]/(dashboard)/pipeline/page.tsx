@@ -85,7 +85,7 @@ function PeriodFilter({
       <PopoverTrigger asChild>
         <button
           className={cn(
-            "flex items-center gap-1 h-6 px-2.5 rounded-full border border-border bg-background transition-colors cursor-pointer",
+            "flex items-center gap-1 h-6 max-md:min-h-10 px-2.5 rounded-full border border-border bg-background transition-colors cursor-pointer",
             dateRange?.from
               ? "text-foreground"
               : "text-muted-foreground hover:text-foreground",
@@ -382,7 +382,7 @@ export default function Pipeline() {
             <button
               title="Kanban"
               onClick={() => setViewMode("kanban")}
-              className={`px-2.5 py-1.5 flex items-center border-0 cursor-pointer ${
+              className={`px-2.5 py-1.5 flex items-center max-md:justify-center max-md:min-h-10 max-md:min-w-10 border-0 cursor-pointer ${
                 viewMode === "kanban"
                   ? "bg-secondary text-primary"
                   : "bg-background text-muted-foreground hover:bg-muted transition-colors"
@@ -393,7 +393,7 @@ export default function Pipeline() {
             <button
               title={t("toolbar.listView")}
               onClick={() => setViewMode("list")}
-              className={`px-2.5 py-1.5 flex items-center border-0 border-l border-border cursor-pointer ${
+              className={`px-2.5 py-1.5 flex items-center max-md:justify-center max-md:min-h-10 max-md:min-w-10 border-0 border-l border-border cursor-pointer ${
                 viewMode === "list"
                   ? "bg-secondary text-primary"
                   : "bg-background text-muted-foreground hover:bg-muted transition-colors"

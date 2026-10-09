@@ -16,6 +16,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { formatCurrency, getInitials } from "@/lib/helper";
 import { useRelativeTime } from "@/lib/format";
+import { ContactMobileCard } from "./ContactMobileCard";
 import {
   Contact,
   ContactTagConst,
@@ -59,7 +60,23 @@ function ContactTableSkeleton() {
   const tableColumns = getTableColumns(t);
   return (
     <>
-      <Table className="min-w-[1200px]">
+      {/* Phone (< md): card skeletons; the table skeleton stays for >= md */}
+      <ul className="md:hidden divide-y divide-border/40">
+        {Array.from({ length: 6 }).map((_, idx) => (
+          <li key={`mobile-skeleton-${idx}`} className="flex flex-col gap-2 px-3 py-3">
+            <div className="flex items-center gap-3">
+              <Skeleton className="size-10 rounded-full shrink-0" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+            <Skeleton className="h-11 w-full" />
+          </li>
+        ))}
+      </ul>
+
+      <Table className="min-w-[1200px] max-md:hidden">
         <TableHeader>
           <TableRow className="hover:bg-transparent border-b border-border/60">
             {tableColumns.map((col, idx) => (
@@ -309,7 +326,14 @@ function ContactTable({
       {contacts && contacts.length > 0 ? (
         /* ── Table ────────────────────────────────────────────────────── */
         <>
-          <Table className="min-w-[1200px]">
+          {/* Phone (< md): cards below; the table stays for >= md */}
+          <ul className="md:hidden divide-y divide-border/40">
+            {contacts.map((contact) => (
+              <ContactMobileCard key={contact.id} contact={contact} />
+            ))}
+          </ul>
+
+          <Table className="min-w-[1200px] max-md:hidden">
             <TableHeader>
               <TableRow className="hover:bg-transparent border-b border-border/60">
                 {tableColumns.map((col, idx) => (
