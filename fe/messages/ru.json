@@ -804,6 +804,7 @@
   "chat": {
     "title": "Чат",
     "selectChannel": "Выберите канал, чтобы начать общение",
+    "backToChannels": "Назад к списку каналов",
     "channels": {
       "title": "Каналы",
       "namePlaceholder": "Название канала",

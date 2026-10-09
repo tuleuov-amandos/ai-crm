@@ -78,7 +78,7 @@ export default function EditMessageForm({
         onKeyDown={handleKeyDown}
         maxLength={MESSAGE_MAX_LENGTH}
         aria-label={t("editLabel")}
-        className="min-h-[38px] max-h-48 resize-none bg-background"
+        className="min-h-[38px] max-h-48 resize-none bg-background max-md:text-base!"
         style={{ fontSize: 13 }}
         disabled={isPending}
       />
@@ -87,7 +87,7 @@ export default function EditMessageForm({
           type="button"
           variant="outline"
           size="sm"
-          className="cursor-pointer"
+          className="cursor-pointer max-md:h-10"
           onClick={onCancel}
           disabled={isPending}
         >
@@ -96,7 +96,7 @@ export default function EditMessageForm({
         <Button
           type="button"
           size="sm"
-          className="cursor-pointer"
+          className="cursor-pointer max-md:h-10"
           onClick={handleSave}
           disabled={isPending || !canSave}
         >

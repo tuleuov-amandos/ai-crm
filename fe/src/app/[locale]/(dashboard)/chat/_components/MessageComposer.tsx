@@ -101,7 +101,7 @@ export default function MessageComposer({ channelId }: MessageComposerProps) {
   };
 
   return (
-    <div className="shrink-0 border-t border-border p-3">
+    <div className="shrink-0 border-t border-border p-3 max-md:p-2">
       {pendingFiles.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mb-2">
           {pendingFiles.map((file, index) => (
@@ -138,7 +138,7 @@ export default function MessageComposer({ channelId }: MessageComposerProps) {
           type="button"
           variant="outline"
           size="icon"
-          className="size-9 shrink-0 text-muted-foreground hover:text-foreground"
+          className="size-9 shrink-0 text-muted-foreground hover:text-foreground max-md:size-11"
           onClick={() => fileInputRef.current?.click()}
           disabled={isPending || pendingFiles.length >= CHAT_ATTACHMENTS_MAX_COUNT}
         >
@@ -151,7 +151,7 @@ export default function MessageComposer({ channelId }: MessageComposerProps) {
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={t("placeholder")}
-          className="min-h-[38px] max-h-32 resize-none"
+          className="min-h-[38px] max-h-32 resize-none max-md:min-h-11 max-md:text-base!"
           style={{ fontSize: 13 }}
           disabled={isPending}
         />
@@ -159,7 +159,7 @@ export default function MessageComposer({ channelId }: MessageComposerProps) {
         <Button
           type="button"
           size="icon"
-          className="size-9 shrink-0"
+          className="size-9 shrink-0 max-md:size-11"
           onClick={handleSubmit}
           disabled={isPending || (!content.trim() && pendingFiles.length === 0)}
         >

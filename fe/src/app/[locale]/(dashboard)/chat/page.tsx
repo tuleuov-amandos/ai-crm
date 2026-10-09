@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { ArrowLeft } from "lucide-react";
 import { useChannels } from "@/hooks/useChat";
 import { useChatSocketContext } from "@/hooks/useChatSocket";
 import ChannelList from "./_components/ChannelList";
 import MessageList from "./_components/MessageList";
 import MessageComposer from "./_components/MessageComposer";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default function ChatPage() {
   const t = useTranslations("chat");
@@ -14,6 +17,10 @@ export default function ChatPage() {
   const [selectedChannelId, setSelectedChannelId] = useState<string | undefined>(
     undefined,
   );
+  // Phones (< md) show one column: the channel list, or the open channel after
+  // a tap on it. Only CSS reads this, so desktop always shows both columns.
+  // Kept apart from selectedChannelId, which the effect below auto-fills.
+  const [isMobileChannelOpen, setIsMobileChannelOpen] = useState(false);
   const { joinChannel, setActiveChannelId, markChannelRead } =
     useChatSocketContext();
 
@@ -42,10 +49,16 @@ export default function ChatPage() {
   ]);
 
   const selectedChannel = channels?.find((c) => c.id === selectedChannelId);
+  const showChannelOnMobile = isMobileChannelOpen && !!selectedChannelId;
 
   return (
-    <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-      <header className="h-14 shrink-0 border-b bg-background flex items-center px-6">
+    <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
+      <header
+        className={cn(
+          "h-14 shrink-0 border-b bg-background flex items-center px-6 max-md:px-3",
+          showChannelOnMobile && "max-md:hidden",
+        )}
+      >
         <h1
           className="text-foreground tracking-tight"
           style={{ fontSize: 15, fontWeight: 600, lineHeight: 1 }}
@@ -54,18 +67,37 @@ export default function ChatPage() {
         </h1>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-hidden">
         <ChannelList
           selectedChannelId={selectedChannelId}
-          onSelect={(id) => setSelectedChannelId(id)}
+          onSelect={(id) => {
+            setSelectedChannelId(id);
+            setIsMobileChannelOpen(id !== undefined);
+          }}
+          className={cn(showChannelOnMobile && "max-md:hidden")}
         />
 
-        <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        <div
+          className={cn(
+            "flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden",
+            !showChannelOnMobile && "max-md:hidden",
+          )}
+        >
           {selectedChannelId ? (
             <>
-              <div className="h-11 shrink-0 border-b border-border flex items-center px-4">
+              <div className="h-11 shrink-0 border-b border-border flex items-center px-4 max-md:h-12 max-md:gap-1 max-md:px-1.5">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-10 shrink-0 md:hidden"
+                  aria-label={t("backToChannels")}
+                  onClick={() => setIsMobileChannelOpen(false)}
+                >
+                  <ArrowLeft size={18} />
+                </Button>
                 <span
-                  className="text-foreground truncate"
+                  className="min-w-0 text-foreground truncate"
                   style={{ fontSize: 13, fontWeight: 500 }}
                 >
                   # {selectedChannel?.name}

@@ -804,6 +804,7 @@
   "chat": {
     "title": "Chat",
     "selectChannel": "Select a channel to start chatting",
+    "backToChannels": "Back to channels",
     "channels": {
       "title": "Channels",
       "namePlaceholder": "Channel name",
