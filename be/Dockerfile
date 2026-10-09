@@ -1,11 +1,11 @@
-FROM node:22-slim AS deps
+FROM public.ecr.aws/docker/library/node:22-slim AS deps
 WORKDIR /app
 
 COPY package.json package-lock.json ./
 RUN npm ci
 
 
-FROM node:22-slim AS build
+FROM public.ecr.aws/docker/library/node:22-slim AS build
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
@@ -24,14 +24,14 @@ RUN npm run build
 
 
 
-FROM node:22-slim AS prod-deps
+FROM public.ecr.aws/docker/library/node:22-slim AS prod-deps
 WORKDIR /app
 
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
 
-FROM node:22-slim AS runner
+FROM public.ecr.aws/docker/library/node:22-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
