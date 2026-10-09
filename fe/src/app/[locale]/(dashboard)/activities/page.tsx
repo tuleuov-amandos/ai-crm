@@ -212,10 +212,13 @@ export default function Activities() {
 
       <div className="flex-1 overflow-y-auto bg-[#F8F8F7] dark:bg-background">
         <div
-          className="flex gap-6 p-6 items-start mx-auto"
+          className="flex gap-6 p-6 items-start mx-auto max-md:flex-col max-md:items-stretch max-md:gap-4 max-md:p-3"
           style={{ maxWidth: 1400 }}
         >
-          <div className="min-w-0" style={{ flex: "65 1 0%" }}>
+          <div
+            className="min-w-0 max-md:order-2 max-md:flex-none!"
+            style={{ flex: "65 1 0%" }}
+          >
             {isLoading ? (
               <TimelineSkeleton />
             ) : (
@@ -235,7 +238,7 @@ export default function Activities() {
                       size="sm"
                       onClick={() => fetchNextPage()}
                       disabled={isFetchingNextPage}
-                      className="gap-1.5"
+                      className="gap-1.5 max-md:h-10"
                       style={{ fontSize: 12 }}
                     >
                       {isFetchingNextPage && (
@@ -250,10 +253,10 @@ export default function Activities() {
           </div>
 
           <div
-            className="min-w-0"
+            className="min-w-0 max-md:order-1 max-md:flex-none! max-md:min-w-0! max-md:max-w-none!"
             style={{ flex: "35 1 0%", minWidth: 260, maxWidth: 320 }}
           >
-            <div className="sticky top-6">
+            <div className="sticky top-6 max-md:static">
               <SummaryPanel activities={allActivities} isLoading={isLoading} />
             </div>
           </div>

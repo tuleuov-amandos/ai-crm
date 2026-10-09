@@ -123,10 +123,10 @@ export default function DashboardPage() {
       </header>
 
       {/* ── Main content ───────────────────────────────────────────────────── */}
-      <main className="flex-1 overflow-y-auto p-6 space-y-5 bg-[#F8F8F7] dark:bg-background">
+      <main className="flex-1 overflow-y-auto p-6 space-y-5 bg-[#F8F8F7] dark:bg-background max-md:p-3">
 
         {/* Welcome strip */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between max-md:flex-wrap max-md:gap-x-3 max-md:gap-y-1.5">
           <p className="text-muted-foreground" style={{ fontSize: 13 }}>
             {t("greeting")},{" "}
             <strong className="text-foreground" style={{ fontWeight: 600 }}>
@@ -144,9 +144,9 @@ export default function DashboardPage() {
 
         {/* ── Metric cards ─────────────────────────────────────────────────── */}
         {isLoading ? (
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-4 gap-4 max-md:grid-cols-2 max-md:gap-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-background border border-border/70 rounded-xl p-5 space-y-3 shadow-none">
+              <div key={i} className="bg-background border border-border/70 rounded-xl p-5 space-y-3 shadow-none max-md:p-3">
                 <Skeleton className="h-3.5 w-24 rounded" />
                 <div className="flex items-end gap-2">
                   <Skeleton className="h-8 w-20 rounded" />
@@ -158,7 +158,7 @@ export default function DashboardPage() {
           </div>
         ) : (
           dashboardData && (
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-4 gap-4 max-md:grid-cols-2 max-md:gap-3">
               <MetricCard
                 label={t("metrics.totalDealValue.label")}
                 value={shortValue(dashboardData.metrics.totalDealValue.value)}
@@ -214,7 +214,10 @@ export default function DashboardPage() {
         )}
 
         {/* ── Charts row ───────────────────────────────────────────────────── */}
-        <div className="grid gap-4" style={{ gridTemplateColumns: canViewLeaderboard ? "3fr 2fr" : "1fr", minHeight: 340 }}>
+        <div
+          className="grid gap-4 max-md:grid-cols-1! max-md:min-h-0!"
+          style={{ gridTemplateColumns: canViewLeaderboard ? "3fr 2fr" : "1fr", minHeight: 340 }}
+        >
           <PipelineChart
             stages={dashboardData?.pipelineFunnel.stages ?? []}
             totalCount={dashboardData?.pipelineFunnel.totalCount ?? 0}
@@ -227,7 +230,10 @@ export default function DashboardPage() {
         </div>
 
         {/* ── Bottom row ───────────────────────────────────────────────────── */}
-        <div className="grid gap-4" style={{ gridTemplateColumns: canReadActivity ? "3fr 2fr" : "1fr" }}>
+        <div
+          className="grid gap-4 max-md:grid-cols-1!"
+          style={{ gridTemplateColumns: canReadActivity ? "3fr 2fr" : "1fr" }}
+        >
           <RecentDeals deals={dashboardData?.recentDeals ?? []} isLoading={isLoading} />
           {canReadActivity && (
             <UpcomingActivities activities={dashboardData?.upcomingActivities ?? []} isLoading={isLoading} />

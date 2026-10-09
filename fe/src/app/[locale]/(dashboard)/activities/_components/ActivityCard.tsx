@@ -138,7 +138,7 @@ export function ActivityCard({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
-                      className="text-muted-foreground hover:text-foreground transition-colors p-0.5 bg-transparent border-0 cursor-pointer"
+                      className="text-muted-foreground hover:text-foreground transition-colors p-0.5 bg-transparent border-0 cursor-pointer max-md:flex max-md:size-10 max-md:items-center max-md:justify-center max-md:-my-3 max-md:-mr-2"
                       aria-label={t("optionsAria")}
                     >
                       <MoreHorizontal size={13} />
@@ -148,7 +148,7 @@ export function ActivityCard({
                     {onEdit && (
                       <DropdownMenuItem
                         onClick={() => onEdit(activity)}
-                        className="gap-2 cursor-pointer"
+                        className="gap-2 cursor-pointer max-md:min-h-10"
                       >
                         <Pencil size={13} />
                         <span style={{ fontSize: 12 }}>{tCommon("edit")}</span>
@@ -158,7 +158,7 @@ export function ActivityCard({
                     {onDelete && (
                       <DropdownMenuItem
                         onClick={() => onDelete(activity)}
-                        className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+                        className="gap-2 cursor-pointer text-destructive focus:text-destructive max-md:min-h-10"
                       >
                         <Trash2 size={13} />
                         <span style={{ fontSize: 12 }}>{tCommon("delete")}</span>
@@ -185,7 +185,7 @@ export function ActivityCard({
             <p className="mb-1" style={{ fontSize: 12 }}>
               <Link
                 href={`/contacts/${activity.contact.id}`}
-                className={cn("text-primary hover:underline")}
+                className={cn("text-primary hover:underline max-md:inline-block max-md:py-2.5 max-md:-my-2.5")}
                 style={{ fontWeight: 500, textDecoration: "none" }}
               >
                 {activity.contact.name}
@@ -220,7 +220,7 @@ export function ActivityCard({
             {isLong && (
               <button
                 onClick={() => setExpanded(!expanded)}
-                className="text-primary ml-1 bg-transparent border-0 cursor-pointer p-0"
+                className="text-primary ml-1 bg-transparent border-0 cursor-pointer p-0 max-md:px-2 max-md:py-2.5 max-md:-my-2.5"
                 style={{ fontSize: 12, fontWeight: 500 }}
               >
                 {expanded ? t("collapse") : t("expand")}
@@ -235,7 +235,7 @@ export function ActivityCard({
                 href={activity.attachmentUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1 text-primary hover:underline"
+                className="flex items-center gap-1 text-primary hover:underline max-md:py-2.5 max-md:-my-2.5"
                 style={{ fontSize: 12, textDecoration: "none" }}
               >
                 <Paperclip size={12} />
@@ -245,7 +245,7 @@ export function ActivityCard({
                 type="button"
                 onClick={() => deleteAttachment.mutate(activity.id)}
                 disabled={deleteAttachment.isPending}
-                className="text-muted-foreground hover:text-destructive bg-transparent border-0 cursor-pointer p-0"
+                className="text-muted-foreground hover:text-destructive bg-transparent border-0 cursor-pointer p-0 max-md:p-3.5 max-md:-m-3.5"
                 aria-label={tAttachment("remove")}
               >
                 <X size={12} />
@@ -270,7 +270,7 @@ export function ActivityCard({
               </div>
               <Link
                 href={`/pipeline/${activity.dealId}`}
-                className="shrink-0 text-primary bg-transparent border-0 cursor-pointer whitespace-nowrap"
+                className="shrink-0 text-primary bg-transparent border-0 cursor-pointer whitespace-nowrap max-md:py-2.5 max-md:-my-2.5 max-md:pl-2"
                 style={{ fontSize: 11, fontWeight: 500, textDecoration: "none" }}
               >
                 {t("view")}

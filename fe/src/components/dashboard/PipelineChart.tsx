@@ -62,7 +62,7 @@ export function PipelineChart({
 
   return (
     <Card className="shadow-none border-border/70 gap-0 py-0 h-full flex flex-col">
-      <CardHeader className="border-b px-5 py-4">
+      <CardHeader className="border-b px-5 py-4 max-md:flex max-md:flex-wrap max-md:items-center max-md:justify-between max-md:gap-x-3">
         <div>
           <CardTitle className="text-sm tracking-tight">{t("title")}</CardTitle>
           <CardDescription className="text-xs mt-0.5">
@@ -73,7 +73,7 @@ export function PipelineChart({
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 gap-1 text-primary hover:text-primary hover:bg-secondary/60 text-xs px-2"
+            className="h-7 gap-1 text-primary hover:text-primary hover:bg-secondary/60 text-xs px-2 max-md:h-10 max-md:px-3"
             asChild
           >
             <Link href="/pipeline">
@@ -114,8 +114,8 @@ export function PipelineChart({
             return (
               <div key={keyOf(stage, i)} className="space-y-1.5">
                 {/* Label row */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between max-md:gap-2">
+                  <div className="flex items-center gap-2 max-md:flex-wrap max-md:gap-y-1">
                     <div
                       className="size-2 rounded-sm shrink-0"
                       style={{ background: colorOf(stage, i) }}
@@ -129,7 +129,7 @@ export function PipelineChart({
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2.5 max-md:shrink-0">
                     <span className="text-xs text-muted-foreground">
                       {shortValue(stage.value)}
                     </span>
@@ -156,8 +156,8 @@ export function PipelineChart({
       )}
 
       {isLoading ? (
-        <CardFooter className="border-t px-5 py-3 flex items-center justify-between">
-          <div className="flex gap-4">
+        <CardFooter className="border-t px-5 py-3 flex items-center justify-between max-md:flex-col max-md:items-start max-md:gap-2">
+          <div className="flex gap-4 max-md:flex-wrap max-md:gap-x-3 max-md:gap-y-1">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="flex items-center gap-1.5">
                 <Skeleton className="size-1.5 rounded-sm" />
@@ -168,8 +168,8 @@ export function PipelineChart({
           <Skeleton className="h-3.5 w-28" />
         </CardFooter>
       ) : (
-        <CardFooter className="border-t px-5 py-3 flex items-center justify-between">
-          <div className="flex gap-4">
+        <CardFooter className="border-t px-5 py-3 flex items-center justify-between max-md:flex-col max-md:items-start max-md:gap-2">
+          <div className="flex gap-4 max-md:flex-wrap max-md:gap-x-3 max-md:gap-y-1">
             {stages.map((s, i) => (
               <div key={keyOf(s, i)} className="flex items-center gap-1.5">
                 <div

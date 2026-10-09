@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 export function EmptyState({ onCreate }: { onCreate: () => void }) {
   const t = useTranslations("activities");
   return (
-    <div className="flex flex-col items-center justify-center py-20 px-8 text-center">
+    <div className="flex flex-col items-center justify-center py-20 px-8 text-center max-md:py-12 max-md:px-4">
       <svg
         width="80"
         height="80"
@@ -40,7 +40,7 @@ export function EmptyState({ onCreate }: { onCreate: () => void }) {
       </p>
       <Button
         size="sm"
-        className="gap-1.5"
+        className="gap-1.5 max-md:h-10"
         style={{ fontSize: 13 }}
         onClick={onCreate}
       >

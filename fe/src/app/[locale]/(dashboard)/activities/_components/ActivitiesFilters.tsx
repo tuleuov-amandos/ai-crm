@@ -39,7 +39,7 @@ function FilterPill({
     <button
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-colors cursor-pointer",
+        "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-colors cursor-pointer max-md:min-h-10 max-md:shrink-0 max-md:whitespace-nowrap max-md:px-4",
         active
           ? "bg-primary text-white border-primary"
           : "bg-background text-muted-foreground border-border hover:border-primary/40 hover:text-foreground",
@@ -53,7 +53,7 @@ function FilterPill({
 }
 
 const dropdownBtnClass =
-  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-background transition-colors cursor-pointer";
+  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border bg-background transition-colors cursor-pointer max-md:min-h-10 max-md:w-full max-md:min-w-0 max-md:justify-between";
 
 function DropdownTrigger({
   label,
@@ -98,7 +98,7 @@ function ListRow({
     <button
       onClick={onClick}
       className={cn(
-        "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors cursor-pointer",
+        "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors cursor-pointer max-md:min-h-10",
         active
           ? "bg-primary/10 text-foreground"
           : "text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -224,7 +224,7 @@ function ContactFilter({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t("filters.searchContacts")}
-          className="mb-1.5 w-full rounded-md border border-border bg-background px-2 py-1.5 outline-none focus:border-primary/50"
+          className="mb-1.5 w-full rounded-md border border-border bg-background px-2 py-1.5 outline-none focus:border-primary/50 max-md:h-10 max-md:text-base!"
           style={{ fontSize: 12 }}
         />
         <div className="max-h-64 space-y-0.5 overflow-y-auto">
@@ -304,8 +304,8 @@ export function ActivitiesFilters({
   ];
 
   return (
-    <div className="shrink-0 border-b bg-background px-6 py-3 space-y-2.5">
-      <div className="flex items-center gap-1.5 flex-wrap">
+    <div className="shrink-0 border-b bg-background px-6 py-3 space-y-2.5 max-md:px-3">
+      <div className="flex items-center gap-1.5 flex-wrap max-md:-mx-3 max-md:flex-nowrap max-md:overflow-x-auto max-md:px-3 max-md:[scrollbar-width:none]">
         {filterPills.map((pill) => (
           <FilterPill
             key={pill.key}
@@ -317,7 +317,7 @@ export function ActivitiesFilters({
         ))}
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-2 flex-wrap max-md:grid max-md:grid-cols-2">
         <StaffFilter
           selectedUserId={selectedUserId}
           onUserChange={onUserChange}
