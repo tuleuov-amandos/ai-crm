@@ -172,7 +172,7 @@ export function UpcomingActivities({ activities = [], isLoading = false }: Upcom
         <Button
           size="sm"
           variant="secondary"
-          className="h-8 gap-1.5 text-xs text-primary hover:text-primary"
+          className="h-8 gap-1.5 text-xs text-primary hover:text-primary max-md:h-10"
           asChild
         >
           <Link href="/activities">

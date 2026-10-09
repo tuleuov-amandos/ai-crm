@@ -12,7 +12,10 @@ export function MobileTopbar() {
 
   return (
     <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border bg-background px-3 md:hidden print:hidden">
-      <SidebarTrigger aria-label={t("openMenu")} />
+      <SidebarTrigger
+        aria-label={t("openMenu")}
+        className="max-md:-mx-2 max-md:size-11"
+      />
       <span className="min-w-0 truncate text-sm font-semibold text-foreground">
         {brandName}
       </span>

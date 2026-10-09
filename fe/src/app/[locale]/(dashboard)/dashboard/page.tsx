@@ -100,7 +100,7 @@ export default function DashboardPage() {
         <div className="flex items-center gap-2 max-md:flex-wrap">
           {/* Period tabs */}
           <Tabs value={period} onValueChange={(val) => setPeriod(val as DashboardPeriod)}>
-            <TabsList className="h-8 gap-0 p-0.5">
+            <TabsList className="h-8 gap-0 p-0.5 max-md:h-auto">
               <TabsTrigger value="week"    className="h-7 px-3 text-xs rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t("period.week")}</TabsTrigger>
               <TabsTrigger value="month"   className="h-7 px-3 text-xs rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t("period.month")}</TabsTrigger>
               <TabsTrigger value="quarter" className="h-7 px-3 text-xs rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">{t("period.quarter")}</TabsTrigger>
@@ -112,7 +112,7 @@ export default function DashboardPage() {
           {canCreateDeal && (
             <Button
               size="sm"
-              className="h-8 gap-1.5 text-xs"
+              className="h-8 gap-1.5 text-xs max-md:h-10"
               onClick={() => setCreateDealOpen(true)}
             >
               <Plus className="size-3.5" />

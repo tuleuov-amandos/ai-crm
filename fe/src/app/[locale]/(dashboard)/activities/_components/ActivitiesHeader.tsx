@@ -100,7 +100,7 @@ export function ActivitiesHeader({
               onSelect={onDateRangeChange}
               numberOfMonths={2}
               defaultMonth={dateRange?.from}
-              className="max-md:[--cell-size:--spacing(10)] max-md:[&_.rdp-months>.rdp-month:nth-child(n+2)]:hidden"
+              className="max-md:[--cell-size:--spacing(10)] max-md:[&_.rdp-months>.rdp-month:nth-child(n+3)]:hidden"
             />
           </PopoverContent>
         </Popover>
