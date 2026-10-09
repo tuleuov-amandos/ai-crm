@@ -10,6 +10,7 @@ import MessageList from "./_components/MessageList";
 import MessageComposer from "./_components/MessageComposer";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { PHONE_MEDIA_QUERY } from "@/lib/viewport";
 
 export default function ChatPage() {
   const t = useTranslations("chat");
@@ -33,20 +34,37 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (!selectedChannelId) return;
-    joinChannel(selectedChannelId);
-    setActiveChannelId(selectedChannelId);
-    markChannelRead(selectedChannelId);
-    // Don't leave the socket room here: the backend auto-joins all channels on
+    // Don't leave the socket room: the backend auto-joins all channels on
     // connect so unread notifications keep arriving outside this channel/page.
+    joinChannel(selectedChannelId);
+  }, [selectedChannelId, joinChannel]);
+
+  // A channel becomes active (and read) only while it is on screen. On a phone
+  // that is after a tap, not while the auto-picked first channel sits behind
+  // the list. The width is read here and not in render (hydration); the
+  // listener re-applies it if the window crosses 768 px (rotation, resize).
+  useEffect(() => {
+    if (!selectedChannelId) return;
+    const mql = window.matchMedia(PHONE_MEDIA_QUERY);
+    let active = false;
+    const apply = () => {
+      const shouldBeActive = !mql.matches || isMobileChannelOpen;
+      if (shouldBeActive === active) return;
+      active = shouldBeActive;
+      if (active) {
+        setActiveChannelId(selectedChannelId);
+        markChannelRead(selectedChannelId);
+      } else {
+        setActiveChannelId(undefined);
+      }
+    };
+    apply();
+    mql.addEventListener("change", apply);
     return () => {
+      mql.removeEventListener("change", apply);
       setActiveChannelId(undefined);
     };
-  }, [
-    selectedChannelId,
-    joinChannel,
-    setActiveChannelId,
-    markChannelRead,
-  ]);
+  }, [selectedChannelId, isMobileChannelOpen, setActiveChannelId, markChannelRead]);
 
   const selectedChannel = channels?.find((c) => c.id === selectedChannelId);
   const showChannelOnMobile = isMobileChannelOpen && !!selectedChannelId;

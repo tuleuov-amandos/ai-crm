@@ -6,21 +6,13 @@ import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { StageBadge } from "@/components/ui/StageBadge";
 import { ArchivedBadge } from "@/components/ui/ArchivedBadge";
+import { PaymentStatusBadge } from "@/components/ui/PaymentStatusBadge";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/helper";
 import { isDealArchived } from "@/lib/dealArchive";
 import { buildTelHref } from "@/lib/dealQuickActions";
 import { formatAddressLine } from "@/lib/addressLine";
 import type { Deal } from "./types";
-
-// GET /deals/board returns only { id, name, company } for the contact today, so
-// these three are undefined until the backend adds them; the card then leaves
-// the address row and the call button out.
-type ContactExtras = {
-  phone?: string | null;
-  address?: string | null;
-  city?: string | null;
-};
 
 // Phone-only (< md) card of the pipeline list view. The whole card opens the
 // deal through a stretched link on the title (no nested links, the browser
@@ -34,7 +26,7 @@ export function DealMobileCard({
   closeDateLabel: string;
 }) {
   const t = useTranslations("pipeline");
-  const contact = deal.contact as Deal["contact"] & ContactExtras;
+  const { contact } = deal;
   const addressLine = formatAddressLine(contact.address, contact.city);
   const telHref = buildTelHref(contact.phone);
 
@@ -83,11 +75,12 @@ export function DealMobileCard({
         </p>
       ) : null}
 
-      {/* Row 4: close date, call */}
+      {/* Row 4: close date, payment status (read-only), call */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-          <span className="truncate">{closeDateLabel}</span>
-          {isDealArchived(deal) && <ArchivedBadge />}
+          <span className="min-w-0 truncate">{closeDateLabel}</span>
+          <PaymentStatusBadge isPaid={deal.isPaid} className="shrink-0" />
+          {isDealArchived(deal) && <ArchivedBadge className="shrink-0" />}
         </div>
         {telHref ? (
           <Button

@@ -11,6 +11,10 @@ const DealContactCardSchema = z.object({
   id: z.string(),
   name: z.string(),
   company: z.string().nullable(),
+  // GET /deals/board sends these; create/update responses may omit them.
+  phone: z.string().nullish(),
+  address: z.string().nullish(),
+  city: z.string().nullish(),
 });
 
 // ─── Deal Card — used in pipeline view ────────────────────────────────────
