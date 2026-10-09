@@ -46,6 +46,7 @@ import {
 interface ChannelListProps {
   selectedChannelId: string | undefined;
   onSelect: (channelId: string | undefined) => void;
+  className?: string;
 }
 
 // Dropdown-of-checkboxes multiselect, same pattern the contact form used to
@@ -123,6 +124,7 @@ function MemberMultiSelect({
 export default function ChannelList({
   selectedChannelId,
   onSelect,
+  className,
 }: ChannelListProps) {
   const t = useTranslations("chat.channels");
   const tCommon = useTranslations("common");
@@ -205,7 +207,14 @@ export default function ChannelList({
     me?.id === createdById || isAdmin;
 
   return (
-    <div className="w-[260px] min-w-[220px] bg-background border-r border-border flex flex-col overflow-hidden shrink-0">
+    <div
+      className={cn(
+        "w-[260px] min-w-[220px] bg-background border-r border-border flex flex-col overflow-hidden shrink-0",
+        // Phones: the list is the whole screen until a channel is opened.
+        "max-md:w-full max-md:min-w-0 max-md:shrink max-md:border-r-0",
+        className,
+      )}
+    >
       <div className="h-11 shrink-0 border-b border-border flex items-center justify-between px-3">
         <span
           className="text-muted-foreground uppercase tracking-wide"
@@ -216,7 +225,7 @@ export default function ChannelList({
         <Button
           variant="ghost"
           size="icon"
-          className="size-6 text-muted-foreground hover:text-foreground"
+          className="size-6 text-muted-foreground hover:text-foreground max-md:size-10 max-md:-mr-2"
           onClick={() => setIsCreating((v) => !v)}
         >
           <Plus size={14} />
@@ -303,7 +312,7 @@ export default function ChannelList({
               <div
                 key={channel.id}
                 className={cn(
-                  "group flex items-center gap-1.5 mx-1.5 rounded-lg px-2 py-1.5 cursor-pointer transition-colors",
+                  "group flex items-center gap-1.5 mx-1.5 rounded-lg px-2 py-1.5 cursor-pointer transition-colors max-md:min-h-11",
                   active
                     ? "bg-[#EEEDFE] text-[#534AB7]"
                     : "text-[#495057] hover:bg-[#E9ECEF] hover:text-[#212529]",
@@ -330,7 +339,7 @@ export default function ChannelList({
                   <button
                     type="button"
                     aria-label={t("addMembersAction")}
-                    className="shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground bg-transparent border-0 cursor-pointer p-0.5"
+                    className="shrink-0 max-md:hidden opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground bg-transparent border-0 cursor-pointer p-0.5"
                     onClick={(e) => {
                       e.stopPropagation();
                       setAddingMembersTo({ id: channel.id, name: channel.name });
@@ -343,7 +352,7 @@ export default function ChannelList({
                   <button
                     type="button"
                     aria-label={t("deleteTitle")}
-                    className="shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive bg-transparent border-0 cursor-pointer p-0.5"
+                    className="shrink-0 max-md:hidden opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive bg-transparent border-0 cursor-pointer p-0.5"
                     onClick={(e) => {
                       e.stopPropagation();
                       setDeletingChannel({ id: channel.id, name: channel.name });

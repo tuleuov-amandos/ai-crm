@@ -33,12 +33,31 @@ test("buildTelHref returns null without digits", () => {
 
 test("buildWhatsAppHref keeps only digits", () => {
   assert.equal(buildWhatsAppHref("+7 (777) 123-45-67"), "https://wa.me/77771234567");
-  // Same as before: the number is not rewritten, 8... stays 8...
-  assert.equal(buildWhatsAppHref("8 777 123 45 67"), "https://wa.me/87771234567");
+  assert.equal(buildWhatsAppHref("7-777-123-45-67"), "https://wa.me/77771234567");
+  assert.equal(buildWhatsAppHref("  77771234567 "), "https://wa.me/77771234567");
+});
+
+test("buildWhatsAppHref turns a Kazakh 8... number into 7...", () => {
+  assert.equal(buildWhatsAppHref("87778889933"), "https://wa.me/77778889933");
+  assert.equal(buildWhatsAppHref("8 777 123 45 67"), "https://wa.me/77771234567");
+  assert.equal(buildWhatsAppHref("8 (777) 123-45-67"), "https://wa.me/77771234567");
+  assert.equal(buildWhatsAppHref(" 8-727-250-00-00 "), "https://wa.me/77272500000");
+});
+
+test("buildWhatsAppHref leaves other numbers as digits", () => {
+  // Not 11 digits: no rewrite.
+  assert.equal(buildWhatsAppHref("8 777 123 45"), "https://wa.me/877712345");
+  assert.equal(buildWhatsAppHref("877712345678"), "https://wa.me/877712345678");
+  // An explicit "+8..." is a foreign country code (+81 Japan), not a local 8.
+  assert.equal(buildWhatsAppHref("+81 3 1234 5678"), "https://wa.me/81312345678");
+  assert.equal(buildWhatsAppHref("+49 30 1234567"), "https://wa.me/49301234567");
+  assert.equal(buildWhatsAppHref("+1 (212) 555-0100"), "https://wa.me/12125550100");
 });
 
 test("buildWhatsAppHref returns null without digits", () => {
   assert.equal(buildWhatsAppHref(""), null);
+  assert.equal(buildWhatsAppHref("   "), null);
+  assert.equal(buildWhatsAppHref("—"), null);
   assert.equal(buildWhatsAppHref("()- +"), null);
   assert.equal(buildWhatsAppHref(null), null);
   assert.equal(buildWhatsAppHref(undefined), null);

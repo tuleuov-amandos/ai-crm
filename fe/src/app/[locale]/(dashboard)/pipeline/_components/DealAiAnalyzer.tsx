@@ -265,7 +265,7 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
             disabled={isStreaming || phase === "analyzing"}
             rows={phase === "idle" ? 10 : 5}
             className={cn(
-              "resize-none border-border focus-visible:border-primary transition-all duration-300",
+              "resize-none border-border focus-visible:border-primary transition-all duration-300 max-md:text-base!",
               (isStreaming || phase === "analyzing") && "bg-[#F8F8F7] dark:bg-muted text-muted-foreground"
             )}
             style={{ fontSize: 12, lineHeight: 1.75 }}
@@ -274,7 +274,7 @@ export function DealAiAnalyzer({ dealId }: DealAiAnalyzerProps) {
           <Button
             onClick={phase === "done" ? reset : startAnalyze}
             disabled={isStreaming || phase === "analyzing" || !note.trim()}
-            className="w-full mt-3 gap-2 h-9"
+            className="w-full mt-3 gap-2 h-9 max-md:h-10"
           >
             {phase === "analyzing" ? (
               <>

@@ -184,14 +184,14 @@ export default function MessageList({ channelId }: MessageListProps) {
     <div
       ref={containerRef}
       onScroll={handleScroll}
-      className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3"
+      className="flex-1 min-h-0 overflow-y-auto px-4 py-3 flex flex-col gap-3 max-md:px-3"
     >
       {hasNextPage && (
         <div className="flex justify-center pb-1">
           <Button
             variant="outline"
             size="sm"
-            className="h-7 gap-1.5 text-xs"
+            className="h-7 gap-1.5 text-xs max-md:h-10"
             onClick={handleLoadMore}
             disabled={isFetchingNextPage}
           >
@@ -314,7 +314,7 @@ function MessageRow({
             <img
               src={attachment.url}
               alt={attachment.fileName}
-              className="max-h-32 rounded-md border border-border object-cover"
+              className="max-h-32 rounded-md border border-border object-cover max-md:max-w-full"
             />
           </a>
         ) : (
@@ -323,14 +323,16 @@ function MessageRow({
             href={attachment.url}
             target="_blank"
             rel="noopener noreferrer"
-            className={
+            className={cn(
               isOwn
                 ? "flex items-center gap-1.5 text-primary-foreground hover:underline"
-                : "flex items-center gap-1.5 text-primary hover:underline"
-            }
+                : "flex items-center gap-1.5 text-primary hover:underline",
+              // Long file names without spaces must not widen the bubble on phones.
+              "max-md:min-w-0 max-md:break-all",
+            )}
             style={{ fontSize: 12, textDecoration: "none" }}
           >
-            <Paperclip size={12} />
+            <Paperclip size={12} className="max-md:shrink-0" />
             {attachment.fileName}
           </a>
         ),
@@ -365,7 +367,7 @@ function MessageRow({
               )}
               <div className="bg-primary text-primary-foreground rounded-2xl px-3 py-2 min-w-0">
                 {message.content && (
-                  <p className="whitespace-pre-wrap break-words" style={{ fontSize: 13 }}>
+                  <p className="whitespace-pre-wrap break-words max-md:wrap-anywhere" style={{ fontSize: 13 }}>
                     {message.content}
                   </p>
                 )}
@@ -401,7 +403,7 @@ function MessageRow({
 
       <div className="flex-1 min-w-0 max-w-[75%]">
         <div className="flex items-baseline gap-2">
-          <span className="text-foreground" style={{ fontSize: 13, fontWeight: 500 }}>
+          <span className="text-foreground max-md:min-w-0 max-md:truncate" style={{ fontSize: 13, fontWeight: 500 }}>
             {message.sender.name}
           </span>
           <span className="text-muted-foreground" style={{ fontSize: 11 }}>
@@ -415,7 +417,7 @@ function MessageRow({
         ) : (
           <div className="bg-muted rounded-2xl px-3 py-2 mt-1 min-w-0 inline-block">
             {message.content && (
-              <p className="text-foreground whitespace-pre-wrap break-words" style={{ fontSize: 13 }}>
+              <p className="text-foreground whitespace-pre-wrap break-words max-md:wrap-anywhere" style={{ fontSize: 13 }}>
                 {message.content}
               </p>
             )}

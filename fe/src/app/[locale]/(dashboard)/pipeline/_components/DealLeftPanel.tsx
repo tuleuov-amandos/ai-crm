@@ -46,6 +46,7 @@ import { useMe } from "@/hooks/useAuth";
 import { useGetUsers } from "@/hooks/useUsers";
 import { usePipelineStages, useStageLabel } from "@/hooks/usePipelineStages";
 import { DealQuickActions } from "./DealQuickActions";
+import { buildTelHref } from "@/lib/dealQuickActions";
 
 const UNASSIGNED = "__unassigned__";
 
@@ -210,6 +211,7 @@ export function DealLeftPanel({ deal, onEdit, className }: DealLeftPanelProps) {
   );
   const pendingCount = tasks.filter((t) => !t.done).length;
   const doneCount    = tasks.filter((t) =>  t.done).length;
+  const contactTelHref = buildTelHref(deal.contact.phone);
 
   return (
     <div className={cn("w-[40%] min-w-[320px] shrink-0 flex flex-col border-r border-border bg-background overflow-y-auto max-md:w-full max-md:min-w-0 max-md:border-r-0", className)}>
@@ -441,21 +443,23 @@ export function DealLeftPanel({ deal, onEdit, className }: DealLeftPanelProps) {
               {deal.contact.email}
             </span>
           </a>
-          <a
-            href={`tel:${deal.contact.phone}`}
-            className="flex items-center gap-2.5 group max-md:min-h-10"
-            style={{ textDecoration: "none" }}
-          >
-            <div className="size-[26px] rounded-[7px] bg-secondary/60 flex items-center justify-center shrink-0">
-              <Phone size={11} className="text-primary" />
-            </div>
-            <span
-              className="text-muted-foreground group-hover:text-primary transition-colors"
-              style={{ fontSize: 12 }}
+          {contactTelHref && (
+            <a
+              href={contactTelHref}
+              className="flex items-center gap-2.5 group max-md:min-h-10"
+              style={{ textDecoration: "none" }}
             >
-              {deal.contact.phone}
-            </span>
-          </a>
+              <div className="size-[26px] rounded-[7px] bg-secondary/60 flex items-center justify-center shrink-0">
+                <Phone size={11} className="text-primary" />
+              </div>
+              <span
+                className="text-muted-foreground group-hover:text-primary transition-colors"
+                style={{ fontSize: 12 }}
+              >
+                {deal.contact.phone}
+              </span>
+            </a>
+          )}
           {deal.contact.city && (
             <div className="flex items-center gap-2.5">
               <div className="size-[26px] rounded-[7px] bg-secondary/60 flex items-center justify-center shrink-0">
