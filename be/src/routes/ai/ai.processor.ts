@@ -16,6 +16,8 @@ import { z } from 'zod'
 import type { AiClient } from './ai.client'
 import { AiProviderRequestError, createTenantAiClient, toJobFailure } from './tenant-ai-client'
 import { HttpException } from '@nestjs/common'
+import type { Logger } from 'pino'
+import { getAiDateContext } from './ai-date-context'
 
 const log = rootLogger.child({ context: 'AiProcessor' })
 const OPENAI_TIMEOUT_MS = 30_000
@@ -58,12 +60,41 @@ function withTimeout<T>(promise: Promise<T>, ms = OPENAI_TIMEOUT_MS) {
   return Promise.race([promise, new Promise<T>((_, rej) => setTimeout(() => rej(new Error('OpenAI timeout')), ms))])
 }
 
-async function callOpenAiAndParse(aiClient: AiClient, meetingNote: string, locale?: string): Promise<AiResponseType> {
+/**
+ * The company timezone for resolving relative dates. Never fails the analysis:
+ * on a DB error or a missing tenant the caller falls back to the default zone.
+ * Tenant is not tenant-scoped by the Prisma extension, so the id is explicit.
+ */
+export async function loadTenantTimezone(
+  prisma: PrismaService,
+  tenantId: string,
+  jobLog: Logger,
+): Promise<string | null> {
+  try {
+    const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { timezone: true } })
+    return tenant?.timezone ?? null
+  } catch {
+    // The error is dropped on purpose: only the fact of the fallback is logged.
+    jobLog.warn('Could not load the company timezone, using the default one')
+    return null
+  }
+}
+
+export async function callOpenAiAndParse(
+  aiClient: AiClient,
+  meetingNote: string,
+  locale?: string,
+  timezone?: string | null,
+  now: Date = new Date(),
+): Promise<AiResponseType> {
+  const today = getAiDateContext(now, timezone)
+  const dateLine = `Today is ${today.date} (${today.weekday}), timezone ${today.timezone}. Resolve relative dates ('Friday', 'tomorrow', 'next week') against it. Return dueDate as YYYY-MM-DD, or null if the note gives no date.`
   const LANGUAGE_NAMES: Record<string, string> = { ru: 'Russian', en: 'English' }
   const language = LANGUAGE_NAMES[locale ?? 'ru'] ?? 'Russian'
 
   const prompt = `
     You are an assistant that extracts actionable items from a meeting note.
+    ${dateLine}
     \nReturn ONLY a single valid JSON object (no explanation) with keys:
     \n{\n  "tasks": [
     { 
@@ -105,6 +136,7 @@ async function callOpenAiAndParse(aiClient: AiClient, meetingNote: string, local
     try {
       const retryPrompt = `
       The previous output was not valid JSON. 
+      ${dateLine}
       Reply with only a single valid JSON object matching schema 
       {
         "tasks": [
@@ -164,7 +196,8 @@ export function startAiWorker(): Worker {
         // The key is decrypted here, at the moment of the call; it is never in
         // the job data, Redis or the logs.
         const aiClient = await createTenantAiClient(aiSettings, tenantId)
-        aiResult = await callOpenAiAndParse(aiClient, meetingNote, locale)
+        const timezone = await loadTenantTimezone(prisma, tenantId, jobLog)
+        aiResult = await callOpenAiAndParse(aiClient, meetingNote, locale, timezone)
       } catch (err) {
         const keyFailure = toJobFailure(err)
         if (keyFailure) {
